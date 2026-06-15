@@ -1,22 +1,28 @@
 ---
 name: Workflow Setup
-description: Correct workflow commands for api-server and newsroom; env vars required at start
+description: Canonical workflow configuration — which workflows should exist and why duplicates are dangerous
 ---
 
-Both workflows require explicit env vars — they are NOT set automatically by the Replit artifact system in dev mode.
+## Active Workflows (Only These Should Exist)
 
-**api-server:**
-- Command: `cd artifacts/api-server && PORT=8080 pnpm run dev`
-- waitForPort: 8080
-- outputType: "console"
-- Requires: PORT (env.ts throws if missing)
+| Workflow | Command | Port |
+|----------|---------|------|
+| `artifacts/api-server: API Server` | `pnpm --filter @workspace/api-server run dev` | 8080 |
+| `artifacts/newsroom: web` | `pnpm --filter @workspace/newsroom run dev` | 23519 |
+| `artifacts/mockup-sandbox: Component Preview Server` | `pnpm --filter @workspace/mockup-sandbox run dev` | 8081 |
 
-**newsroom:**
-- Command: `cd artifacts/newsroom && PORT=23519 BASE_PATH=/newsroom/ pnpm run dev`
-- waitForPort: 23519
-- outputType: "webview"
-- Requires: PORT and BASE_PATH (vite.config.ts throws if either is missing)
+## Critical Rule
 
-**Why:** env.ts calls requireEnv("PORT") at module load time; vite.config.ts throws if BASE_PATH is unset.
+**Never create custom workflows alongside Replit-managed artifact workflows.** Replit auto-creates a workflow for every registered artifact. Adding a second workflow that binds the same port causes the artifact workflow to fail silently.
 
-**How to apply:** Always pass PORT and BASE_PATH explicitly in the workflow command string.
+**Why:** Sprint 2 created `Start newsroom` (port 23519) and `Start api-server` (port 8080) manually. When Replit registered the artifact workflows they competed for the same ports. `artifacts/newsroom: web` kept failing with "Port 23519 is already in use" — all briefings appeared broken even though the API server was fine.
+
+**How to apply:** When adding a new service, use the artifacts skill to register it. The artifact system creates the workflow automatically with PORT and BASE_PATH injected. Do not run `createWorkflow` separately.
+
+## PORT and BASE_PATH
+
+Replit injects PORT and BASE_PATH automatically into managed artifact workflows. The newsroom vite.config.ts requires both. This works correctly as long as no other process holds the port first.
+
+## Port Conflict Recovery
+
+If a workflow is removed but the port stays bound: the process survived workflow deletion. Use `ss -tlnp | grep <port>` to find the PID and `kill -9 <pid>` to free it. Then restart the artifact workflow.

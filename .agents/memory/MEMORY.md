@@ -1,4 +1,5 @@
 - [AI Provider Layer](ai-provider-layer.md) — provider switching is env-var only; summaryService.ts must never import a provider directly
-- [Workflow Setup](workflow-setup.md) — api-server and newsroom workflow commands, PORT/BASE_PATH requirements
+- [Workflow Setup](workflow-setup.md) — only 2 active workflows; never create custom ones alongside Replit-managed artifact workflows
 - [Icon System](icon-system.md) — topics.ts icon field is a Lucide name ("cpu", "laptop", etc.), not emoji; frontend maps via TOPIC_ICON_MAP
 - [Feed Diagnostics](feed-diagnostics.md) — every /api/news/summarize response includes debugInfo: FeedDiagnostic[]; frontend shows debug panel in DEV mode
+- [Port Conflict Risk](port-conflict-risk.md) — stale workflow processes survive workflow deletion; always kill by PID if port is "in use" after workflow removal
