@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { startScheduler } from "./services/delivery/scheduler";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +23,8 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  // Start delivery scheduler: morning 07:00, evening 18:00 (SCHEDULER_TIMEZONE).
+  // Only sends if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are configured.
+  startScheduler();
 });

@@ -1,24 +1,20 @@
 // ============================================================
 // PROMPT BUILDER — Shared prompt templates for all AI providers
 //
-// Centralise prompts here so githubProvider, openaiProvider,
-// and geminiProvider always use identical instructions.
+// Three prompt types:
+//   buildBriefingPrompt()       — Standard topic briefing (home page)
+//   buildMorningBriefingPrompt() — Morning cross-topic briefing (07:00)
+//   buildEveningBriefingPrompt() — Evening daily recap (18:00)
 //
-// Output format contract (parsed by the frontend):
-//   HEADLINE
-//   [line]
-//   EXECUTIVE SUMMARY
-//   [lines]
-//   KEY DEVELOPMENTS
-//   1. [line]
-//   ...
-//   IMPACT ANALYSIS
-//   [lines — short-term and long-term separated by newline]
-//   WHAT TO WATCH NEXT
-//   [lines]
+// Output format contract (parsed by the frontend + briefingFormatter):
+//   Standard:  HEADLINE / EXECUTIVE SUMMARY / KEY DEVELOPMENTS /
+//              IMPACT ANALYSIS / WHAT TO WATCH NEXT
+//   Morning:   MORNING BRIEFING / TOP DEVELOPMENTS /
+//              EXECUTIVE SUMMARY / IMPACT ANALYSIS / WHAT TO WATCH TODAY
+//   Evening:   EVENING RECAP / WHAT HAPPENED TODAY /
+//              WHAT CHANGED / WHAT MATTERS TOMORROW
 //
 // STRICT: no markdown, no emojis, Thai language only.
-// Target length: 800–1500 Thai words (approx 2400–4500 characters).
 // ============================================================
 
 import type { Article } from "./aiProvider.js";
@@ -28,6 +24,22 @@ export interface BriefingPrompt {
   userPrompt: string;
 }
 
+// ── Shared constraints (applied to all 3 prompt types) ───────
+
+const SHARED_RULES = `กฎที่ต้องปฏิบัติอย่างเคร่งครัด:
+- เขียนเป็นภาษาไทยเท่านั้น
+- ห้ามใช้ markdown ทุกชนิด ได้แก่ ###, **, *, -, หรือสัญลักษณ์ bullet
+- ห้ามใช้ emoji ทุกชนิดโดยเด็ดขาด
+- ห้ามขึ้นต้นประโยคด้วย "ในปัจจุบัน" "โดยรวมแล้ว" "กล่าวโดยสรุป" หรือคำเติมที่ไม่มีความหมาย
+- ห้ามนำข้อมูลเดิมมาซ้ำในต่างส่วน
+- ใช้ภาษาตรงไปตรงมา วิเคราะห์ได้ ไม่ใช่ภาษาทั่วไป
+- อ้างอิงชื่อองค์กร บุคคล ตัวเลข และวันที่เฉพาะเจาะจงจากบทความที่ให้มา
+- สังเคราะห์ข้อมูลจากหลายแหล่ง ระบุว่าแหล่งใดรายงานอะไร หากแหล่งข่าวมีข้อมูลขัดแย้งกัน ให้ระบุและวิเคราะห์ความขัดแย้งนั้นด้วย`;
+
+// ── Standard briefing prompt ─────────────────────────────────
+// Used by: POST /api/news/summarize (home page topic briefings)
+// Target: 800–1500 Thai words
+
 export function buildBriefingPrompt(
   articles: Article[],
   topic: string,
@@ -36,22 +48,15 @@ export function buildBriefingPrompt(
     .slice(0, 10)
     .map(
       (a, i) =>
-        `${i + 1}. ${a.title}\n${a.description ?? "(ไม่มีรายละเอียด)"}\nURL: ${a.url}`,
+        `${i + 1}. ${a.title}\nแหล่งที่มา: ${(a as { source?: string }).source ?? "ไม่ระบุ"}\n${a.description ?? "(ไม่มีรายละเอียด)"}\nURL: ${a.url}`,
     )
     .join("\n\n");
 
   const systemPrompt = `คุณคือนักวิเคราะห์ข่าวกรองอาวุโส เขียนรายงานให้ผู้บริหารระดับสูงที่ต้องการข้อมูลเชิงลึก ไม่ใช่แค่ข่าวพาดหัว
 
-พันธกิจของคุณ: วิเคราะห์ ไม่ใช่สรุป ผู้อ่านต้องเข้าใจว่า อะไรเกิดขึ้น ทำไมจึงเกิดขึ้น ใครได้รับผลกระทบ ผลกระทบระยะสั้นและระยะยาวคืออะไร
+พันธกิจของคุณ: วิเคราะห์ ไม่ใช่สรุป ผู้อ่านต้องเข้าใจว่า อะไรเกิดขึ้น ทำไมจึงเกิดขึ้น ใครได้รับผลกระทบ และผลกระทบระยะสั้น (1–4 สัปดาห์) กับระยะยาว (3–12 เดือน) แตกต่างกันอย่างไร
 
-กฎที่ต้องปฏิบัติอย่างเคร่งครัด:
-- เขียนเป็นภาษาไทยเท่านั้น
-- ห้ามใช้ markdown ทุกชนิด ได้แก่ ###, **, *, -, หรือสัญลักษณ์ bullet
-- ห้ามใช้ emoji ทุกชนิดโดยเด็ดขาด
-- ห้ามขึ้นต้นประโยคด้วย "ในปัจจุบัน" "โดยรวมแล้ว" "กล่าวโดยสรุป" หรือคำเติมที่ไม่มีความหมาย
-- ห้ามนำข้อมูลเดิมมาซ้ำในต่างส่วน
-- ใช้ภาษาตรงไปตรงมา วิเคราะห์ได้ ไม่ใช่ภาษาทั่วไป
-- ใช้หลักฐานจากบทความที่ให้มา อ้างอิงชื่อองค์กร บุคคล ตัวเลข และเหตุการณ์เฉพาะเจาะจง
+${SHARED_RULES}
 - ความยาวเป้าหมาย: 800–1500 คำภาษาไทย
 
 รูปแบบผลลัพธ์ที่ต้องใช้ให้ตรงทุกตัวอักษร ส่วนหัวแต่ละส่วนอยู่บรรทัดของตัวเอง:
@@ -63,7 +68,7 @@ EXECUTIVE SUMMARY
 [3–4 ประโยคที่ครอบคลุมภาพรวมสถานการณ์ปัจจุบัน ระบุผู้เล่นหลัก เหตุการณ์ที่เกิดขึ้นแล้ว และบริบทที่จำเป็น ใช้อดีตกาลสำหรับเหตุการณ์ที่สิ้นสุดแล้ว ใช้ปัจจุบันกาลสำหรับสิ่งที่กำลังดำเนินอยู่]
 
 KEY DEVELOPMENTS
-[ระบุหมายเลข 1 ถึง 5 แต่ละข้อเป็นข้อเท็จจริงเฉพาะเจาะจงที่มีหลักฐานรองรับจากบทความ ไม่ซ้ำกัน แต่ละข้ออาจมี 1–2 ประโยค]
+[ระบุหมายเลข 1 ถึง 5 แต่ละข้อเป็นข้อเท็จจริงเฉพาะเจาะจงที่มีหลักฐานรองรับจากบทความ พร้อมระบุแหล่งที่มาเมื่อเกี่ยวข้อง แต่ละข้ออาจมี 1–2 ประโยค]
 1. 
 2. 
 3. 
@@ -71,12 +76,115 @@ KEY DEVELOPMENTS
 5. 
 
 IMPACT ANALYSIS
-[2–3 ย่อหน้า แบ่งเป็น (1) ผลกระทบระยะสั้น: ใครได้รับผลกระทบทันทีและอย่างไร (2) ผลกระทบระยะยาว: แนวโน้ม การเปลี่ยนแปลงเชิงโครงสร้าง หรือความเสี่ยงที่ต้องติดตาม แต่ละย่อหน้ามี 2–3 ประโยค]
+[ย่อหน้าที่ 1 — ผลกระทบระยะสั้น (1–4 สัปดาห์): ใครได้รับผลกระทบทันทีและอย่างไร มีตัวเลขหรือข้อเท็จจริงรองรับ]
+[ย่อหน้าที่ 2 — ผลกระทบระยะยาว (3–12 เดือน): แนวโน้มเชิงโครงสร้าง การเปลี่ยนแปลงที่ถาวร หรือความเสี่ยงที่ต้องติดตาม]
+[ย่อหน้าที่ 3 — หากมีข้อมูลขัดแย้งระหว่างแหล่งข่าว ให้วิเคราะห์ความขัดแย้งนั้นที่นี่]
 
 WHAT TO WATCH NEXT
 [2–3 ประโยคระบุเหตุการณ์ การประกาศ หรือตัวชี้วัดเฉพาะที่ผู้อ่านควรติดตามในสัปดาห์ข้างหน้า พร้อมเหตุผลว่าทำไมจึงสำคัญ]`;
 
   const userPrompt = `เขียนรายงานข่าวกรองเชิงวิเคราะห์เกี่ยวกับ "${topic}" จากบทความต่อไปนี้:\n\n${articleText}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+// ── Morning briefing prompt ──────────────────────────────────
+// Used by: POST /api/delivery/morning
+// Target: 400–700 Thai words (2–4 min read)
+// Cross-topic synthesis of overnight developments.
+
+export function buildMorningBriefingPrompt(
+  articles: Article[],
+  topicLabels: string[],
+): BriefingPrompt {
+  const articleText = articles
+    .slice(0, 12)
+    .map(
+      (a, i) =>
+        `${i + 1}. ${a.title}\nแหล่งที่มา: ${(a as { source?: string }).source ?? "ไม่ระบุ"}\n${a.description ?? "(ไม่มีรายละเอียด)"}`,
+    )
+    .join("\n\n");
+
+  const topicsStr = topicLabels.join(", ");
+
+  const systemPrompt = `คุณคือผู้ช่วยส่วนตัวด้านข่าวกรองที่จัดทำรายงานเช้าสำหรับผู้บริหาร เพื่อให้เขาเริ่มต้นวันด้วยข้อมูลที่สำคัญที่สุด
+
+พันธกิจ: สังเคราะห์ข้อมูลข้ามหัวข้อ (${topicsStr}) และระบุ 5 พัฒนาการสำคัญที่สุดที่เกิดขึ้นในช่วงที่ผ่านมา เน้นสิ่งที่ผู้อ่านต้องรู้ก่อนเริ่มงาน
+
+${SHARED_RULES}
+- ความยาวเป้าหมาย: 400–700 คำภาษาไทย (อ่านจบใน 2–4 นาที)
+- เน้นความสั้นกระชับ ตรงประเด็น ไม่ยืดเยื้อ
+
+รูปแบบผลลัพธ์ที่ต้องใช้ให้ตรงทุกตัวอักษร:
+
+MORNING BRIEFING
+[หนึ่งประโยค: พัฒนาการสำคัญที่สุดในเช้านี้]
+
+TOP DEVELOPMENTS
+1. [พัฒนาการที่ 1 — เฉพาะเจาะจง มีหลักฐาน ระบุชื่อองค์กรหรือตัวเลข]
+2. [พัฒนาการที่ 2]
+3. [พัฒนาการที่ 3]
+4. [พัฒนาการที่ 4]
+5. [พัฒนาการที่ 5]
+
+EXECUTIVE SUMMARY
+[2–3 ประโยค: ภาพรวมสถานการณ์เช้านี้ในบริบทที่กว้างขึ้น]
+
+IMPACT ANALYSIS
+[ย่อหน้าที่ 1 — ผลกระทบที่เกิดขึ้นทันทีวันนี้]
+[ย่อหน้าที่ 2 — แนวโน้มระยะกลางที่ต้องจับตา]
+
+WHAT TO WATCH TODAY
+[2–3 ประโยค: เหตุการณ์ การประกาศ หรือข้อมูลเศรษฐกิจที่จะเกิดขึ้นวันนี้ และเหตุใดจึงสำคัญ]`;
+
+  const userPrompt = `จัดทำ Morning Intelligence Briefing จากบทความข่าวล่าสุดต่อไปนี้ ซึ่งรวบรวมจากหัวข้อ: ${topicsStr}\n\n${articleText}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+// ── Evening briefing prompt ──────────────────────────────────
+// Used by: POST /api/delivery/evening
+// Target: 600–900 Thai words (3–5 min read)
+// Daily recap: what happened, what changed, what matters tomorrow.
+
+export function buildEveningBriefingPrompt(
+  articles: Article[],
+  topicLabels: string[],
+): BriefingPrompt {
+  const articleText = articles
+    .slice(0, 12)
+    .map(
+      (a, i) =>
+        `${i + 1}. ${a.title}\nแหล่งที่มา: ${(a as { source?: string }).source ?? "ไม่ระบุ"}\n${a.description ?? "(ไม่มีรายละเอียด)"}`,
+    )
+    .join("\n\n");
+
+  const topicsStr = topicLabels.join(", ");
+
+  const systemPrompt = `คุณคือผู้ช่วยส่วนตัวด้านข่าวกรองที่จัดทำรายงานเย็น เพื่อให้ผู้บริหารเข้าใจสิ่งที่เกิดขึ้นตลอดวัน และเตรียมพร้อมสำหรับวันพรุ่งนี้
+
+พันธกิจ: สังเคราะห์พัฒนาการสำคัญจากหลายหัวข้อ (${topicsStr}) บอกว่าอะไรเปลี่ยนแปลงไปจากเช้า อะไรน่าแปลกใจ และอะไรที่ต้องติดตามพรุ่งนี้
+
+${SHARED_RULES}
+- ความยาวเป้าหมาย: 600–900 คำภาษาไทย (อ่านจบใน 3–5 นาที)
+- เปรียบเทียบสถานการณ์ตอนเช้าและตอนเย็นเมื่อข้อมูลอนุญาต
+
+รูปแบบผลลัพธ์ที่ต้องใช้ให้ตรงทุกตัวอักษร:
+
+EVENING RECAP
+[หนึ่งประโยค: เรื่องราวสำคัญที่สุดของวันนี้]
+
+WHAT HAPPENED TODAY
+[3–4 ย่อหน้าสั้น ๆ: เหตุการณ์สำคัญที่เกิดขึ้นในวันนี้ เรียงจากสำคัญมากไปน้อย แต่ละย่อหน้ามีข้อเท็จจริงเฉพาะเจาะจง]
+
+WHAT CHANGED
+[ย่อหน้าที่ 1 — อะไรเปลี่ยนแปลงจากที่คาดไว้ อะไรพลิกผัน หรือมีข้อมูลใหม่ที่ขัดแย้งกับที่รายงานก่อนหน้า]
+[ย่อหน้าที่ 2 — การเปลี่ยนแปลงเชิงโครงสร้างหรือแนวโน้มที่ชัดเจนขึ้นในวันนี้]
+
+WHAT MATTERS TOMORROW
+[2–3 ประโยค: สิ่งที่ต้องติดตามในวันพรุ่งนี้ ระบุชื่อเหตุการณ์ เวลา หรือการประกาศที่เฉพาะเจาะจง และเหตุใดจึงสำคัญ]`;
+
+  const userPrompt = `จัดทำ Evening Intelligence Recap จากบทความข่าวล่าสุดต่อไปนี้ ซึ่งรวบรวมจากหัวข้อ: ${topicsStr}\n\n${articleText}`;
 
   return { systemPrompt, userPrompt };
 }

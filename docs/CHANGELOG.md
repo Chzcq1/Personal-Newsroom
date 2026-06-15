@@ -2,6 +2,68 @@
 
 ---
 
+## [2026-06-15] — Sprint 4: Intelligence Delivery Engine
+
+**What:** Transformed from a news website into a personal intelligence assistant with automated Telegram delivery, morning/evening briefing schedules, interest profiling, delivery preview, and configuration center. 11 tasks across backend and frontend.
+
+**Why:** Sprint 3 proved the core briefing quality. Sprint 4 makes it a daily-use tool — delivering insights to you automatically instead of requiring you to visit the site.
+
+---
+
+### Task A — Telegram Delivery Settings UI
+
+- `/settings/delivery` — form to enter bot token + chat ID, save to localStorage, test connection
+- `POST /api/telegram/test` — verifies bot can reach the configured chat (calls `getChat`)
+- `POST /api/telegram/send` — sends a pre-generated briefing text to Telegram
+- Credentials stored in localStorage (migration-ready for DB: see `lib/telegramSettings.ts`)
+
+### Task B — Delivery Engine + Real Telegram
+
+- `services/delivery/telegramDelivery.ts` — `IDeliveryChannel` interface + `TelegramDelivery` implementation using raw `fetch` to Telegram Bot API (HTML parse mode, 500 ms inter-message delay)
+- `services/delivery/deliveryEngine.ts` — pipeline orchestrator: collect → summarize → format → deliver; `generateBriefing()` (no send) and `generateAndDeliver()` (with channel)
+- `services/delivery/briefingFormatter.ts` — HTML formatting, 4096-char message splitting at paragraph boundaries
+
+### Task C+D — Morning + Evening Scheduled Briefings
+
+- `services/delivery/scheduler.ts` — setInterval 60 s poll, fires at 07:00 and 18:00 in `SCHEDULER_TIMEZONE` (default `Asia/Bangkok`); memory-tracks sent-today keys to prevent duplicates
+- Scheduler starts automatically on server boot; silently no-ops if Telegram credentials are not configured
+- `POST /api/delivery/morning` and `POST /api/delivery/evening` — generate and optionally deliver
+
+### Task E+F — Interest Engine + Feed Generator
+
+- `lib/interestProfile.ts` — localStorage profile with add/remove/clear; 12 preset interests
+- `services/news/feedGenerator.ts` — `INTEREST_DEFINITIONS` map (12 presets: Tesla, Nvidia, BYD, Bitcoin, Ethereum, Nintendo, Steam, OpenAI, Anthropic, AI Agents, EV, Gaming); `generatePersonalFeed()`, `scoreArticleByInterests()`
+- `/settings/interests` — toggle grid for all 12 presets, shows which topics each maps to
+
+### Task G — Delivery Preview Page
+
+- `/delivery-preview` — generate morning and evening briefings on-demand; renders them inside a mock Telegram UI bubble; "Send to Telegram" button uses stored credentials
+- `GET /api/delivery/preview/morning` and `GET /api/delivery/preview/evening` — generate and return formatted messages without delivering
+
+### Task H — Briefing Quality Upgrade
+
+- Added to all prompts: multi-source evidence synthesis (cite org names, people, numbers)
+- Added: contradiction detection between sources
+- Clarified IMPACT ANALYSIS: explicit short-term (1–4 weeks) vs long-term (3–12 months) split
+- All providers now expose `complete(systemPrompt, userPrompt)` as the low-level method; `summarize()` calls it
+
+### Task I — Configuration Center
+
+- `/settings` hub — cards for Telegram Delivery, Interest Profile, Delivery Preview; live status badges
+- Settings gear icon added to main header nav (home page)
+
+### Task J — Retry System
+
+- `rssService.ts` — each feed retried up to 2 times (1 s then 2 s delay); `FeedDiagnostic.attempts` tracks retry count
+- `summaryService.ts` — AI calls retried once after 2 s; auth errors (401) not retried
+
+### Task K — Architecture Docs
+
+- `docs/ARCHITECTURE.md` — fully rewritten: system diagram, all layers, data flow, extension guides
+- `docs/CHANGELOG.md` — Sprint 4 entry added
+
+---
+
 ## [2026-06-15] — Sprint 2: Product Quality Phase
 
 **What:** Eight-task quality sprint moving the product from MVP to professional intelligence platform. Addresses all five user feedback items: Technology topic reliability, briefing depth, emoji icons, generic errors, and overall product feel.

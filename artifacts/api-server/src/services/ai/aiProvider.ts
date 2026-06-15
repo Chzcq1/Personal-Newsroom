@@ -36,6 +36,15 @@ export interface Article {
 
 export interface AIProvider {
   readonly providerName: string;
+  /**
+   * Low-level completion — any system + user prompt pair.
+   * Use this for delivery briefings and custom prompt types.
+   */
+  complete(systemPrompt: string, userPrompt: string): Promise<string>;
+  /**
+   * High-level: generate a Thai intelligence briefing for given articles and topic.
+   * Calls complete() with the standard briefing prompt.
+   */
   summarize(articles: Article[], topic: string): Promise<string>;
 }
 

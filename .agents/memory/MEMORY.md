@@ -1,4 +1,5 @@
-- [AI Provider Layer](ai-provider-layer.md) — provider switching is env-var only; summaryService.ts must never import a provider directly
+- [AI Provider Layer](ai-provider-layer.md) — provider switching is env-var only; summaryService.ts must never import a provider directly; complete() is the low-level method
+- [Delivery Architecture](delivery-architecture.md) — IDeliveryChannel abstraction, credential split (localStorage vs env vars), scheduler pattern, Telegram HTML format
 - [Workflow Setup](workflow-setup.md) — only 2 active workflows; never create custom ones alongside Replit-managed artifact workflows
 - [Icon System](icon-system.md) — topics.ts icon field is a Lucide name ("cpu", "laptop", etc.), not emoji; frontend maps via TOPIC_ICON_MAP
 - [Feed Diagnostics](feed-diagnostics.md) — every /api/news/summarize response includes debugInfo: FeedDiagnostic[]; frontend shows debug panel in DEV mode

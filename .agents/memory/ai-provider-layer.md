@@ -6,6 +6,13 @@ description: How the AI abstraction works in Personal AI Newsroom — switching 
 ## Rule
 `summaryService.ts` is the only entry point for AI. It NEVER imports a provider directly — only calls `createAIProvider()` from `aiProvider.ts`.
 
+## AIProvider interface (Sprint 4 addition)
+Two methods — both required on every provider:
+- `complete(systemPrompt, userPrompt)` — low-level; used by delivery briefings and any custom prompt
+- `summarize(articles, topic)` — calls `complete()` with the standard briefing prompt
+
+When adding a new prompt type, use `provider.complete()` via a new function in `summaryService.ts`. Never add a new method to the AIProvider interface unless it's a fundamentally different interaction pattern.
+
 ## How to switch providers
 Change `AI_PROVIDER` env var only. No code changes needed.
 - `github` → `GITHUB_TOKEN` required (default)

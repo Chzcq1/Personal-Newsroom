@@ -10,13 +10,6 @@
 //
 // Required env var: GITHUB_TOKEN
 // Active when: AI_PROVIDER=github (default)
-//
-// Free models available on GitHub Models:
-//   - gpt-4o-mini       (used here — fast, good quality)
-//   - Phi-3.5-mini-instruct
-//   - Meta-Llama-3.1-8B-Instruct
-//
-// To change the model, update DEFAULT_MODEL below.
 // ============================================================
 
 import OpenAI from "openai";
@@ -38,8 +31,11 @@ export class GithubProvider implements AIProvider {
     });
   }
 
-  async summarize(articles: Article[], topic: string): Promise<string> {
-    const { systemPrompt, userPrompt } = buildBriefingPrompt(articles, topic);
+  /**
+   * Low-level: call the model with any system + user prompt.
+   * Used by both summarize() and delivery briefing generation.
+   */
+  async complete(systemPrompt: string, userPrompt: string): Promise<string> {
     const startMs = Date.now();
 
     try {
@@ -67,9 +63,14 @@ export class GithubProvider implements AIProvider {
     } catch (err) {
       logger.error(
         { provider: this.providerName, model: DEFAULT_MODEL, durationMs: Date.now() - startMs, err: String(err) },
-        "AI summarization failed",
+        "AI completion failed",
       );
       throw err;
     }
+  }
+
+  async summarize(articles: Article[], topic: string): Promise<string> {
+    const { systemPrompt, userPrompt } = buildBriefingPrompt(articles, topic);
+    return this.complete(systemPrompt, userPrompt);
   }
 }

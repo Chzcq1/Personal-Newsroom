@@ -25,6 +25,7 @@ import {
   XCircle,
   AlertTriangle,
   Activity,
+  Settings,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -614,17 +615,24 @@ export default function Home() {
             </span>
             {health && <HealthBadge health={health} />}
           </div>
-          <Link to="/saved">
-            <Button variant="ghost" size="sm" className="gap-2 text-xs">
-              <Bookmark className="w-3.5 h-3.5" />
-              Saved
-              {savedCount > 0 && (
-                <span className="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
-                  {savedCount > 9 ? "9+" : savedCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link to="/saved">
+              <Button variant="ghost" size="sm" className="gap-2 text-xs">
+                <Bookmark className="w-3.5 h-3.5" />
+                Saved
+                {savedCount > 0 && (
+                  <span className="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
+                    {savedCount > 9 ? "9+" : savedCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+            <Link to="/settings">
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:text-foreground">
+                <Settings className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 

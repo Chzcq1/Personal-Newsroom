@@ -41,15 +41,9 @@ export const config = {
   port: requireEnv("PORT"),
 
   // ── AI Provider ──────────────────────────────────────────
-  // Controls which AI backend is used for Thai summarization.
-  // To switch providers, change the AI_PROVIDER environment variable.
-  //   'github'  → GitHub Models API (default, free with GitHub account)
-  //   'openai'  → OpenAI API (requires OPENAI_API_KEY)
-  //   'gemini'  → Google Gemini API (requires GEMINI_API_KEY)
   aiProvider: resolveAIProvider(),
 
   // ── Provider Credentials ─────────────────────────────────
-  // Only the key matching the active AI_PROVIDER is required at runtime.
   github: {
     token: optionalEnv("GITHUB_TOKEN"),
   },
@@ -65,11 +59,20 @@ export const config = {
     key: optionalEnv("NEWSAPI_KEY"),
   },
 
-  // ── Delivery ─────────────────────────────────────────────
+  // ── Telegram Delivery ────────────────────────────────────
+  // Used by the scheduler for automated morning/evening briefings.
+  // The UI settings page stores credentials locally and sends them
+  // in API request bodies — env vars are only needed for the scheduler.
   telegram: {
     botToken: optionalEnv("TELEGRAM_BOT_TOKEN"),
     chatId: optionalEnv("TELEGRAM_CHAT_ID"),
   },
+
+  // ── Delivery Scheduler ───────────────────────────────────
+  // Timezone for morning (07:00) and evening (18:00) scheduled delivery.
+  // Uses IANA timezone names: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  // Default: Asia/Bangkok (UTC+7)
+  schedulerTimezone: optionalEnv("SCHEDULER_TIMEZONE") ?? "Asia/Bangkok",
 
   // ── Database ─────────────────────────────────────────────
   database: {

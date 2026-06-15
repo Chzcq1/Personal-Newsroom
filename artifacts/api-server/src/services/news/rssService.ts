@@ -4,9 +4,14 @@
 // Returns a normalised RssArticle array and a FeedDiagnostic
 // regardless of feed format. RSS parsing: rss-parser.
 //
+// ── RETRY POLICY ─────────────────────────────────────────
+// Each feed is retried up to 2 times on failure.
+// Delays: 1s after first failure, 2s after second.
+// All retries are transparent to callers.
+//
 // Logging contract:
-//   INFO  — successful fetch with article count and duration
-//   WARN  — feed failure (continues, caller skips this feed)
+//   INFO  — successful fetch (reports attempt count if > 1)
+//   WARN  — feed failure after all retries exhausted
 // ============================================================
 
 import Parser from "rss-parser";
@@ -33,6 +38,7 @@ export interface FeedDiagnostic {
   status: "success" | "failed";
   articleCount: number;
   durationMs: number;
+  attempts: number;
   error?: string;
 }
 
@@ -41,77 +47,104 @@ export interface FeedResult {
   diagnostic: FeedDiagnostic;
 }
 
+const RETRY_DELAYS_MS = [1000, 2000];
+const MAX_ATTEMPTS = RETRY_DELAYS_MS.length + 1;
+
 /**
  * Fetch and parse a single RSS feed URL.
- * Always returns a FeedResult — articles is empty on error.
- * Caller decides what to do with failed feeds.
- *
- * @param url        - Full RSS feed URL
- * @param sourceName - Human-readable source name for attribution
+ * Retries up to 2 times on failure (total 3 attempts).
+ * Always returns a FeedResult — articles is empty on final failure.
  */
 export async function fetchFeed(
   url: string,
   sourceName: string,
 ): Promise<FeedResult> {
-  const startMs = Date.now();
+  const totalStartMs = Date.now();
+  let lastError = "";
 
-  try {
-    const feed = await parser.parseURL(url);
-    const articles = feed.items.slice(0, 10).map((item) => ({
-      title: item.title?.trim() ?? "(ไม่มีหัวข้อ)",
-      description:
-        item.contentSnippet?.trim() || item.summary?.trim() || undefined,
-      url: item.link ?? item.guid ?? url,
-      pubDate: item.pubDate ?? item.isoDate ?? undefined,
-      source: sourceName,
-    }));
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const attemptStartMs = Date.now();
 
-    const durationMs = Date.now() - startMs;
+    try {
+      const feed = await parser.parseURL(url);
+      const articles = feed.items.slice(0, 10).map((item) => ({
+        title: item.title?.trim() ?? "(ไม่มีหัวข้อ)",
+        description:
+          item.contentSnippet?.trim() || item.summary?.trim() || undefined,
+        url: item.link ?? item.guid ?? url,
+        pubDate: item.pubDate ?? item.isoDate ?? undefined,
+        source: sourceName,
+      }));
 
-    logger.info(
-      {
-        feed: sourceName,
-        url,
-        articles: articles.length,
-        durationMs,
-      },
-      "RSS feed fetched",
-    );
+      const durationMs = Date.now() - totalStartMs;
 
-    return {
-      articles,
-      diagnostic: {
-        name: sourceName,
-        url,
-        status: "success",
-        articleCount: articles.length,
-        durationMs,
-      },
-    };
-  } catch (err) {
-    const durationMs = Date.now() - startMs;
-    const errorMessage = err instanceof Error ? err.message : String(err);
+      logger.info(
+        {
+          feed: sourceName,
+          url,
+          articles: articles.length,
+          durationMs,
+          attempts: attempt,
+        },
+        "RSS feed fetched",
+      );
 
-    logger.warn(
-      {
-        feed: sourceName,
-        url,
-        durationMs,
-        error: errorMessage,
-      },
-      "RSS feed failed — skipping",
-    );
+      return {
+        articles,
+        diagnostic: {
+          name: sourceName,
+          url,
+          status: "success",
+          articleCount: articles.length,
+          durationMs,
+          attempts: attempt,
+        },
+      };
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+      const attemptDurationMs = Date.now() - attemptStartMs;
 
-    return {
-      articles: [],
-      diagnostic: {
-        name: sourceName,
-        url,
-        status: "failed",
-        articleCount: 0,
-        durationMs,
-        error: errorMessage,
-      },
-    };
+      if (attempt < MAX_ATTEMPTS) {
+        const delay = RETRY_DELAYS_MS[attempt - 1];
+        logger.warn(
+          {
+            feed: sourceName,
+            url,
+            attempt,
+            nextRetryMs: delay,
+            durationMs: attemptDurationMs,
+            error: lastError,
+          },
+          "RSS feed failed — retrying",
+        );
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
   }
+
+  const durationMs = Date.now() - totalStartMs;
+
+  logger.warn(
+    {
+      feed: sourceName,
+      url,
+      attempts: MAX_ATTEMPTS,
+      durationMs,
+      error: lastError,
+    },
+    "RSS feed failed after all retries — skipping",
+  );
+
+  return {
+    articles: [],
+    diagnostic: {
+      name: sourceName,
+      url,
+      status: "failed",
+      articleCount: 0,
+      durationMs,
+      attempts: MAX_ATTEMPTS,
+      error: lastError,
+    },
+  };
 }

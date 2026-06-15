@@ -2,294 +2,209 @@
 
 ## Overview
 
-Personal AI Newsroom is a modular web application where a user selects a news topic, the system collects relevant articles, an AI model summarizes them in Thai, and optionally delivers the summary to Telegram.
+Personal AI Newsroom is a full-stack React + Vite frontend with an Express backend. The backend collects RSS news, generates Thai-language AI briefings, and delivers them automatically via Telegram. The frontend is a personal intelligence dashboard.
 
 All modules are designed to be independently replaceable. Adding a new delivery channel, news source, or AI provider should require touching only one service file.
 
 ---
 
-## Current System State (as of 2026-06-15 Sprint 2)
-
-- Technology topic fixed: 6 RSS sources with reliable fallbacks (Ars Technica, TechCrunch, The Verge, Hacker News, Engadget, ZDNet)
-- Intelligence briefing format: HEADLINE / EXECUTIVE SUMMARY / KEY DEVELOPMENTS / IMPACT ANALYSIS / WHAT TO WATCH NEXT
-- Professional SVG icons via Lucide React (no emoji)
-- Save Briefings: localStorage persistence, future-ready for DB migration
-- User Preferences: last viewed topic restored on next visit
-- Telegram delivery: architecture stub at `services/delivery/telegramService.ts`
-- Per-feed diagnostics: every API response includes `debugInfo` with feed status, article count, duration, and error details
-- Dev mode debug panel: surfaced in frontend when `import.meta.env.DEV` is true
-
----
-
-## Project Structure
+## System Diagram
 
 ```
-Personal-AI-Newsroom/
-│
-├── docs/
-│   ├── PROJECT_VISION.md         # Product goals and success criteria
-│   ├── ARCHITECTURE.md           # This file — system design and module map
-│   ├── AGENT_RULES.md            # Rules for AI agents modifying this codebase
-│   ├── CHANGELOG.md              # Feature history
-│   └── LOGIN_PREPARATION.md      # Future login architecture (no implementation)
-│
-├── artifacts/newsroom/           # React + Vite frontend (port via PORT env)
-│   └── src/
-│       ├── App.tsx               # Wouter routing (/ and /saved routes)
-│       ├── index.css             # Design tokens (colors, fonts)
-│       ├── pages/
-│       │   ├── home.tsx          # Topic grid + intelligence briefing display
-│       │   ├── saved-briefings.tsx  # Saved briefings list + expand/delete
-│       │   └── not-found.tsx
-│       └── lib/
-│           ├── briefingStorage.ts  # localStorage briefing persistence
-│           └── preferences.ts      # localStorage user preferences
-│
-├── artifacts/api-server/         # Express backend (port via PORT env)
-│   └── src/
-│       ├── config/
-│       │   ├── env.ts            # Centralized env config (ONLY place process.env is read)
-│       │   └── topics.ts         # Topic definitions + RSS feed URLs + icon names
-│       ├── routes/
-│       │   ├── index.ts          # Route registry
-│       │   ├── health.ts         # GET /api/healthz
-│       │   ├── topics.ts         # GET /api/topics
-│       │   └── news.ts           # POST /api/news/summarize (with specific error classification)
-│       └── services/
-│           ├── news/
-│           │   ├── rssService.ts           # Fetch + parse single RSS feed, returns FeedResult
-│           │   └── newsCollectorService.ts # Parallel aggregation + dedup + diagnostics
-│           ├── ai/
-│           │   ├── aiProvider.ts           # Provider interface + factory
-│           │   ├── summaryService.ts       # ONLY entry point for AI calls
-│           │   ├── promptBuilder.ts        # Shared prompts (800-1500 Thai words target)
-│           │   ├── githubProvider.ts       # GitHub Models (default, max_tokens=3000)
-│           │   ├── openaiProvider.ts       # OpenAI (max_tokens=3000)
-│           │   └── geminiProvider.ts       # Google Gemini (maxOutputTokens=3000)
-│           └── delivery/
-│               └── telegramService.ts      # Telegram stub (interface only, not activated)
-│
-├── lib/api-spec/openapi.yaml     # Single source of truth for API contracts
-├── lib/api-client-react/         # Orval-generated React Query hooks
-├── lib/api-zod/                  # Orval-generated Zod validators
-│
-└── docs/                         # Project documentation
+Browser (React + Vite, port 23519)
+  │  GET/POST /api/*
+  ▼
+Express API Server (port 8080)
+  ├── routes/health.ts      GET /api/health
+  ├── routes/topics.ts      GET /api/topics
+  ├── routes/news.ts        POST /api/news/summarize
+  ├── routes/telegram.ts    POST /api/telegram/test, /send
+  └── routes/delivery.ts    POST /api/delivery/morning|evening
+                            GET  /api/delivery/preview/morning|evening
 ```
 
 ---
 
-## Core Data Flow (V1)
+## Backend Services
+
+### AI Layer (`services/ai/`)
 
 ```
-User selects topic
-        ↓
-Preferences saved (lastViewedTopicId → localStorage)
-        ↓
-Backend receives topic via POST /api/news/summarize
-        ↓
-newsCollectorService aggregates sources (parallel)
-    ├── rssService (feed 1) → { articles[], diagnostic }
-    ├── rssService (feed 2) → { articles[], diagnostic }
-    └── rssService (feed N) → { articles[], diagnostic }
-        ↓
-CollectionResult { articles, feedDiagnostics, failedFeeds, totalCollected }
-        ↓
-If articles.length === 0 → specific error (feed unavailable / no articles / all failed)
-        ↓
-AI summaryService generates Thai intelligence briefing (800-1500 words)
-        ↓
-If AI fails → specific error (timeout / rate limit / token exceeded / auth / parse)
-        ↓
-Response includes { topic, summary, sources, debugInfo: feedDiagnostics, ... }
-        ↓
-Frontend renders structured briefing sections
-        ↓
-User can Save briefing → localStorage (briefingStorage.ts)
-        ↓
-[Future] telegramService delivers to Telegram
+summaryService.ts              ← ONLY entry point for AI calls
+  → aiProvider.ts              ← Interface + factory (never import provider directly)
+    → githubProvider.ts        ← GitHub Models (default, AI_PROVIDER=github)
+    → openaiProvider.ts        ← OpenAI API (AI_PROVIDER=openai)
+    → geminiProvider.ts        ← Google Gemini (AI_PROVIDER=gemini)
+  → promptBuilder.ts           ← All prompt templates
 ```
 
----
+**Key rules:**
+- `summaryService.ts` is the **only** file that imports from `aiProvider.ts`
+- No route file, no service file other than `summaryService.ts` may call an AI provider directly
+- Switch provider with `AI_PROVIDER` env var only — no code changes needed
 
-## Module Descriptions
-
-### `config/topics.ts`
-- **Purpose:** Topic definitions and RSS feed URLs
-- **Icon field:** Lucide React icon name (e.g. "cpu", "laptop") — NOT emoji
-- **Technology:** 6 sources for maximum resilience
-- **Rule:** Use ≥5 sources per topic
-
-### `services/news/rssService.ts`
-- **Purpose:** Fetch and parse a single RSS feed URL
-- **Input:** `{ name: string, url: string }` from `config/topics.ts`
-- **Output:** `FeedResult { articles: RssArticle[], diagnostic: FeedDiagnostic }`
-- **Diagnostic fields:** name, url, status, articleCount, durationMs, error?
-- **Logging:** INFO per successful feed; WARN per failure
-- **Risk Level:** Medium — failures are isolated, never throws
-
-### `services/news/newsCollectorService.ts`
-- **Purpose:** Collect, deduplicate, rank, and select best articles for a topic
-- **Output:** `CollectionResult { articles, feedDiagnostics, totalConfigured, totalCollected, failedFeeds }`
-- **Ranking:** recency score (0-50) + quality score (0-30); Jaccard near-duplicate suppression (>65%)
-- **Logging:** INFO with all collection metrics
-
-### `routes/news.ts`
-- **Purpose:** POST /api/news/summarize endpoint
-- **Error classification:** Specific Thai error messages for each failure type
-  - Feed unavailable: reports how many feeds failed out of total
-  - AI timeout: specific timeout message
-  - Rate limit: rate limit message with wait suggestion
-  - Token exceeded: token limit exceeded message
-  - Auth error: provider + key name
-  - Parse error: parsing failure message
-- **Debug info:** Always included in response as `debugInfo` field (FeedDiagnostic[])
-
-### `services/ai/promptBuilder.ts`
-- **Purpose:** Single source of truth for all AI prompts
-- **Output format:** HEADLINE / EXECUTIVE SUMMARY / KEY DEVELOPMENTS / IMPACT ANALYSIS / WHAT TO WATCH NEXT
-- **Target length:** 800–1500 Thai words (analytical, evidence-based)
-- **Rule:** All 3 providers import from here — never write prompts inline in a provider
-- **Risk Level:** HIGH — changes affect all providers and the frontend parser
-
-### `services/delivery/telegramService.ts`
-- **Purpose:** Architecture stub for future Telegram delivery
-- **Status:** Interface defined, not activated, no UI
-- **To activate:** See inline documentation in the file
-
-### `lib/briefingStorage.ts` (frontend)
-- **Purpose:** localStorage persistence for saved briefings
-- **Key:** `ai-newsroom:saved-briefings`
-- **Max stored:** 50 briefings (oldest auto-removed)
-- **Migration path:** Replace localStorage calls with API calls to POST/GET/DELETE /api/briefings
-
-### `lib/preferences.ts` (frontend)
-- **Purpose:** localStorage persistence for user preferences
-- **Key:** `ai-newsroom:preferences`
-- **Stores:** lastViewedTopicId, favoriteTopics[]
-- **Behaviour:** Last viewed topic is auto-restored and briefing auto-generated on next visit
-
----
-
-## API Endpoints (V1)
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/topics` | List available topics |
-| POST | `/api/news/summarize` | Fetch + summarize news for a topic |
-| GET | `/api/healthz` | Health check |
-
-### POST /api/news/summarize Response
-
-```json
-{
-  "topic": { "id": "...", "label": "...", "labelTh": "...", "icon": "..." },
-  "summary": "Thai intelligence briefing text...",
-  "sources": [ { "title": "...", "url": "...", "source": "...", "pubDate": "..." } ],
-  "generatedAt": "ISO 8601",
-  "generationTimeMs": 7832,
-  "provider": "github",
-  "articleCount": 10,
-  "debugInfo": [
-    { "name": "Ars Technica", "url": "...", "status": "success", "articleCount": 10, "durationMs": 543 },
-    { "name": "NY Times", "url": "...", "status": "failed", "articleCount": 0, "durationMs": 10001, "error": "timeout" }
-  ]
+**AIProvider interface** (`aiProvider.ts`):
+```typescript
+interface AIProvider {
+  readonly providerName: string;
+  complete(systemPrompt: string, userPrompt: string): Promise<string>;
+  summarize(articles: Article[], topic: string): Promise<string>;
 }
 ```
+`complete()` is the low-level method (used for delivery briefings). `summarize()` calls `complete()` with the standard briefing prompt.
+
+**Retry policy:** AI calls are retried once after 2 seconds. Auth errors (401/Unauthorized) are not retried.
+
+**Prompt types** (`promptBuilder.ts`):
+
+| Function | Used by | Thai words | Format |
+|---|---|---|---|
+| `buildBriefingPrompt` | Standard topic briefings | 800–1500 | HEADLINE / EXECUTIVE SUMMARY / KEY DEVELOPMENTS / IMPACT ANALYSIS / WHAT TO WATCH NEXT |
+| `buildMorningBriefingPrompt` | Morning delivery (07:00) | 400–700 | MORNING BRIEFING / TOP DEVELOPMENTS / EXECUTIVE SUMMARY / IMPACT ANALYSIS / WHAT TO WATCH TODAY |
+| `buildEveningBriefingPrompt` | Evening delivery (18:00) | 600–900 | EVENING RECAP / WHAT HAPPENED TODAY / WHAT CHANGED / WHAT MATTERS TOMORROW |
+
+**Quality requirements baked into all prompts:**
+- Evidence synthesis: cite org names, people, numbers, and dates from source articles
+- Multi-source synthesis: note when sources contradict each other
+- Separate short-term (1–4 weeks) vs long-term (3–12 months) in impact analysis
+- Senior intelligence analyst tone — not a news summarizer
 
 ---
 
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `PORT` | Yes (auto-set) | Server port — set by Replit artifact system |
-| `AI_PROVIDER` | No (default: `github`) | Active AI provider: `github` \| `openai` \| `gemini` |
-| `GITHUB_TOKEN` | Yes (if `AI_PROVIDER=github`) | GitHub Personal Access Token for GitHub Models API |
-| `OPENAI_API_KEY` | Yes (if `AI_PROVIDER=openai`) | OpenAI API key |
-| `GEMINI_API_KEY` | Yes (if `AI_PROVIDER=gemini`) | Google Gemini API key |
-| `NEWSAPI_KEY` | Optional | API key for NewsAPI news collection |
-| `TELEGRAM_BOT_TOKEN` | Optional | Telegram bot token for delivery |
-| `TELEGRAM_CHAT_ID` | Optional | Telegram chat/channel ID for delivery |
-| `DATABASE_URL` | Optional (V1) | PostgreSQL connection string |
-
----
-
-## AI Provider Layer
-
-The AI integration is abstracted behind a provider interface. The active provider is selected at startup via the `AI_PROVIDER` environment variable. No code changes are needed to switch providers.
+### News Collection (`services/news/`)
 
 ```
-AI_PROVIDER env var
-       ↓
-config/env.ts  (reads + validates the value)
-       ↓
-services/ai/summaryService.ts  (single entry point for all AI calls)
-       ↓
-services/ai/aiProvider.ts  (createAIProvider factory)
-       ↓
-┌──────────────────────────────────────────┐
-│  AI_PROVIDER=github  → githubProvider.ts │  ← DEFAULT (max_tokens=3000)
-│  AI_PROVIDER=openai  → openaiProvider.ts │  (max_tokens=3000)
-│  AI_PROVIDER=gemini  → geminiProvider.ts │  (maxOutputTokens=3000)
-└──────────────────────────────────────────┘
+newsCollectorService.ts        ← Orchestrates collection for one topic
+  → rssService.ts              ← Fetch + parse one RSS feed (retry ×2)
+  → newsRanker.ts              ← Score and rank articles by recency + quality
+
+feedGenerator.ts               ← Interest → topic/keyword mapping
+  INTEREST_DEFINITIONS         ← 12 predefined interests with topicIds + keywords
+  generatePersonalFeed()       ← Returns topicIds + boostKeywords
+  scoreArticleByInterests()    ← Keyword boost score
 ```
 
-### How to Switch Providers
+**RSS retry policy:** Each feed retried up to 2 times (1 s then 2 s delay), 3 total attempts. Failed feeds are skipped; collection continues with remaining feeds.
 
-| Provider | `AI_PROVIDER` value | Required Secret |
-|----------|---------------------|-----------------|
-| GitHub Models (default) | `github` | `GITHUB_TOKEN` |
-| OpenAI | `openai` | `OPENAI_API_KEY` |
-| Google Gemini | `gemini` | `GEMINI_API_KEY` |
+**RSS feed minimums:** At least 5 sources per topic ensures 10+ articles even if 2–3 feeds fail.
 
 ---
 
-## Design Decisions
+### Delivery Layer (`services/delivery/`)
 
-1. **Services are stateless.** Each service function takes inputs, returns outputs, and has no side effects beyond its own scope.
-2. **Topic-to-source mapping lives in config.** Topics map to RSS feeds via a config file, not hardcoded in services.
-3. **AI provider is fully swappable via env var.** `summaryService.ts` only calls `aiProvider.ts`. Switching from GitHub Models to OpenAI or Gemini requires changing `AI_PROVIDER` only — zero code changes.
-4. **Delivery is optional and non-blocking.** Telegram delivery failure must never crash the main summarization flow.
-5. **No authentication in V1.** Single-user product. Auth is a future-version concern.
-6. **Diagnostics flow from feed → collector → route → frontend.** Every response includes per-feed diagnostics in `debugInfo`. The frontend debug panel shows this data in dev mode.
-7. **Icon field is a Lucide icon name, not emoji.** The backend sends `"cpu"`, `"laptop"` etc. The frontend maps these to Lucide React components.
-8. **Persistence is localStorage-first.** `briefingStorage.ts` and `preferences.ts` use localStorage with interfaces designed for direct replacement by API calls when login is activated.
+```
+deliveryEngine.ts              ← Pipeline: collect → summarize → format → deliver
+  → newsCollectorService.ts    ← 3 articles per topic in parallel
+  → summaryService.ts          ← summarizeDelivery() for morning/evening prompts
+  → briefingFormatter.ts       ← HTML formatting + 4096-char message splitting
+  → telegramDelivery.ts        ← IDeliveryChannel + TelegramDelivery
 
----
+scheduler.ts                   ← setInterval 60 s poll, fires at 07:00 and 18:00
+```
 
-## Known Technical Debt
+**IDeliveryChannel interface** (`telegramDelivery.ts`):
+```typescript
+interface IDeliveryChannel {
+  readonly name: string;
+  verify(): Promise<boolean>;
+  send(messages: string[]): Promise<ChannelDeliveryResult>;
+}
+```
+New channels (LINE, Discord, Email) implement this interface — no changes to `deliveryEngine.ts`.
 
-- `icon` field in OpenAPI spec still describes as "Emoji icon" — update when codegen is next run
-- `debugInfo` field in `/api/news/summarize` response is not in the OpenAPI spec — add in next codegen cycle
-- Error response from `/api/news/summarize` sometimes includes `debugInfo` alongside `error` — not reflected in OpenAPI `ApiError` schema
+**Telegram message format:** HTML parse mode (`<b>`, `<i>`, `<a>`). Max 4096 chars/message. Long briefings split at paragraph boundaries by `briefingFormatter.ts`. 500 ms delay between messages respects Telegram rate limits.
 
----
-
-## Future Roadmap
-
-### Near-term (V1.1)
-- Telegram delivery (implement `telegramService.ts`)
-- Login via Google OAuth (Clerk) — see `docs/LOGIN_PREPARATION.md`
-- Migrate saved briefings from localStorage to PostgreSQL after login
-
-### Medium-term (V2)
-- Reporter Agent, Editor Agent, Analyst Agent (in `services/agents/`)
-- Agent orchestrator (`services/agents/agentOrchestrator.ts`)
-- Personalized Newsroom Dashboard
-
-### Long-term (V3+)
-- LINE delivery
-- Agent Marketplace
-- Multi-user support
+**Scheduler activation:**
+1. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in Replit Secrets
+2. Optionally set `SCHEDULER_TIMEZONE` (default: `Asia/Bangkok`)
+3. Server starts scheduler automatically on boot
 
 ---
 
-## Future Architecture Considerations
+## Frontend Architecture
 
-When adding new AI agents (Reporter, Editor, Analyst), each agent should:
-- Live in its own file under `services/agents/`
-- Accept a standard input format
-- Return a standard output format
-- Be orchestrated by a central `agentOrchestrator.ts`
+### Routing (`App.tsx`)
 
-This file should be created as a stub in V2, not V1.
+| Path | Component | Purpose |
+|---|---|---|
+| `/` | `home.tsx` | Topic selector + briefing viewer |
+| `/saved` | `saved-briefings.tsx` | Saved briefings archive |
+| `/settings` | `settings/index.tsx` | Settings hub |
+| `/settings/delivery` | `settings/delivery.tsx` | Telegram bot config + test |
+| `/settings/interests` | `settings/interests.tsx` | 12-interest profile selector |
+| `/delivery-preview` | `delivery-preview.tsx` | Live preview + one-click send |
+
+### Local Storage (`lib/`)
+
+| File | Storage Key | Purpose | DB migration |
+|---|---|---|---|
+| `briefingStorage.ts` | `ai-newsroom:saved-briefings` | Saved briefing archive | GET/POST /api/briefings |
+| `preferences.ts` | `ai-newsroom:preferences` | Last viewed topic | GET/PUT /api/preferences |
+| `telegramSettings.ts` | `ai-newsroom:telegram-settings` | Bot token + chat ID | GET/PUT /api/telegram/settings |
+| `interestProfile.ts` | `ai-newsroom:interest-profile` | Active interest list | GET/PUT /api/interests |
+
+All localStorage libraries are interface-compatible with future API calls. See `docs/LOGIN_PREPARATION.md`.
+
+### API calls
+
+- Standard briefings: `@workspace/api-client-react` (generated from OpenAPI spec)
+- Custom endpoints (telegram, delivery): plain `fetch()` with `${import.meta.env.BASE_URL}api/...`
+
+---
+
+## Configuration (`config/env.ts`)
+
+All `process.env` access is centralized here. No other file reads `process.env` directly.
+
+| Env Var | Required | Default | Purpose |
+|---|---|---|---|
+| `PORT` | Yes | — | Server port (assigned by Replit) |
+| `GITHUB_TOKEN` | If `github` provider | — | GitHub Models auth |
+| `OPENAI_API_KEY` | If `openai` provider | — | OpenAI auth |
+| `GEMINI_API_KEY` | If `gemini` provider | — | Google Gemini auth |
+| `AI_PROVIDER` | No | `github` | Active AI provider |
+| `TELEGRAM_BOT_TOKEN` | No | — | Bot token for scheduled delivery |
+| `TELEGRAM_CHAT_ID` | No | — | Target chat for scheduled delivery |
+| `SCHEDULER_TIMEZONE` | No | `Asia/Bangkok` | 07:00/18:00 delivery timezone |
+
+---
+
+## Data Flow — Morning Briefing (full pipeline)
+
+```
+scheduler.ts (07:00 check)
+  → generateAndDeliver("morning", telegramChannel)       [deliveryEngine.ts]
+    → collectCrossTopicArticles(allTopicIds)
+        → collectArticlesForTopic(topicId) × 5 parallel  [newsCollectorService.ts]
+            → fetchFeed(url, name) × N feeds             [rssService.ts, retry ×2]
+        → merge, sort by pubDate desc, take top 12
+    → summarizeDelivery(articles, "morning", labels)     [summaryService.ts]
+        → provider.complete(systemPrompt, userPrompt)    [githubProvider.ts]
+    → formatMorningBriefingForTelegram(rawText)          [briefingFormatter.ts]
+        → applyTelegramFormatting() → splitMessages()
+    → telegramChannel.send(messages)                     [telegramDelivery.ts]
+        → POST api.telegram.org/bot{TOKEN}/sendMessage × N
+```
+
+---
+
+## How to Extend
+
+### New AI prompt type
+1. Add function to `promptBuilder.ts` returning `BriefingPrompt`
+2. Add wrapper in `summaryService.ts` calling `provider.complete()`
+3. Create route in `routes/`
+
+### New delivery channel
+1. Create `services/delivery/<name>Delivery.ts` implementing `IDeliveryChannel`
+2. Export a factory function
+3. Update `scheduler.ts` to instantiate and use the new channel
+
+### New news topic
+1. Add to `TOPICS` array in `config/topics.ts`
+2. Add to `TOPIC_RSS_SOURCES` with ≥ 5 RSS feeds
+3. Add interest mapping in `services/news/feedGenerator.ts` (optional)
+
+### New interest preset
+1. Add to `INTEREST_DEFINITIONS` in `services/news/feedGenerator.ts`
+2. The constant is also mirrored as `PRESET_INTERESTS` in `lib/interestProfile.ts` (keep in sync)

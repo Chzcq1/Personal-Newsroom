@@ -6,12 +6,6 @@
 // Docs: https://platform.openai.com/docs
 // Required env var: OPENAI_API_KEY
 // Active when: AI_PROVIDER=openai
-//
-// To switch to this provider:
-//   Set AI_PROVIDER=openai in your environment variables.
-//   Ensure OPENAI_API_KEY is set in Replit Secrets.
-//
-// To change the model, update DEFAULT_MODEL below.
 // ============================================================
 
 import OpenAI from "openai";
@@ -29,8 +23,7 @@ export class OpenAIProvider implements AIProvider {
     this.client = new OpenAI({ apiKey });
   }
 
-  async summarize(articles: Article[], topic: string): Promise<string> {
-    const { systemPrompt, userPrompt } = buildBriefingPrompt(articles, topic);
+  async complete(systemPrompt: string, userPrompt: string): Promise<string> {
     const startMs = Date.now();
 
     try {
@@ -58,9 +51,14 @@ export class OpenAIProvider implements AIProvider {
     } catch (err) {
       logger.error(
         { provider: this.providerName, model: DEFAULT_MODEL, durationMs: Date.now() - startMs, err: String(err) },
-        "AI summarization failed",
+        "AI completion failed",
       );
       throw err;
     }
+  }
+
+  async summarize(articles: Article[], topic: string): Promise<string> {
+    const { systemPrompt, userPrompt } = buildBriefingPrompt(articles, topic);
+    return this.complete(systemPrompt, userPrompt);
   }
 }
