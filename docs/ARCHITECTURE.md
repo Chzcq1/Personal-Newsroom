@@ -127,12 +127,15 @@ Response returned to frontend
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `PORT` | Yes (auto-set) | Server port — set by Replit artifact system |
+| `AI_PROVIDER` | No (default: `github`) | Active AI provider: `github` \| `openai` \| `gemini` |
+| `GITHUB_TOKEN` | Yes (if `AI_PROVIDER=github`) | GitHub Personal Access Token for GitHub Models API |
+| `OPENAI_API_KEY` | Yes (if `AI_PROVIDER=openai`) | OpenAI API key |
+| `GEMINI_API_KEY` | Yes (if `AI_PROVIDER=gemini`) | Google Gemini API key |
+| `NEWSAPI_KEY` | Optional | API key for NewsAPI news collection |
+| `TELEGRAM_BOT_TOKEN` | Optional | Telegram bot token for delivery |
+| `TELEGRAM_CHAT_ID` | Optional | Telegram chat/channel ID for delivery |
 | `DATABASE_URL` | Optional (V1) | PostgreSQL connection string |
-| `NEWSAPI_KEY` | Yes | API key for news data provider |
-| `OPENAI_API_KEY` | Yes | API key for AI summarization |
-| `TELEGRAM_BOT_TOKEN` | Optional | Telegram bot token |
-| `TELEGRAM_CHAT_ID` | Optional | Telegram chat/channel ID |
-| `PORT` | No | Server port (default 5000) |
 
 ---
 
@@ -165,13 +168,137 @@ Response returned to frontend
 
 ---
 
+## AI Provider Layer
+
+The AI integration is abstracted behind a provider interface. The active provider is selected at startup via the `AI_PROVIDER` environment variable. No code changes are needed to switch providers.
+
+### Provider Switching Mechanism
+
+```
+AI_PROVIDER env var
+       ↓
+config/env.ts  (reads + validates the value)
+       ↓
+services/ai/summaryService.ts  (single entry point for all AI calls)
+       ↓
+services/ai/aiProvider.ts  (createAIProvider factory — registers all providers)
+       ↓
+┌──────────────────────────────────────────┐
+│  AI_PROVIDER=github  → githubProvider.ts │  ← DEFAULT
+│  AI_PROVIDER=openai  → openaiProvider.ts │
+│  AI_PROVIDER=gemini  → geminiProvider.ts │
+└──────────────────────────────────────────┘
+```
+
+### AI Provider Files
+
+| File | Purpose | Risk |
+|------|---------|------|
+| `services/ai/aiProvider.ts` | Interface definition + provider factory. **Register new providers here.** | HIGH |
+| `services/ai/summaryService.ts` | Only public entry point for AI. Never calls providers directly. | HIGH |
+| `services/ai/githubProvider.ts` | GitHub Models (OpenAI-compatible). Default provider. | MEDIUM |
+| `services/ai/openaiProvider.ts` | OpenAI API. Activated via `AI_PROVIDER=openai`. | MEDIUM |
+| `services/ai/geminiProvider.ts` | Google Gemini API. Activated via `AI_PROVIDER=gemini`. | MEDIUM |
+
+### How to Switch Providers
+
+Change one environment variable — no code changes needed:
+
+| Provider | `AI_PROVIDER` value | Required Secret |
+|----------|---------------------|-----------------|
+| GitHub Models (default) | `github` | `GITHUB_TOKEN` |
+| OpenAI | `openai` | `OPENAI_API_KEY` |
+| Google Gemini | `gemini` | `GEMINI_API_KEY` |
+
+### How to Add a New Provider
+
+1. Create `services/ai/<name>Provider.ts` implementing the `AIProvider` interface
+2. Add the provider name to `SupportedAIProvider` in `config/env.ts`
+3. Add credentials to `config/env.ts`
+4. Register in the `createAIProvider()` factory in `aiProvider.ts`
+
+### Dependency Flow (AI Layer)
+
+```
+summaryService.ts
+  └── aiProvider.ts (createAIProvider)
+        ├── githubProvider.ts  → openai SDK (custom baseURL)
+        ├── openaiProvider.ts  → openai SDK (standard baseURL)
+        └── geminiProvider.ts  → @google/generative-ai SDK
+```
+
+---
+
+## Module Descriptions
+
+### `config/env.ts`
+- **Purpose:** Single place to read and validate ALL environment variables
+- **Rule:** No `process.env` calls outside this file — every service imports from here
+- **Risk Level:** HIGH — changes affect every service
+
+### `services/ai/aiProvider.ts`
+- **Purpose:** Unified `AIProvider` interface + `createAIProvider()` factory
+- **Input:** Provider name + credentials object
+- **Output:** `AIProvider` instance
+- **Risk Level:** HIGH — all AI calls flow through here
+
+### `services/ai/summaryService.ts`
+- **Purpose:** The only public API for Thai news summarization
+- **Input:** Array of articles + topic string
+- **Output:** Thai-language summary string
+- **Rule:** Never import a provider directly — only call `createAIProvider()`
+- **Risk Level:** HIGH — core product feature
+
+### `services/ai/githubProvider.ts`
+- **Purpose:** GitHub Models API integration (default provider)
+- **Dependencies:** `openai` npm package, `GITHUB_TOKEN` secret
+- **Risk Level:** MEDIUM
+
+### `services/ai/openaiProvider.ts`
+- **Purpose:** OpenAI API integration
+- **Dependencies:** `openai` npm package, `OPENAI_API_KEY` secret
+- **Risk Level:** MEDIUM
+
+### `services/ai/geminiProvider.ts`
+- **Purpose:** Google Gemini API integration
+- **Dependencies:** `@google/generative-ai` npm package, `GEMINI_API_KEY` secret
+- **Risk Level:** MEDIUM
+
+### `services/news/rssService.ts`
+- **Purpose:** Fetch and parse news articles from RSS feeds
+- **Input:** Topic string → mapped to configured RSS URLs
+- **Output:** Array of `{ title, link, description, pubDate }`
+- **Dependencies:** `rss-parser` npm package
+- **Risk Level:** Medium — depends on third-party RSS availability
+
+### `services/news/newsApiService.ts`
+- **Purpose:** Fetch news from a structured API (e.g. NewsAPI.org)
+- **Input:** Topic keyword
+- **Output:** Array of `{ title, url, description, publishedAt }`
+- **Dependencies:** `NEWSAPI_KEY` env variable, `axios`
+- **Risk Level:** High — requires API key, subject to rate limits
+
+### `services/delivery/telegramService.ts`
+- **Purpose:** Send a formatted summary message to a Telegram chat or channel
+- **Input:** Summary string, chat ID
+- **Output:** Delivery confirmation
+- **Dependencies:** `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` env variables
+- **Risk Level:** Low — optional feature, fail gracefully
+
+### `backend/controllers/`
+- **Purpose:** Handle HTTP requests, call services, return responses
+- **Rule:** Controllers must be thin — no business logic here. Delegate to services.
+
+---
+
 ## Design Decisions
 
 1. **Services are stateless.** Each service function takes inputs, returns outputs, and has no side effects beyond its own scope.
 2. **Topic-to-source mapping lives in config.** Topics map to RSS feeds and API keywords via a config file, not hardcoded in services.
-3. **AI provider is swappable.** `summaryService.js` wraps the provider call so switching from OpenAI to Anthropic requires changing one file only.
+3. **AI provider is fully swappable via env var.** `summaryService.ts` only calls `aiProvider.ts`. Switching from GitHub Models to OpenAI or Gemini requires changing `AI_PROVIDER` only — zero code changes.
 4. **Delivery is optional and non-blocking.** Telegram delivery failure must never crash the main summarization flow.
 5. **No authentication in V1.** Single-user product. Auth is a future-version concern.
+6. **Provider factory uses lazy dynamic imports.** Each provider module is only loaded if it is the active provider, avoiding unnecessary SDK initialization at startup.
 
 ---
 

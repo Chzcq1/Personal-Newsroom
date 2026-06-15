@@ -1,0 +1,1 @@
+- [AI Provider Layer](ai-provider-layer.md) — provider switching is env-var only; summaryService.ts must never import a provider directly
