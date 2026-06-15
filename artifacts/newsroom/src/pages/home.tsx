@@ -616,6 +616,12 @@ export default function Home() {
             {health && <HealthBadge health={health} />}
           </div>
           <div className="flex items-center gap-1">
+            <Link to="/my-feed">
+              <Button variant="ghost" size="sm" className="gap-2 text-xs">
+                <Newspaper className="w-3.5 h-3.5" />
+                My Feed
+              </Button>
+            </Link>
             <Link to="/saved">
               <Button variant="ghost" size="sm" className="gap-2 text-xs">
                 <Bookmark className="w-3.5 h-3.5" />

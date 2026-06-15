@@ -2,6 +2,62 @@
 
 ---
 
+## [2026-06-15] — Sprint 5: Cost Optimization & Personalization
+
+**What:** Ten-task sprint making the platform scalable and cost-efficient. Global briefing cache, article preprocessor, token budget controller, source diversity scoring, interest priority engine, trend memory, cost analytics dashboard, lightweight fallback generator, personal feed V1, and documentation.
+
+**Why:** Every request generated a fresh AI briefing. Technology and AI topics exceeded GitHub token limits. The personalization layer existed but wasn't driving article selection. Sprint 5 fixes all three problems before adding more features.
+
+### Task A — Shared Briefing Cache
+- `services/cache/briefingCache.ts` — in-memory, 60-min TTL, key `{topicId}:{YYYY-MM-DD-HH}`
+- Same topic + same hour → same briefing served to all users
+- `getCacheMetrics()` tracks hit rate; returned in `GET /api/admin/costs`
+- `routes/news.ts` checks cache first; returns in <50ms on hit, includes `cacheHit: true` flag
+
+### Task B — Article Preprocessor
+- `services/news/articlePreprocessor.ts` — strips HTML, boilerplate, entity codes; trims descriptions
+- Logs before/after char counts + reduction %; `preprocessStats` field in API response
+
+### Task C — Token Budget Controller
+- Part of `articlePreprocessor.ts`: MAX_ARTICLES=5, MAX_ARTICLE_LENGTH=1000, MAX_PROMPT_CHARS=24000
+- Drops lowest-ranked articles if budget exceeded; Technology/AI topics can no longer exceed GitHub limits
+
+### Task D — Source Diversity Scoring
+- `newsCollectorService.ts` updated: second article from same source -15 pts, third+ -30 pts
+- Promotes cross-source variety across the selected article set
+
+### Task E — Interest Priority Engine
+- `newsCollectorService.ts` now accepts `interests: string[]`; applies `scoreArticleByInterests()` during ranking
+- `routes/news.ts` extracts `interests` from request body and passes through the pipeline
+
+### Task F — Trend Memory
+- `services/news/trendMemory.ts` — stores top headlines per topic for 24 hours
+- `formatTrendContext()` returns Thai-language context injected into the AI prompt
+- `promptBuilder.ts` and `summaryService.ts` updated to accept optional `trendContext` parameter
+
+### Task G — Cost Analytics Dashboard
+- `services/analytics/costAnalytics.ts` — rolling 1000-entry request log with token estimates + cost projection
+- `routes/costs.ts` — `GET /api/admin/costs` returns full snapshot
+- `pages/admin-costs.tsx` — dashboard at `/admin/costs` with stat cards, request table, cache state, trend memory
+
+### Task H — Fallback Generation
+- `services/ai/fallbackGenerator.ts` — generates HEADLINE + TOP STORIES + KEY FACTS without LLM
+- Activated on any AI failure; `isLightweightFallback: true` in response
+
+### Task I — Personal Feed V1
+- `routes/feed.ts` — `POST /api/feed/personal` scores and annotates articles across all interest topics
+- `pages/my-feed.tsx` — `/my-feed` page; interest pills, watchlist input, matched/unmatched split, selection reasons
+- "My Feed" link added to home page nav
+
+### Task J — Documentation
+- `docs/ARCHITECTURE.md` updated: Sprint 5 modules, caching architecture, token controller, trend memory, personal feed
+- `docs/CHANGELOG.md` Sprint 5 entry (this)
+
+**Files created:** `briefingCache.ts`, `articlePreprocessor.ts`, `trendMemory.ts`, `fallbackGenerator.ts`, `costAnalytics.ts`, `costs.ts`, `feed.ts`, `admin-costs.tsx`, `my-feed.tsx`
+**Files modified:** `newsCollectorService.ts`, `promptBuilder.ts`, `summaryService.ts`, `news.ts`, `routes/index.ts`, `App.tsx`, `home.tsx`
+
+---
+
 ## [2026-06-15] — Sprint 4: Intelligence Delivery Engine
 
 **What:** Transformed from a news website into a personal intelligence assistant with automated Telegram delivery, morning/evening briefing schedules, interest profiling, delivery preview, and configuration center. 11 tasks across backend and frontend.

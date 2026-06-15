@@ -1,16 +1,33 @@
+// ============================================================
+// NEWS ROUTE — POST /api/news/summarize
+//
+// Sprint 5 integration:
+//   Task A — Briefing Cache: serve from cache when same topic + hour
+//   Task B — Article Preprocessor: strip boilerplate, trim descriptions
+//   Task C — Token Budget Controller: max 5 articles, 6000 tokens
+//   Task D — Source Diversity: already in newsCollectorService
+//   Task E — Interest Priority: accepts interests[] in request body
+//   Task F — Trend Memory: passes yesterday context to AI prompt
+//   Task G — Cost Analytics: records every request
+//   Task H — Fallback Generator: lightweight briefing if AI fails
+// ============================================================
+
 import { Router } from "express";
 import { getTopicById } from "../config/topics.js";
 import { collectArticlesForTopic } from "../services/news/newsCollectorService.js";
 import { summarizeArticles } from "../services/ai/summaryService.js";
+import { preprocessArticles } from "../services/news/articlePreprocessor.js";
+import { getCachedBriefing, cacheBriefing } from "../services/cache/briefingCache.js";
+import { formatTrendContext, recordTrend } from "../services/news/trendMemory.js";
+import { generateFallbackBriefing } from "../services/ai/fallbackGenerator.js";
+import { recordRequest } from "../services/analytics/costAnalytics.js";
+import { estimateTokens } from "../services/news/articlePreprocessor.js";
 import { config } from "../config/env.js";
 import { logger } from "../lib/logger.js";
 
 const router = Router();
 
 // ── Error reason classification ────────────────────────────
-//
-// Returns a specific Thai error message based on what went wrong.
-// Generic "Unable to generate briefing" is never shown.
 
 function classifyFeedError(
   totalConfigured: number,
@@ -57,7 +74,10 @@ function classifyAIError(err: unknown): string {
 // ── Route ──────────────────────────────────────────────────
 
 router.post("/news/summarize", async (req, res) => {
-  const { topicId } = req.body as { topicId?: string };
+  const { topicId, interests = [] } = req.body as {
+    topicId?: string;
+    interests?: string[];
+  };
 
   if (!topicId || typeof topicId !== "string") {
     res.status(400).json({ error: "topicId is required" });
@@ -71,23 +91,69 @@ router.post("/news/summarize", async (req, res) => {
   }
 
   const startTime = Date.now();
-  logger.info({ topicId }, "Starting news summarization");
+  logger.info({ topicId, interests }, "Starting news summarization");
 
   try {
+    // ── Task A: Check briefing cache ─────────────────────────
+    const cached = getCachedBriefing(topicId);
+    if (cached) {
+      const generationTimeMs = Date.now() - startTime;
+      recordRequest({
+        timestamp: new Date().toISOString(),
+        topicId,
+        cacheHit: true,
+        inputTokensEstimate: 0,
+        outputTokensEstimate: estimateTokens(cached.briefing),
+        generationTimeMs,
+        articleCount: cached.articleCount,
+        preprocessedArticles: cached.articleCount,
+        provider: config.aiProvider,
+        fallbackMode: false,
+      });
+
+      res.json({
+        topic,
+        summary: cached.briefing,
+        failsafeMode: false,
+        failsafeReason: undefined,
+        sources: [],
+        generatedAt: cached.generatedAt.toISOString(),
+        generationTimeMs,
+        provider: config.aiProvider,
+        articleCount: cached.articleCount,
+        cacheHit: true,
+        debugInfo: [],
+      });
+      return;
+    }
+
+    // ── Collect articles (Task D + E integrated in collector) ─
     const {
-      articles,
+      articles: rawArticles,
       feedDiagnostics,
       totalConfigured,
       totalCollected,
       failedFeeds,
-    } = await collectArticlesForTopic(topicId);
+    } = await collectArticlesForTopic(topicId, Array.isArray(interests) ? interests : []);
 
-    if (articles.length === 0) {
+    if (rawArticles.length === 0) {
       const reason = classifyFeedError(totalConfigured, failedFeeds, totalCollected);
       logger.warn(
         { topicId, totalConfigured, failedFeeds, totalCollected },
         "No articles collected",
       );
+      recordRequest({
+        timestamp: new Date().toISOString(),
+        topicId,
+        cacheHit: false,
+        inputTokensEstimate: 0,
+        outputTokensEstimate: 0,
+        generationTimeMs: Date.now() - startTime,
+        articleCount: 0,
+        preprocessedArticles: 0,
+        provider: config.aiProvider,
+        fallbackMode: false,
+      });
       res.status(500).json({
         error: reason,
         debugInfo: feedDiagnostics,
@@ -95,29 +161,67 @@ router.post("/news/summarize", async (req, res) => {
       return;
     }
 
-    // ── AI Summarization (with failsafe) ───────────────────
-    // If the AI fails AFTER we have articles, we do NOT show
-    // an error — we activate failsafe mode and return the
-    // raw articles. The user always sees something useful.
+    // ── Task B + C: Preprocess + token budget ────────────────
+    const { articles, stats: preprocessStats } = preprocessArticles(rawArticles);
 
+    // ── Task F: Get trend context ────────────────────────────
+    const trendContext = formatTrendContext(topicId);
+
+    // ── AI Summarization with fallback (Task H) ──────────────
     let summary: string;
-    let failsafeMode = false;
-    let failsafeReason: string | undefined;
+    let fallbackMode = false;
+    let fallbackReason: string | undefined;
+    let isLightweightFallback = false;
+
+    const inputText = articles.map((a) => `${a.title} ${a.description ?? ""}`).join(" ");
+    const inputTokensEstimate = estimateTokens(inputText);
 
     try {
-      summary = await summarizeArticles(articles, topic.labelTh);
+      summary = await summarizeArticles(articles, topic.labelTh, trendContext || undefined);
     } catch (aiErr) {
-      failsafeReason = classifyAIError(aiErr);
+      fallbackReason = classifyAIError(aiErr);
       logger.warn(
         { topicId, err: String(aiErr) },
-        "AI summarization failed — activating failsafe mode",
+        "AI summarization failed — activating fallback generator",
       );
-      summary = "";
-      failsafeMode = true;
+
+      // Task H: generate lightweight briefing without LLM
+      const fallbackResult = generateFallbackBriefing(rawArticles, topic.labelTh);
+      summary = fallbackResult.text;
+      fallbackMode = true;
+      isLightweightFallback = true;
     }
 
+    const outputTokensEstimate = estimateTokens(summary);
     const generationTimeMs = Date.now() - startTime;
-    const sources = articles.map((a) => ({
+
+    // ── Task F: Record trend memory ──────────────────────────
+    if (!fallbackMode) {
+      const headlineMatch = summary.match(/HEADLINE\n([^\n]+)/);
+      const briefingHeadline = headlineMatch ? headlineMatch[1].trim() : articles[0]?.title ?? "";
+      recordTrend(topicId, articles.map((a) => a.title), briefingHeadline);
+    }
+
+    // ── Task A: Cache the briefing ───────────────────────────
+    if (!fallbackMode) {
+      cacheBriefing(topicId, summary, articles.length);
+    }
+
+    // ── Task G: Record analytics ─────────────────────────────
+    recordRequest({
+      timestamp: new Date().toISOString(),
+      topicId,
+      cacheHit: false,
+      inputTokensEstimate,
+      outputTokensEstimate,
+      generationTimeMs,
+      articleCount: rawArticles.length,
+      preprocessedArticles: articles.length,
+      provider: config.aiProvider,
+      fallbackMode,
+    });
+
+    const sources = rawArticles.map((a) => ({
       title: a.title,
       url: a.url,
       description: a.description ?? null,
@@ -128,13 +232,17 @@ router.post("/news/summarize", async (req, res) => {
     res.json({
       topic,
       summary,
-      failsafeMode,
-      failsafeReason,
+      failsafeMode: fallbackMode,
+      failsafeReason: fallbackReason,
+      isLightweightFallback,
       sources,
       generatedAt: new Date().toISOString(),
       generationTimeMs,
       provider: config.aiProvider,
       articleCount: articles.length,
+      cacheHit: false,
+      preprocessStats,
+      trendContextUsed: !!trendContext,
       debugInfo: feedDiagnostics,
     });
   } catch (err) {

@@ -27,6 +27,7 @@
 import { config } from "../../config/env.js";
 import { createAIProvider, type Article } from "./aiProvider.js";
 import {
+  buildBriefingPrompt,
   buildMorningBriefingPrompt,
   buildEveningBriefingPrompt,
 } from "./promptBuilder.js";
@@ -80,11 +81,13 @@ async function withRetry<T>(
 
 /**
  * Summarize a list of news articles for a given topic in Thai.
+ * Accepts optional trendContext (Sprint 5 Task F) for continuity briefings.
  * This is the only function news routes should ever call for standard briefings.
  */
 export async function summarizeArticles(
   articles: Article[],
   topic: string,
+  trendContext?: string,
 ): Promise<string> {
   if (articles.length === 0) {
     return `ไม่พบบทความที่เกี่ยวข้องกับหัวข้อ "${topic}" ในขณะนี้ กรุณาลองใหม่อีกครั้ง`;
@@ -92,11 +95,13 @@ export async function summarizeArticles(
 
   const provider = await getProvider();
   logger.info(
-    { provider: provider.providerName, topic, articleCount: articles.length },
+    { provider: provider.providerName, topic, articleCount: articles.length, hasTrend: !!trendContext },
     "Summarizing articles",
   );
 
-  return withRetry(() => provider.summarize(articles, topic), `summarize:${topic}`);
+  // Use complete() + buildBriefingPrompt so we can pass trendContext
+  const { systemPrompt, userPrompt } = buildBriefingPrompt(articles, topic, trendContext);
+  return withRetry(() => provider.complete(systemPrompt, userPrompt), `summarize:${topic}`);
 }
 
 /**

@@ -17,10 +17,12 @@ Browser (React + Vite, port 23519)
 Express API Server (port 8080)
   ├── routes/health.ts      GET /api/health
   ├── routes/topics.ts      GET /api/topics
-  ├── routes/news.ts        POST /api/news/summarize
+  ├── routes/news.ts        POST /api/news/summarize        ← Sprint 5: cache + preprocessor + trend
   ├── routes/telegram.ts    POST /api/telegram/test, /send
-  └── routes/delivery.ts    POST /api/delivery/morning|evening
-                            GET  /api/delivery/preview/morning|evening
+  ├── routes/delivery.ts    POST /api/delivery/morning|evening
+  │                         GET  /api/delivery/preview/morning|evening
+  ├── routes/costs.ts       GET  /api/admin/costs           ← Sprint 5: cost analytics
+  └── routes/feed.ts        POST /api/feed/personal         ← Sprint 5: personal feed
 ```
 
 ---
@@ -76,7 +78,17 @@ interface AIProvider {
 ```
 newsCollectorService.ts        ← Orchestrates collection for one topic
   → rssService.ts              ← Fetch + parse one RSS feed (retry ×2)
-  → newsRanker.ts              ← Score and rank articles by recency + quality
+  → scoring inline             ← recency + quality + source diversity (Sprint 5 Task D)
+  → scoreArticleByInterests()  ← Interest boost (Sprint 5 Task E, from feedGenerator)
+
+articlePreprocessor.ts         ← Sprint 5 Tasks B+C: strip HTML, trim, token budget
+  MAX_ARTICLES = 5             ← Token Budget Controller hard cap
+  MAX_ARTICLE_LENGTH = 1000    ← Per-article character limit
+  MAX_PROMPT_CHARS = 24000     ← Total prompt budget (~6000 tokens)
+
+trendMemory.ts                 ← Sprint 5 Task F: 24h story memory
+  recordTrend()                ← Stores top headlines after each briefing
+  formatTrendContext()         ← Returns Thai-language context for AI prompt
 
 feedGenerator.ts               ← Interest → topic/keyword mapping
   INTEREST_DEFINITIONS         ← 12 predefined interests with topicIds + keywords
@@ -87,6 +99,10 @@ feedGenerator.ts               ← Interest → topic/keyword mapping
 **RSS retry policy:** Each feed retried up to 2 times (1 s then 2 s delay), 3 total attempts. Failed feeds are skipped; collection continues with remaining feeds.
 
 **RSS feed minimums:** At least 5 sources per topic ensures 10+ articles even if 2–3 feeds fail.
+
+**Source diversity (Task D):** Second article from same source: -15 score. Third+: -30. Prevents one dominant source from filling all slots.
+
+**Token budget (Task C):** Articles already ranked best-first. Preprocessor caps at MAX_ARTICLES=5, then enforces total character budget. Drops from the end (lowest-ranked) if exceeded.
 
 ---
 
@@ -129,10 +145,12 @@ New channels (LINE, Discord, Email) implement this interface — no changes to `
 |---|---|---|
 | `/` | `home.tsx` | Topic selector + briefing viewer |
 | `/saved` | `saved-briefings.tsx` | Saved briefings archive |
+| `/my-feed` | `my-feed.tsx` | Personal feed with interest matching (Sprint 5 Task I) |
 | `/settings` | `settings/index.tsx` | Settings hub |
 | `/settings/delivery` | `settings/delivery.tsx` | Telegram bot config + test |
 | `/settings/interests` | `settings/interests.tsx` | 12-interest profile selector |
 | `/delivery-preview` | `delivery-preview.tsx` | Live preview + one-click send |
+| `/admin/costs` | `admin-costs.tsx` | Cost analytics dashboard (Sprint 5 Task G) |
 
 ### Local Storage (`lib/`)
 
@@ -185,6 +203,50 @@ scheduler.ts (07:00 check)
     → telegramChannel.send(messages)                     [telegramDelivery.ts]
         → POST api.telegram.org/bot{TOKEN}/sendMessage × N
 ```
+
+---
+
+## Sprint 5 — Caching & Cost Architecture
+
+### Briefing Cache (`services/cache/briefingCache.ts`)
+
+In-memory cache keyed by `{topicId}:{YYYY-MM-DD-HH}`. Same topic + same hour = same cached briefing. TTL = 60 minutes. Served before any RSS fetch or AI call. Saves 100% of token cost on cache hits.
+
+```
+GET /api/news/summarize
+  → briefingCache.getCachedBriefing(topicId)
+      HIT  → return cached response (<50ms)
+      MISS → collect → preprocess → trend context → AI → cache + return
+```
+
+### Token Controller Pipeline
+
+Every AI call passes through the preprocessor before reaching the provider:
+
+```
+rawArticles (10 max from collector)
+  → articlePreprocessor.preprocessArticles()
+      → strip HTML + boilerplate
+      → trim to MAX_ARTICLE_LENGTH (1000 chars each)
+      → cap at MAX_ARTICLES (5)
+      → enforce MAX_PROMPT_CHARS (24,000 = ~6000 tokens)
+      → drop lowest-ranked articles if over budget
+  → preprocessedArticles (≤5 articles, ~60-80% smaller)
+  → summaryService.summarizeArticles(articles, topic, trendContext)
+  → provider.complete(systemPrompt, userPrompt)
+```
+
+### Trend Memory (`services/news/trendMemory.ts`)
+
+After each successful briefing, stores the top article headlines and AI-generated headline for 24 hours. On the next request for the same topic, the stored context is formatted in Thai and injected into the prompt so the AI can identify what changed, what is ongoing, and what is new.
+
+### Cost Analytics (`services/analytics/costAnalytics.ts`)
+
+Tracks every request: tokens (estimated at ÷4 chars), cache status, generation time, article counts, fallback mode. Applies provider pricing tables to estimate daily and monthly cost. Accessible at `GET /api/admin/costs` and visible in the `/admin/costs` dashboard.
+
+### Personal Feed (`routes/feed.ts`)
+
+`POST /api/feed/personal` collects articles from all interest-relevant topics in parallel. Each article is scored and annotated with: `matchedInterests[]`, `matchedWatchlist[]`, `selectionReason`. Response is sorted matched-first by relevance score. No AI call involved — scoring only.
 
 ---
 
