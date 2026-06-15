@@ -1,25 +1,77 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "wouter";
 import { useGetTopics, useSummarizeNews } from "@workspace/api-client-react";
 import type { NewsSummary } from "@workspace/api-client-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import { Clock, FileText, ExternalLink, Loader2, RefreshCw, Newspaper } from "lucide-react";
+import {
+  Clock,
+  FileText,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+  Newspaper,
+  Bookmark,
+  BookmarkCheck,
+  Cpu,
+  Laptop,
+  BarChart2,
+  Globe,
+  Landmark,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import {
+  saveBriefing,
+  isBriefingSaved,
+  getSavedCount,
+} from "@/lib/briefingStorage";
+import {
+  setLastViewedTopic,
+  getLastViewedTopic,
+} from "@/lib/preferences";
+
+// ── Icon mapping ─────────────────────────────────────────────
+// Maps icon string from topics config to Lucide React components.
+// icon field is now a kebab-case name, not an emoji.
+
+const TOPIC_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  cpu: Cpu,
+  laptop: Laptop,
+  "bar-chart-2": BarChart2,
+  globe: Globe,
+  landmark: Landmark,
+};
+
+function TopicIcon({
+  icon,
+  className = "w-5 h-5",
+}: {
+  icon: string;
+  className?: string;
+}) {
+  const Icon = TOPIC_ICON_MAP[icon];
+  if (!Icon) return <Newspaper className={className} />;
+  return <Icon className={className} />;
+}
 
 // ── Section parser ──────────────────────────────────────────
 // Parses the structured briefing format returned by promptBuilder.ts.
 // Falls back gracefully if the AI deviates from the expected format.
+// Supports both IMPACT ANALYSIS (current) and WHY IT MATTERS (legacy).
 
 interface BriefingSections {
   headline: string;
   executiveSummary: string;
   keyDevelopments: string[];
-  whyItMatters: string;
+  impactAnalysis: string;
   watchNext: string;
-  raw: string; // kept for fallback rendering
+  raw: string;
 }
 
 function parseBriefing(summary: string): BriefingSections {
@@ -27,13 +79,19 @@ function parseBriefing(summary: string): BriefingSections {
     headline: "",
     executiveSummary: "",
     keyDevelopments: [],
-    whyItMatters: "",
+    impactAnalysis: "",
     watchNext: "",
     raw: summary,
   };
 
   const lines = summary.split("\n");
-  type SectionKey = "headline" | "executiveSummary" | "keyDevelopments" | "whyItMatters" | "watchNext" | null;
+  type SectionKey =
+    | "headline"
+    | "executiveSummary"
+    | "keyDevelopments"
+    | "impactAnalysis"
+    | "watchNext"
+    | null;
   let current: SectionKey = null;
 
   for (const rawLine of lines) {
@@ -43,7 +101,9 @@ function parseBriefing(summary: string): BriefingSections {
     if (line === "HEADLINE") { current = "headline"; continue; }
     if (line === "EXECUTIVE SUMMARY") { current = "executiveSummary"; continue; }
     if (line === "KEY DEVELOPMENTS") { current = "keyDevelopments"; continue; }
-    if (line === "WHY IT MATTERS") { current = "whyItMatters"; continue; }
+    if (line === "IMPACT ANALYSIS" || line === "WHY IT MATTERS") {
+      current = "impactAnalysis"; continue;
+    }
     if (line === "WHAT TO WATCH NEXT") { current = "watchNext"; continue; }
 
     switch (current) {
@@ -58,14 +118,13 @@ function parseBriefing(summary: string): BriefingSections {
           : line;
         break;
       case "keyDevelopments": {
-        // Strip leading "1. " / "• " / "- " markers
         const text = line.replace(/^\d+\.\s*/, "").replace(/^[•\-]\s*/, "").trim();
         if (text) sections.keyDevelopments.push(text);
         break;
       }
-      case "whyItMatters":
-        sections.whyItMatters = sections.whyItMatters
-          ? sections.whyItMatters + "\n" + line
+      case "impactAnalysis":
+        sections.impactAnalysis = sections.impactAnalysis
+          ? sections.impactAnalysis + "\n" + line
           : line;
         break;
       case "watchNext":
@@ -79,7 +138,6 @@ function parseBriefing(summary: string): BriefingSections {
   return sections;
 }
 
-// Strip stray markdown artifacts the AI occasionally produces
 function clean(text: string): string {
   return text
     .replace(/#{1,6}\s*/g, "")
@@ -89,11 +147,94 @@ function clean(text: string): string {
     .trim();
 }
 
-// ── Sub-components ──────────────────────────────────────────
+// ── Feed Diagnostics (dev mode) ─────────────────────────────
 
-function BriefingDisplay({ data }: { data: NewsSummary }) {
+interface FeedDiagnostic {
+  name: string;
+  url: string;
+  status: "success" | "failed";
+  articleCount: number;
+  durationMs: number;
+  error?: string;
+}
+
+function DebugPanel({ feeds }: { feeds: FeedDiagnostic[] }) {
+  const [open, setOpen] = useState(false);
+  const failed = feeds.filter((f) => f.status === "failed").length;
+
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50/50 text-xs font-mono overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-2.5 text-amber-700 hover:bg-amber-100/50 transition-colors"
+      >
+        <span className="font-semibold">
+          DEV: Feed Diagnostics — {feeds.length} feeds, {failed} failed
+        </span>
+        {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+      </button>
+      {open && (
+        <div className="border-t border-amber-200 divide-y divide-amber-100">
+          {feeds.map((feed, i) => (
+            <div
+              key={i}
+              className={`px-4 py-2.5 flex items-start gap-3 ${
+                feed.status === "failed" ? "bg-red-50/50" : "bg-green-50/30"
+              }`}
+            >
+              {feed.status === "success" ? (
+                <CheckCircle className="w-3.5 h-3.5 text-green-600 mt-0.5 flex-shrink-0" />
+              ) : (
+                <XCircle className="w-3.5 h-3.5 text-red-500 mt-0.5 flex-shrink-0" />
+              )}
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">{feed.name}</span>
+                  <span className="text-muted-foreground">{feed.durationMs}ms</span>
+                  {feed.status === "success" && (
+                    <span className="text-green-700">{feed.articleCount} articles</span>
+                  )}
+                </div>
+                <div className="text-muted-foreground truncate">{feed.url}</div>
+                {feed.error && (
+                  <div className="text-red-600 break-all">{feed.error}</div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Briefing Display ─────────────────────────────────────────
+
+type ExtendedNewsSummary = NewsSummary & { debugInfo?: FeedDiagnostic[] };
+
+function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
   const s = parseBriefing(data.summary);
   const hasSections = s.headline || s.executiveSummary || s.keyDevelopments.length > 0;
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setSaved(isBriefingSaved(data.topic.id, data.generatedAt));
+  }, [data.topic.id, data.generatedAt]);
+
+  const handleSave = () => {
+    saveBriefing({
+      topicId: data.topic.id,
+      topicLabel: data.topic.label,
+      topicLabelTh: data.topic.labelTh,
+      topicIcon: data.topic.icon,
+      summary: data.summary,
+      sources: data.sources,
+      generatedAt: data.generatedAt,
+      provider: data.provider,
+      articleCount: data.articleCount,
+    });
+    setSaved(true);
+  };
 
   return (
     <motion.div
@@ -107,7 +248,9 @@ function BriefingDisplay({ data }: { data: NewsSummary }) {
         {/* Card header bar */}
         <div className="px-8 py-5 border-b border-border/50 bg-muted/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="text-lg" aria-hidden="true">{data.topic.icon}</span>
+            <span className="flex-shrink-0 w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
+              <TopicIcon icon={data.topic.icon} className="w-4 h-4 text-primary" />
+            </span>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Intelligence Briefing
@@ -127,20 +270,37 @@ function BriefingDisplay({ data }: { data: NewsSummary }) {
             <span className="text-muted-foreground/60">
               {format(new Date(data.generatedAt), "HH:mm · d MMM yyyy")}
             </span>
+            <Button
+              variant={saved ? "secondary" : "outline"}
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={handleSave}
+              disabled={saved}
+            >
+              {saved ? (
+                <>
+                  <BookmarkCheck className="w-3.5 h-3.5" />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Bookmark className="w-3.5 h-3.5" />
+                  Save
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
         <CardContent className="px-8 py-8 space-y-7">
           {hasSections ? (
             <>
-              {/* Headline */}
               {s.headline && (
                 <h2 className="text-2xl font-bold leading-snug tracking-tight text-foreground">
                   {clean(s.headline)}
                 </h2>
               )}
 
-              {/* Executive Summary */}
               {s.executiveSummary && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
@@ -156,7 +316,6 @@ function BriefingDisplay({ data }: { data: NewsSummary }) {
                 </div>
               )}
 
-              {/* Key Developments */}
               {s.keyDevelopments.length > 0 && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
@@ -177,17 +336,20 @@ function BriefingDisplay({ data }: { data: NewsSummary }) {
                 </div>
               )}
 
-              {/* Why it matters + Watch next in a two-column grid on wider screens */}
-              {(s.whyItMatters || s.watchNext) && (
+              {(s.impactAnalysis || s.watchNext) && (
                 <div className="grid sm:grid-cols-2 gap-5 pt-1">
-                  {s.whyItMatters && (
+                  {s.impactAnalysis && (
                     <div className="bg-muted/50 rounded-lg p-5">
                       <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-2">
-                        Why It Matters
+                        Impact Analysis
                       </p>
-                      <p className="text-sm leading-relaxed text-foreground/85">
-                        {clean(s.whyItMatters)}
-                      </p>
+                      <div className="space-y-2">
+                        {s.impactAnalysis.split("\n").map((p, i) => (
+                          <p key={i} className="text-sm leading-relaxed text-foreground/85">
+                            {clean(p)}
+                          </p>
+                        ))}
+                      </div>
                     </div>
                   )}
                   {s.watchNext && (
@@ -204,7 +366,6 @@ function BriefingDisplay({ data }: { data: NewsSummary }) {
               )}
             </>
           ) : (
-            // Fallback: plain text render if sections couldn't be parsed
             <div className="space-y-3">
               {s.raw.split("\n").map((line, i) =>
                 line.trim() ? (
@@ -226,6 +387,11 @@ function BriefingDisplay({ data }: { data: NewsSummary }) {
           </span>
         </CardFooter>
       </Card>
+
+      {/* Dev mode: Feed diagnostics debug panel */}
+      {import.meta.env.DEV && data.debugInfo && data.debugInfo.length > 0 && (
+        <DebugPanel feeds={data.debugInfo} />
+      )}
 
       {/* Source articles */}
       <div className="space-y-4">
@@ -276,9 +442,24 @@ export default function Home() {
   const { data: topics, isLoading: topicsLoading } = useGetTopics();
   const summarize = useSummarizeNews();
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [savedCount, setSavedCount] = useState(getSavedCount);
+  const restoredRef = useRef(false);
+
+  // Restore last viewed topic once topics are loaded
+  useEffect(() => {
+    if (restoredRef.current || topicsLoading || !topics || topics.length === 0) return;
+    restoredRef.current = true;
+
+    const lastTopicId = getLastViewedTopic();
+    if (lastTopicId && topics.find((t) => t.id === lastTopicId)) {
+      setSelectedTopicId(lastTopicId);
+      summarize.mutate({ data: { topicId: lastTopicId } });
+    }
+  }, [topicsLoading, topics]);
 
   const handleTopicClick = (topicId: string) => {
     setSelectedTopicId(topicId);
+    setLastViewedTopic(topicId);
     summarize.mutate({ data: { topicId } });
   };
 
@@ -293,19 +474,47 @@ export default function Home() {
 
   useEffect(() => {
     if (!summarize.isPending) { setMsgIdx(0); return; }
-    const id = setInterval(() => setMsgIdx((p) => (p + 1) % loadingMessages.length), 2800);
+    const id = setInterval(
+      () => setMsgIdx((p) => (p + 1) % loadingMessages.length),
+      2800,
+    );
     return () => clearInterval(id);
   }, [summarize.isPending]);
+
+  // Refresh saved count when a briefing is saved
+  useEffect(() => {
+    if (summarize.isSuccess) {
+      setSavedCount(getSavedCount());
+    }
+  }, [summarize.isSuccess]);
+
+  const extendedError = summarize.error as (Error & { response?: { data?: { error?: string } } }) | null;
+  const errorMessage =
+    extendedError?.response?.data?.error ||
+    "ไม่สามารถสร้างรายงานได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง";
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border/60 bg-background/95 sticky top-0 z-10 backdrop-blur">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center gap-2.5">
-          <Newspaper className="w-4 h-4 text-primary" />
-          <span className="text-sm font-semibold tracking-tight text-foreground">
-            Personal AI Newsroom
-          </span>
+        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <Newspaper className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold tracking-tight text-foreground">
+              Personal AI Newsroom
+            </span>
+          </div>
+          <Link to="/saved">
+            <Button variant="ghost" size="sm" className="gap-2 text-xs">
+              <Bookmark className="w-3.5 h-3.5" />
+              Saved
+              {savedCount > 0 && (
+                <span className="ml-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
+                  {savedCount > 9 ? "9+" : savedCount}
+                </span>
+              )}
+            </Button>
+          </Link>
         </div>
       </header>
 
@@ -318,7 +527,7 @@ export default function Home() {
               Select a Topic
             </h1>
             <p className="text-sm text-muted-foreground">
-              Choose a subject. The system will collect live news and produce a structured briefing in Thai.
+              Choose a subject. The system collects live news and produces a structured intelligence briefing in Thai.
             </p>
           </div>
 
@@ -343,8 +552,23 @@ export default function Home() {
                       : "border-border/60 bg-background",
                   ].join(" ")}
                 >
-                  <span className="text-2xl leading-none" aria-hidden="true">
-                    {topic.icon}
+                  <span
+                    className={[
+                      "w-9 h-9 rounded-lg flex items-center justify-center",
+                      selectedTopicId === topic.id
+                        ? "bg-primary/15"
+                        : "bg-muted/60",
+                    ].join(" ")}
+                  >
+                    <TopicIcon
+                      icon={topic.icon}
+                      className={[
+                        "w-4.5 h-4.5",
+                        selectedTopicId === topic.id
+                          ? "text-primary"
+                          : "text-muted-foreground",
+                      ].join(" ")}
+                    />
                   </span>
                   <div className="space-y-0.5">
                     <p className="text-xs font-semibold text-foreground leading-tight">
@@ -382,21 +606,26 @@ export default function Home() {
             </motion.div>
           )}
 
-          {/* Error state */}
+          {/* Error state — shows specific reason, not generic message */}
           {summarize.isError && (
             <motion.div
               key="error"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="rounded-lg border border-destructive/30 bg-destructive/5 px-6 py-8 text-center space-y-4"
+              className="rounded-lg border border-destructive/30 bg-destructive/5 px-6 py-8 space-y-4"
             >
-              <p className="text-sm font-medium text-destructive">
-                ไม่สามารถสร้างรายงานได้ในขณะนี้
+              <p className="text-sm font-semibold text-destructive">
+                ไม่สามารถสร้างรายงานได้
+              </p>
+              <p className="text-sm text-foreground/80 leading-relaxed">
+                {errorMessage}
               </p>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => selectedTopicId && handleTopicClick(selectedTopicId)}
+                onClick={() =>
+                  selectedTopicId && handleTopicClick(selectedTopicId)
+                }
               >
                 <RefreshCw className="w-3.5 h-3.5 mr-2" />
                 ลองใหม่อีกครั้ง
@@ -406,7 +635,10 @@ export default function Home() {
 
           {/* Result */}
           {summarize.isSuccess && summarize.data && (
-            <BriefingDisplay key="result" data={summarize.data} />
+            <BriefingDisplay
+              key="result"
+              data={summarize.data as ExtendedNewsSummary}
+            />
           )}
         </AnimatePresence>
       </main>

@@ -1,8 +1,8 @@
 // ============================================================
 // RSS SERVICE — Fetch and parse a single RSS feed
 //
-// Returns a normalised RssArticle array regardless of feed format.
-// RSS parsing: rss-parser (handles RSS 1.0/2.0 + Atom).
+// Returns a normalised RssArticle array and a FeedDiagnostic
+// regardless of feed format. RSS parsing: rss-parser.
 //
 // Logging contract:
 //   INFO  — successful fetch with article count and duration
@@ -27,9 +27,24 @@ export interface RssArticle extends Article {
   source: string;
 }
 
+export interface FeedDiagnostic {
+  name: string;
+  url: string;
+  status: "success" | "failed";
+  articleCount: number;
+  durationMs: number;
+  error?: string;
+}
+
+export interface FeedResult {
+  articles: RssArticle[];
+  diagnostic: FeedDiagnostic;
+}
+
 /**
  * Fetch and parse a single RSS feed URL.
- * Returns an empty array on any error — caller skips bad feeds.
+ * Always returns a FeedResult — articles is empty on error.
+ * Caller decides what to do with failed feeds.
  *
  * @param url        - Full RSS feed URL
  * @param sourceName - Human-readable source name for attribution
@@ -37,7 +52,7 @@ export interface RssArticle extends Article {
 export async function fetchFeed(
   url: string,
   sourceName: string,
-): Promise<RssArticle[]> {
+): Promise<FeedResult> {
   const startMs = Date.now();
 
   try {
@@ -51,28 +66,52 @@ export async function fetchFeed(
       source: sourceName,
     }));
 
+    const durationMs = Date.now() - startMs;
+
     logger.info(
       {
         feed: sourceName,
         url,
         articles: articles.length,
-        durationMs: Date.now() - startMs,
+        durationMs,
       },
       "RSS feed fetched",
     );
 
-    return articles;
+    return {
+      articles,
+      diagnostic: {
+        name: sourceName,
+        url,
+        status: "success",
+        articleCount: articles.length,
+        durationMs,
+      },
+    };
   } catch (err) {
+    const durationMs = Date.now() - startMs;
     const errorMessage = err instanceof Error ? err.message : String(err);
+
     logger.warn(
       {
         feed: sourceName,
         url,
-        durationMs: Date.now() - startMs,
+        durationMs,
         error: errorMessage,
       },
       "RSS feed failed — skipping",
     );
-    return [];
+
+    return {
+      articles: [],
+      diagnostic: {
+        name: sourceName,
+        url,
+        status: "failed",
+        articleCount: 0,
+        durationMs,
+        error: errorMessage,
+      },
+    };
   }
 }

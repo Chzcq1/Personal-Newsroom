@@ -11,6 +11,43 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start api-server"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start newsroom"
+
+[[workflows.workflow]]
+name = "Start api-server"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/api-server && PORT=8080 pnpm run dev"
+waitForPort = 8080
+
+[[workflows.workflow]]
+name = "Start newsroom"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/newsroom && PORT=23519 BASE_PATH=/newsroom/ pnpm run dev"
+waitForPort = 23519
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true

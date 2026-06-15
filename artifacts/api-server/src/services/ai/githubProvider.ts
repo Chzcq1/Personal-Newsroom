@@ -49,7 +49,7 @@ export class GithubProvider implements AIProvider {
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 1500,
+        max_tokens: 3000,
         temperature: 0.3,
       });
 

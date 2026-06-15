@@ -1,1 +1,4 @@
 - [AI Provider Layer](ai-provider-layer.md) — provider switching is env-var only; summaryService.ts must never import a provider directly
+- [Workflow Setup](workflow-setup.md) — api-server and newsroom workflow commands, PORT/BASE_PATH requirements
+- [Icon System](icon-system.md) — topics.ts icon field is a Lucide name ("cpu", "laptop", etc.), not emoji; frontend maps via TOPIC_ICON_MAP
+- [Feed Diagnostics](feed-diagnostics.md) — every /api/news/summarize response includes debugInfo: FeedDiagnostic[]; frontend shows debug panel in DEV mode

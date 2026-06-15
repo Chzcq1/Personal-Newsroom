@@ -1,0 +1,244 @@
+Read:
+
+* docs/PROJECT_VISION.md
+* docs/ARCHITECTURE.md
+* docs/AGENT_RULES.md
+
+We are moving from MVP to Product Quality phase.
+
+Current user feedback:
+
+1. Technology topic still fails.
+2. News briefings are too short and feel like headline summaries.
+3. Emoji-based icons look unprofessional.
+4. Error messages are too generic.
+5. Product should feel closer to a professional intelligence platform than a news summarizer.
+
+========================================
+TASK A - FIX TECHNOLOGY TOPIC
+
+Technology topic must become fully reliable.
+
+Requirements:
+
+* Investigate exact root cause.
+* Log every stage:
+    * Feed URL
+    * Feed status
+    * Feed article count
+    * Feed response time
+    * AI prompt size
+    * Estimated token count
+    * AI response status
+* Never show generic errors.
+
+Replace:
+
+“Unable to generate briefing”
+
+With actual reasons:
+
+* Feed unavailable
+* No articles collected
+* AI provider timeout
+* Token limit exceeded
+* Parsing error
+
+Create a debug panel available in development mode.
+
+========================================
+TASK B - UPGRADE BRIEFING QUALITY
+
+Current summaries are too compressed.
+
+Goal:
+
+Create intelligence briefings.
+
+The user should understand:
+
+* What happened
+* Why it happened
+* Who is affected
+* Short-term impact
+* Long-term impact
+
+Target length:
+
+800-1500 Thai words
+
+Structure:
+
+Headline
+
+Executive Summary
+
+Key Developments
+
+Impact Analysis
+
+What To Watch Next
+
+Important:
+
+Do not summarize.
+
+Analyze.
+
+Use evidence from collected articles.
+
+Avoid generic AI wording.
+
+========================================
+TASK C - PROFESSIONAL VISUAL DESIGN
+
+Remove emoji icons completely.
+
+Replace with professional SVG icons.
+
+Use:
+
+AI → Cpu icon
+
+Technology → Laptop icon
+
+Markets → Chart icon
+
+Economy → Globe icon
+
+Politics → Landmark icon
+
+Use Lucide React icons.
+
+The product should feel like:
+
+Bloomberg
+Reuters
+Financial Times
+
+Not:
+
+School project
+AI demo
+ChatGPT clone
+
+========================================
+TASK D - SAVE BRIEFINGS SYSTEM
+
+Create a local persistence layer.
+
+Users can:
+
+* Save briefing
+* View saved briefings
+* Delete saved briefings
+
+Do not require login yet.
+
+Store locally first.
+
+Create:
+
+Saved Briefings page
+
+Features:
+
+⭐ Save Briefing
+
+📚 My Briefings
+
+The architecture must support future migration to database storage.
+
+========================================
+TASK E - USER PREFERENCES
+
+Remember:
+
+* Preferred topics
+* Last viewed topic
+
+Automatically restore preferences on next visit.
+
+No login required.
+
+========================================
+TASK F - PREPARE FOR TELEGRAM
+
+Do not implement Telegram sending yet.
+
+Prepare architecture.
+
+Create:
+
+services/delivery/
+
+telegramService.ts
+
+Requirements:
+
+* Service interface only
+* No UI yet
+* Future-ready
+
+Document integration flow.
+
+========================================
+TASK G - LOGIN PREPARATION
+
+Do not build login.
+
+Prepare architecture only.
+
+Future login will use:
+
+Google OAuth
+
+Create documentation describing:
+
+* User model
+* Saved Briefings ownership
+* Preferences ownership
+* Telegram ownership
+
+No implementation yet.
+
+========================================
+TASK H - DOCUMENTATION
+
+Update:
+
+ARCHITECTURE.md
+
+CHANGELOG.md
+
+Add:
+
+Current System State
+
+Future Roadmap
+
+Technical Debt
+
+Known Issues
+
+========================================
+SUCCESS CRITERIA
+
+After this sprint:
+
+* Technology topic works reliably
+* Briefings are analytical and detailed
+* Emoji icons are gone
+* Users can save briefings
+* Preferences persist
+* Architecture is ready for Telegram and Login
+
+Provide a complete implementation report.
+
+List:
+
+* files created
+* files modified
+* unresolved issues
+* future extension points
+* architecture decisions

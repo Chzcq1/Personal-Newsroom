@@ -38,6 +38,10 @@ export class GeminiProvider implements AIProvider {
       const model = this.genAI.getGenerativeModel({
         model: DEFAULT_MODEL,
         systemInstruction: systemPrompt,
+        generationConfig: {
+          maxOutputTokens: 3000,
+          temperature: 0.3,
+        },
       });
 
       const result = await model.generateContent(userPrompt);

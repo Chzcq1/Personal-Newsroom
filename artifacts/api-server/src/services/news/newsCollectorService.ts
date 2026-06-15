@@ -3,10 +3,15 @@
 //
 // Pipeline:
 //   1. Fetch all RSS sources for the topic in parallel
-//   2. Deduplicate by URL
-//   3. Near-duplicate detection on titles (word-overlap)
-//   4. Score each article: recency + quality
-//   5. Sort by score descending, return top MAX_ARTICLES_FOR_AI
+//   2. Collect per-feed diagnostics (for debug panel)
+//   3. Deduplicate by URL
+//   4. Near-duplicate detection on titles (word-overlap)
+//   5. Score each article: recency + quality
+//   6. Sort by score descending, return top MAX_ARTICLES_FOR_AI
+//
+// Returns CollectionResult with articles AND feed diagnostics.
+// Diagnostics allow the API route to surface specific failure reasons
+// instead of generic error messages.
 //
 // Logging contract:
 //   INFO  — collection summary (topic, feedCount, total, selected, failedFeeds)
@@ -14,8 +19,10 @@
 // ============================================================
 
 import { TOPIC_RSS_SOURCES } from "../../config/topics.js";
-import { fetchFeed, type RssArticle } from "./rssService.js";
+import { fetchFeed, type RssArticle, type FeedDiagnostic } from "./rssService.js";
 import { logger } from "../../lib/logger.js";
+
+export type { FeedDiagnostic };
 
 const MAX_ARTICLES_FOR_AI = 10;
 
@@ -57,20 +64,37 @@ function titleSimilarity(a: string, b: string): number {
   return intersection / (setA.size + setB.size - intersection);
 }
 
+// ── Types ───────────────────────────────────────────────────
+
+export interface CollectionResult {
+  articles: RssArticle[];
+  feedDiagnostics: FeedDiagnostic[];
+  totalConfigured: number;
+  totalCollected: number;
+  failedFeeds: number;
+}
+
 // ── Main Export ────────────────────────────────────────────
 
 /**
  * Collect, deduplicate, rank, and return the best articles for a topic.
+ * Also returns per-feed diagnostics for error surfacing and the debug panel.
  *
  * @param topicId - One of the topic IDs from TOPICS in config/topics.ts
  */
 export async function collectArticlesForTopic(
   topicId: string,
-): Promise<RssArticle[]> {
+): Promise<CollectionResult> {
   const sources = TOPIC_RSS_SOURCES[topicId];
   if (!sources || sources.length === 0) {
     logger.warn({ topicId }, "No RSS sources configured for topic");
-    return [];
+    return {
+      articles: [],
+      feedDiagnostics: [],
+      totalConfigured: 0,
+      totalCollected: 0,
+      failedFeeds: 0,
+    };
   }
 
   logger.info({ topicId, sourceCount: sources.length }, "Fetching RSS sources");
@@ -79,20 +103,26 @@ export async function collectArticlesForTopic(
     sources.map((src) => fetchFeed(src.url, src.name)),
   );
 
-  // Count feed failures for logging
   let failedFeeds = 0;
   const allArticles: RssArticle[] = [];
+  const feedDiagnostics: FeedDiagnostic[] = [];
   const seenUrls = new Set<string>();
 
   for (const result of feedResults) {
     if (result.status === "rejected") {
+      // fetchFeed never rejects (it catches internally), but handle defensively
       failedFeeds++;
       continue;
     }
-    if (result.value.length === 0) {
+
+    const { articles, diagnostic } = result.value;
+    feedDiagnostics.push(diagnostic);
+
+    if (diagnostic.status === "failed") {
       failedFeeds++;
     }
-    for (const article of result.value) {
+
+    for (const article of articles) {
       if (!seenUrls.has(article.url)) {
         seenUrls.add(article.url);
         allArticles.push(article);
@@ -133,5 +163,11 @@ export async function collectArticlesForTopic(
     "Articles collected and ranked",
   );
 
-  return selected;
+  return {
+    articles: selected,
+    feedDiagnostics,
+    totalConfigured: sources.length,
+    totalCollected: allArticles.length,
+    failedFeeds,
+  };
 }
