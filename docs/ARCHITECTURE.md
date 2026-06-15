@@ -19,35 +19,38 @@ Personal-AI-Newsroom/
 │   ├── AGENT_RULES.md          # Rules for AI agents modifying this codebase
 │   └── CHANGELOG.md            # Feature history
 │
-├── frontend/
-│   ├── pages/                  # Top-level page components
-│   ├── components/             # Reusable UI components
-│   └── layouts/                # Page layout wrappers
+├── artifacts/newsroom/         # React + Vite frontend (port 23519)
+│   └── src/
+│       ├── App.tsx             # Wouter routing + QueryClient
+│       ├── index.css           # Design tokens (colors, fonts)
+│       └── pages/             # Home page (topic grid + summary display)
 │
-├── backend/
-│   ├── routes/                 # Express route definitions
-│   ├── controllers/            # Request handlers (thin, delegate to services)
-│   └── middleware/             # Auth, logging, error handling
+├── artifacts/api-server/       # Express backend (port 8080)
+│   └── src/
+│       ├── config/
+│       │   ├── env.ts          # Centralized env config (ONLY place process.env is read)
+│       │   └── topics.ts       # Topic definitions + RSS feed URLs
+│       ├── routes/
+│       │   ├── index.ts        # Route registry
+│       │   ├── health.ts       # GET /api/healthz
+│       │   ├── topics.ts       # GET /api/topics
+│       │   └── news.ts         # POST /api/news/summarize
+│       └── services/
+│           ├── news/
+│           │   ├── rssService.ts           # Fetch + parse single RSS feed
+│           │   └── newsCollectorService.ts # Parallel aggregation + dedup
+│           └── ai/
+│               ├── aiProvider.ts           # Provider interface + factory
+│               ├── summaryService.ts       # ONLY entry point for AI calls
+│               ├── githubProvider.ts       # GitHub Models (default)
+│               ├── openaiProvider.ts       # OpenAI
+│               └── geminiProvider.ts       # Google Gemini
 │
-├── services/
-│   ├── news/
-│   │   ├── rssService.js       # Fetch news via RSS feeds
-│   │   └── newsApiService.js   # Fetch news via NewsAPI or similar
-│   ├── ai/
-│   │   └── summaryService.js   # AI summarization (Thai)
-│   └── delivery/
-│       └── telegramService.js  # Send summaries to Telegram
+├── lib/api-spec/openapi.yaml   # Single source of truth for API contracts
+├── lib/api-client-react/       # Orval-generated React Query hooks
+├── lib/api-zod/                # Orval-generated Zod validators
 │
-├── database/
-│   ├── models/                 # Data models / schema definitions
-│   └── migrations/             # Database migration scripts
-│
-├── config/
-│   └── env.js                  # Centralized environment config
-│
-├── tests/                      # Unit and integration tests
-│
-└── README.md
+└── docs/                       # Project documentation
 ```
 
 ---
