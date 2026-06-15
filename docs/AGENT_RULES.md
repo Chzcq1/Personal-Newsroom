@@ -170,3 +170,23 @@ Format:
 | V1 scope is frozen | Don't add excluded features |
 | Update ARCHITECTURE.md | After every major change |
 | Ask when unsure | Never guess on ambiguous requirements |
+
+## SAFE DEVELOPMENT RULE
+
+Before making any changes:
+
+1. Read docs/PROJECT_VISION.md
+2. Read docs/ARCHITECTURE.md
+3. Read docs/AGENT_RULES.md
+
+Never overwrite existing files without explanation.
+
+Always show:
+
+- Files to modify
+- Reason for modification
+- Expected impact
+
+If architecture changes are needed:
+
+Update ARCHITECTURE.md first.
