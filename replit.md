@@ -1,6 +1,6 @@
-# [Project name]
+# Personal AI Newsroom V1
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A web application that lets users select news topics and receive AI-generated summaries in Thai — delivered as a personal newsroom, not a generic news site.
 
 ## Run & Operate
 
