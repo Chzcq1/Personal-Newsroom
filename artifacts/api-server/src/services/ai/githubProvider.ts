@@ -21,6 +21,8 @@
 
 import OpenAI from "openai";
 import type { AIProvider, Article } from "./aiProvider.js";
+import { buildBriefingPrompt } from "./promptBuilder.js";
+import { logger } from "../../lib/logger.js";
 
 const GITHUB_MODELS_BASE_URL = "https://models.inference.ai.azure.com";
 const DEFAULT_MODEL = "gpt-4o-mini";
@@ -30,7 +32,6 @@ export class GithubProvider implements AIProvider {
   private client: OpenAI;
 
   constructor(token: string) {
-    // GitHub Models is OpenAI-compatible — only the baseURL and apiKey differ
     this.client = new OpenAI({
       baseURL: GITHUB_MODELS_BASE_URL,
       apiKey: token,
@@ -38,32 +39,37 @@ export class GithubProvider implements AIProvider {
   }
 
   async summarize(articles: Article[], topic: string): Promise<string> {
-    const articleText = articles
-      .slice(0, 10) // Limit to 10 articles to stay within token budget
-      .map(
-        (a, i) =>
-          `${i + 1}. ${a.title}\n${a.description ?? "(ไม่มีรายละเอียด)"}\nURL: ${a.url}`,
-      )
-      .join("\n\n");
+    const { systemPrompt, userPrompt } = buildBriefingPrompt(articles, topic);
+    const startMs = Date.now();
 
-    const response = await this.client.chat.completions.create({
-      model: DEFAULT_MODEL,
-      messages: [
-        {
-          role: "system",
-          content:
-            "คุณคือผู้ช่วยสรุปข่าวที่เชี่ยวชาญ สรุปข่าวเป็นภาษาไทยที่กระชับ ชัดเจน และเข้าใจง่าย ไม่ใช้ศัพท์เทคนิคโดยไม่จำเป็น",
-        },
-        {
-          role: "user",
-          content: `สรุปข่าวเกี่ยวกับ "${topic}" จากบทความต่อไปนี้เป็นภาษาไทย:\n\n${articleText}\n\nรูปแบบการสรุป:\n1. ภาพรวมสถานการณ์ (2-3 ประโยค)\n2. ประเด็นสำคัญ 3-5 ข้อ (ใช้ bullet points)\n3. สรุปผลกระทบหรือแนวโน้ม (1-2 ประโยค)`,
-        },
-      ],
-      max_tokens: 1024,
-    });
+    try {
+      const response = await this.client.chat.completions.create({
+        model: DEFAULT_MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 1500,
+        temperature: 0.3,
+      });
 
-    return (
-      response.choices[0]?.message?.content ?? "ไม่สามารถสรุปข่าวได้ในขณะนี้"
-    );
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error("Empty response from GitHub Models API");
+      }
+
+      logger.info(
+        { provider: this.providerName, model: DEFAULT_MODEL, durationMs: Date.now() - startMs },
+        "AI summary generated",
+      );
+
+      return content;
+    } catch (err) {
+      logger.error(
+        { provider: this.providerName, model: DEFAULT_MODEL, durationMs: Date.now() - startMs, err: String(err) },
+        "AI summarization failed",
+      );
+      throw err;
+    }
   }
 }

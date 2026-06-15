@@ -1,8 +1,12 @@
 // ============================================================
-// RSS SERVICE — Fetch and parse a single RSS feed URL
+// RSS SERVICE — Fetch and parse a single RSS feed
 //
-// Returns a normalized Article array regardless of feed format.
-// RSS parsing is done with rss-parser (handles RSS 1.0/2.0 + Atom).
+// Returns a normalised RssArticle array regardless of feed format.
+// RSS parsing: rss-parser (handles RSS 1.0/2.0 + Atom).
+//
+// Logging contract:
+//   INFO  — successful fetch with article count and duration
+//   WARN  — feed failure (continues, caller skips this feed)
 // ============================================================
 
 import Parser from "rss-parser";
@@ -10,7 +14,7 @@ import type { Article } from "../ai/aiProvider.js";
 import { logger } from "../../lib/logger.js";
 
 const parser = new Parser({
-  timeout: 8000,
+  timeout: 10000,
   headers: {
     "User-Agent":
       "Mozilla/5.0 (compatible; PersonalAINewsroom/1.0; +https://replit.com)",
@@ -25,24 +29,50 @@ export interface RssArticle extends Article {
 
 /**
  * Fetch and parse a single RSS feed URL.
- * Returns an empty array on any error so the caller can skip bad feeds.
+ * Returns an empty array on any error — caller skips bad feeds.
+ *
+ * @param url        - Full RSS feed URL
+ * @param sourceName - Human-readable source name for attribution
  */
 export async function fetchFeed(
   url: string,
   sourceName: string,
 ): Promise<RssArticle[]> {
+  const startMs = Date.now();
+
   try {
     const feed = await parser.parseURL(url);
-
-    return feed.items.slice(0, 8).map((item) => ({
+    const articles = feed.items.slice(0, 10).map((item) => ({
       title: item.title?.trim() ?? "(ไม่มีหัวข้อ)",
-      description: item.contentSnippet?.trim() || item.summary?.trim() || undefined,
+      description:
+        item.contentSnippet?.trim() || item.summary?.trim() || undefined,
       url: item.link ?? item.guid ?? url,
       pubDate: item.pubDate ?? item.isoDate ?? undefined,
       source: sourceName,
     }));
+
+    logger.info(
+      {
+        feed: sourceName,
+        url,
+        articles: articles.length,
+        durationMs: Date.now() - startMs,
+      },
+      "RSS feed fetched",
+    );
+
+    return articles;
   } catch (err) {
-    logger.warn({ url, err: String(err) }, "Failed to fetch RSS feed — skipping");
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    logger.warn(
+      {
+        feed: sourceName,
+        url,
+        durationMs: Date.now() - startMs,
+        error: errorMessage,
+      },
+      "RSS feed failed — skipping",
+    );
     return [];
   }
 }

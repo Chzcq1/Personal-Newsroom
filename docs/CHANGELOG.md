@@ -2,6 +2,61 @@
 
 ---
 
+## [2026-06-15] — Quality Pass: Briefing Format, Source Ranking, Feed Resilience, UI Polish
+
+**What:** Comprehensive quality improvement across every layer of the stack in response to product feedback.
+
+**Why:** V1 summaries felt generic, contained markdown artifacts, and the Technology topic was unreliable. The product needs to feel like a professional intelligence service — not a generic chatbot output.
+
+**Changes by area:**
+
+**A. Technology Feed Resilience**
+- Expanded all topics from 3 → 4-5 named sources; Technology now has 5 feeds
+- Changed `TOPIC_RSS_FEEDS` (anonymous URLs) to `TOPIC_RSS_SOURCES` (named `{name, url}` pairs)
+- Source names now flow through the pipeline and appear as attribution in the UI
+- 5 feeds guarantees 10+ articles even if 2 feeds fail simultaneously
+
+**B. Summary Quality — Intelligence Briefing Format**
+- Extracted all prompt logic into new `services/ai/promptBuilder.ts` (shared across all 3 providers)
+- New 5-section format: HEADLINE, EXECUTIVE SUMMARY, KEY DEVELOPMENTS, WHY IT MATTERS, WHAT TO WATCH NEXT
+- Prompt explicitly forbids markdown, emojis, filler phrases, and repetition
+- Temperature set to 0.3 for consistent, analytical tone
+- `max_tokens` raised to 1500 to accommodate the richer format
+
+**C. Source Ranking**
+- Added recency scoring (50pts for <6h, down to 10pts for >1wk)
+- Added quality scoring (30pts for descriptions >150 chars)
+- Added near-duplicate title suppression (Jaccard similarity >65% = skip)
+- Pipeline now selects best 10 articles by combined score, not just newest
+
+**D. UI — Professional Rendering**
+- Frontend parses structured HEADLINE/EXECUTIVE SUMMARY/KEY DEVELOPMENTS/WHY IT MATTERS/WHAT TO WATCH NEXT sections
+- Each section rendered with distinct typography (section labels, numbered list, muted insight cards)
+- `clean()` utility strips stray markdown artifacts from any line before rendering
+- Graceful fallback to plain text if section parsing fails
+- Loading messages translated to Thai; error messages in Thai
+
+**E. Logging**
+- `rssService.ts`: logs feed name, URL, article count, duration per feed
+- `newsCollectorService.ts`: logs failedFeeds count, totalCollected, afterRanking
+- All 3 AI providers: log provider, model, duration on success; full error with duration on failure
+
+**Files created:**
+- `artifacts/api-server/src/services/ai/promptBuilder.ts`
+
+**Files modified:**
+- `artifacts/api-server/src/config/topics.ts`
+- `artifacts/api-server/src/services/news/rssService.ts`
+- `artifacts/api-server/src/services/news/newsCollectorService.ts`
+- `artifacts/api-server/src/services/ai/githubProvider.ts`
+- `artifacts/api-server/src/services/ai/openaiProvider.ts`
+- `artifacts/api-server/src/services/ai/geminiProvider.ts`
+- `artifacts/newsroom/src/pages/home.tsx`
+- `docs/ARCHITECTURE.md`
+- `docs/CHANGELOG.md`
+
+---
+
 ## [2026-06-15] — V1 Full Application (Frontend + Backend + News Pipeline)
 
 **What:** Completed the full Personal AI Newsroom V1. Users can select from 5 topics (AI, Technology, Stocks, Economy, Politics) and receive a real-time AI-generated Thai-language news summary fetched live from RSS feeds.

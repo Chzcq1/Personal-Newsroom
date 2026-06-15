@@ -267,19 +267,25 @@ summaryService.ts
 - **Dependencies:** `@google/generative-ai` npm package, `GEMINI_API_KEY` secret
 - **Risk Level:** MEDIUM
 
-### `services/news/rssService.ts`
-- **Purpose:** Fetch and parse news articles from RSS feeds
-- **Input:** Topic string → mapped to configured RSS URLs
-- **Output:** Array of `{ title, link, description, pubDate }`
-- **Dependencies:** `rss-parser` npm package
-- **Risk Level:** Medium — depends on third-party RSS availability
+### `services/ai/promptBuilder.ts`
+- **Purpose:** Single source of truth for all AI prompts
+- **Rule:** All 3 providers import from here — never write prompts inline in a provider
+- **Output format:** 5 structured sections (HEADLINE, EXECUTIVE SUMMARY, KEY DEVELOPMENTS, WHY IT MATTERS, WHAT TO WATCH NEXT) in plain Thai — no markdown, no emojis
+- **Risk Level:** HIGH — changes affect all providers and the frontend parser
 
-### `services/news/newsApiService.ts`
-- **Purpose:** Fetch news from a structured API (e.g. NewsAPI.org)
-- **Input:** Topic keyword
-- **Output:** Array of `{ title, url, description, publishedAt }`
-- **Dependencies:** `NEWSAPI_KEY` env variable, `axios`
-- **Risk Level:** High — requires API key, subject to rate limits
+### `services/news/rssService.ts`
+- **Purpose:** Fetch and parse a single RSS feed by name+URL pair
+- **Input:** `{ name: string, url: string }` from `config/topics.ts`
+- **Output:** Array of `RssArticle` with source name attributed
+- **Logging:** INFO per successful feed (name, articles, durationMs); WARN per failure (name, url, error, durationMs)
+- **Dependencies:** `rss-parser` npm package
+- **Risk Level:** Medium — depends on third-party RSS availability; failures are isolated (returns [])
+
+### `services/news/newsCollectorService.ts`
+- **Purpose:** Collect, deduplicate, rank, and select best articles for a topic
+- **Ranking:** recency score (0-50) + quality score (0-30); Jaccard near-duplicate suppression on titles (>65% similarity = skip)
+- **Output:** Top 10 ranked articles, deduplicated by URL and near-duplicate title
+- **Logging:** INFO with sourceCount, failedFeeds, totalCollected, afterRanking
 
 ### `services/delivery/telegramService.ts`
 - **Purpose:** Send a formatted summary message to a Telegram chat or channel
