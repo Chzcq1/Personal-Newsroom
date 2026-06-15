@@ -10,7 +10,7 @@ const router = Router();
 // ── Error reason classification ────────────────────────────
 //
 // Returns a specific Thai error message based on what went wrong.
-// "Unable to generate briefing" is never shown — always a real reason.
+// Generic "Unable to generate briefing" is never shown.
 
 function classifyFeedError(
   totalConfigured: number,
@@ -74,8 +74,13 @@ router.post("/news/summarize", async (req, res) => {
   logger.info({ topicId }, "Starting news summarization");
 
   try {
-    const { articles, feedDiagnostics, totalConfigured, totalCollected, failedFeeds } =
-      await collectArticlesForTopic(topicId);
+    const {
+      articles,
+      feedDiagnostics,
+      totalConfigured,
+      totalCollected,
+      failedFeeds,
+    } = await collectArticlesForTopic(topicId);
 
     if (articles.length === 0) {
       const reason = classifyFeedError(totalConfigured, failedFeeds, totalCollected);
@@ -90,31 +95,42 @@ router.post("/news/summarize", async (req, res) => {
       return;
     }
 
+    // ── AI Summarization (with failsafe) ───────────────────
+    // If the AI fails AFTER we have articles, we do NOT show
+    // an error — we activate failsafe mode and return the
+    // raw articles. The user always sees something useful.
+
     let summary: string;
+    let failsafeMode = false;
+    let failsafeReason: string | undefined;
+
     try {
       summary = await summarizeArticles(articles, topic.labelTh);
     } catch (aiErr) {
-      const reason = classifyAIError(aiErr);
-      logger.error({ topicId, err: aiErr }, "AI summarization failed");
-      res.status(500).json({
-        error: reason,
-        debugInfo: feedDiagnostics,
-      });
-      return;
+      failsafeReason = classifyAIError(aiErr);
+      logger.warn(
+        { topicId, err: String(aiErr) },
+        "AI summarization failed — activating failsafe mode",
+      );
+      summary = "";
+      failsafeMode = true;
     }
 
     const generationTimeMs = Date.now() - startTime;
+    const sources = articles.map((a) => ({
+      title: a.title,
+      url: a.url,
+      description: a.description ?? null,
+      pubDate: a.pubDate ?? null,
+      source: a.source ?? null,
+    }));
 
     res.json({
       topic,
       summary,
-      sources: articles.map((a) => ({
-        title: a.title,
-        url: a.url,
-        description: a.description ?? null,
-        pubDate: a.pubDate ?? null,
-        source: a.source ?? null,
-      })),
+      failsafeMode,
+      failsafeReason,
+      sources,
       generatedAt: new Date().toISOString(),
       generationTimeMs,
       provider: config.aiProvider,

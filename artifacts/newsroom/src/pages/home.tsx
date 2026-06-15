@@ -23,6 +23,8 @@ import {
   ChevronUp,
   CheckCircle,
   XCircle,
+  AlertTriangle,
+  Activity,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -31,14 +33,9 @@ import {
   isBriefingSaved,
   getSavedCount,
 } from "@/lib/briefingStorage";
-import {
-  setLastViewedTopic,
-  getLastViewedTopic,
-} from "@/lib/preferences";
+import { setLastViewedTopic, getLastViewedTopic } from "@/lib/preferences";
 
 // ── Icon mapping ─────────────────────────────────────────────
-// Maps icon string from topics config to Lucide React components.
-// icon field is now a kebab-case name, not an emoji.
 
 const TOPIC_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   cpu: Cpu,
@@ -48,22 +45,71 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>
   landmark: Landmark,
 };
 
-function TopicIcon({
-  icon,
-  className = "w-5 h-5",
-}: {
-  icon: string;
-  className?: string;
-}) {
+function TopicIcon({ icon, className = "w-5 h-5" }: { icon: string; className?: string }) {
   const Icon = TOPIC_ICON_MAP[icon];
   if (!Icon) return <Newspaper className={className} />;
   return <Icon className={className} />;
 }
 
+// ── Extended API types ───────────────────────────────────────
+// debugInfo and failsafeMode are not in the OpenAPI spec;
+// we layer them on via type intersection.
+
+interface FeedDiagnostic {
+  name: string;
+  url: string;
+  status: "success" | "failed";
+  articleCount: number;
+  durationMs: number;
+  error?: string;
+}
+
+type ExtendedNewsSummary = NewsSummary & {
+  debugInfo?: FeedDiagnostic[];
+  failsafeMode?: boolean;
+  failsafeReason?: string;
+};
+
+// ── Health status ────────────────────────────────────────────
+
+interface HealthData {
+  status: "healthy" | "degraded" | "offline";
+  aiProviderWorking: boolean;
+  aiProviderName: string;
+  aiProviderDetail: string;
+  rssFeedsWorking: boolean;
+  rssFeedDetail: string;
+}
+
+function HealthBadge({ health }: { health: HealthData | null }) {
+  if (!health) return null;
+  const colors = {
+    healthy: "bg-green-50 text-green-700 border-green-200",
+    degraded: "bg-amber-50 text-amber-700 border-amber-200",
+    offline: "bg-red-50 text-red-600 border-red-200",
+  };
+  const dots = {
+    healthy: "bg-green-500",
+    degraded: "bg-amber-500",
+    offline: "bg-red-500",
+  };
+  const labels = {
+    healthy: "System Healthy",
+    degraded: "System Degraded",
+    offline: "System Offline",
+  };
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold ${colors[health.status]}`}
+      title={`AI: ${health.aiProviderDetail} | RSS: ${health.rssFeedDetail}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${dots[health.status]}`} />
+      {labels[health.status]}
+    </span>
+  );
+}
+
 // ── Section parser ──────────────────────────────────────────
-// Parses the structured briefing format returned by promptBuilder.ts.
-// Falls back gracefully if the AI deviates from the expected format.
-// Supports both IMPACT ANALYSIS (current) and WHY IT MATTERS (legacy).
 
 interface BriefingSections {
   headline: string;
@@ -85,13 +131,7 @@ function parseBriefing(summary: string): BriefingSections {
   };
 
   const lines = summary.split("\n");
-  type SectionKey =
-    | "headline"
-    | "executiveSummary"
-    | "keyDevelopments"
-    | "impactAnalysis"
-    | "watchNext"
-    | null;
+  type SectionKey = "headline" | "executiveSummary" | "keyDevelopments" | "impactAnalysis" | "watchNext" | null;
   let current: SectionKey = null;
 
   for (const rawLine of lines) {
@@ -101,16 +141,12 @@ function parseBriefing(summary: string): BriefingSections {
     if (line === "HEADLINE") { current = "headline"; continue; }
     if (line === "EXECUTIVE SUMMARY") { current = "executiveSummary"; continue; }
     if (line === "KEY DEVELOPMENTS") { current = "keyDevelopments"; continue; }
-    if (line === "IMPACT ANALYSIS" || line === "WHY IT MATTERS") {
-      current = "impactAnalysis"; continue;
-    }
+    if (line === "IMPACT ANALYSIS" || line === "WHY IT MATTERS") { current = "impactAnalysis"; continue; }
     if (line === "WHAT TO WATCH NEXT") { current = "watchNext"; continue; }
 
     switch (current) {
       case "headline":
-        sections.headline = sections.headline
-          ? sections.headline + " " + line
-          : line;
+        sections.headline = sections.headline ? sections.headline + " " + line : line;
         break;
       case "executiveSummary":
         sections.executiveSummary = sections.executiveSummary
@@ -134,7 +170,6 @@ function parseBriefing(summary: string): BriefingSections {
         break;
     }
   }
-
   return sections;
 }
 
@@ -147,20 +182,94 @@ function clean(text: string): string {
     .trim();
 }
 
-// ── Feed Diagnostics (dev mode) ─────────────────────────────
+// ── Failsafe Display ─────────────────────────────────────────
+// Shown when AI fails but articles were collected successfully.
+// User always sees something — never a blank page.
 
-interface FeedDiagnostic {
-  name: string;
-  url: string;
-  status: "success" | "failed";
-  articleCount: number;
-  durationMs: number;
-  error?: string;
+function FailsafeDisplay({ data }: { data: ExtendedNewsSummary }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="space-y-6"
+    >
+      <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-6 py-5">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-amber-800">
+              AI Summary Unavailable — Showing Collected Articles
+            </p>
+            {data.failsafeReason && (
+              <p className="text-xs text-amber-700 leading-relaxed">{data.failsafeReason}</p>
+            )}
+            <p className="text-xs text-amber-600">
+              รวบรวมได้ {data.articleCount} บทความ — AI ไม่สามารถประมวลผลได้ในขณะนี้
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="flex-shrink-0 w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+            <TopicIcon icon={data.topic.icon} className="w-3.5 h-3.5 text-primary" />
+          </span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+              {data.topic.label}
+            </p>
+            <p className="text-sm font-semibold text-foreground">{data.topic.labelTh}</p>
+          </div>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {format(new Date(data.generatedAt), "HH:mm · d MMM yyyy")}
+          </span>
+        </div>
+
+        <div className="grid gap-2">
+          {data.sources.map((article, idx) => (
+            <a
+              key={idx}
+              href={article.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block group"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-3 rounded-lg border border-border/50 bg-background hover:bg-accent/30 transition-colors">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                    {article.title}
+                  </p>
+                  {article.source && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{article.source}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0 text-xs text-muted-foreground">
+                  {article.pubDate && (
+                    <span>{format(new Date(article.pubDate), "d MMM yyyy")}</span>
+                  )}
+                  <ExternalLink className="w-3 h-3 opacity-40 group-hover:opacity-80 transition-opacity" />
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
-function DebugPanel({ feeds }: { feeds: FeedDiagnostic[] }) {
+// ── Dev Debug Panel ───────────────────────────────────────────
+
+function DebugPanel({ data }: { data: ExtendedNewsSummary }) {
   const [open, setOpen] = useState(false);
+  const feeds = data.debugInfo ?? [];
   const failed = feeds.filter((f) => f.status === "failed").length;
+  const articleTextLength = data.sources
+    .map((s) => `${s.title} ${s.description ?? ""}`)
+    .join(" ").length;
+  const estimatedTokens = Math.round(articleTextLength / 4);
 
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50/50 text-xs font-mono overflow-hidden">
@@ -168,40 +277,53 @@ function DebugPanel({ feeds }: { feeds: FeedDiagnostic[] }) {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-2.5 text-amber-700 hover:bg-amber-100/50 transition-colors"
       >
-        <span className="font-semibold">
-          DEV: Feed Diagnostics — {feeds.length} feeds, {failed} failed
+        <span className="font-semibold flex items-center gap-2">
+          <Activity className="w-3.5 h-3.5" />
+          DEV — {feeds.length} feeds · {failed} failed · ~{estimatedTokens} tokens · {data.generationTimeMs}ms
         </span>
         {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
       </button>
       {open && (
-        <div className="border-t border-amber-200 divide-y divide-amber-100">
-          {feeds.map((feed, i) => (
-            <div
-              key={i}
-              className={`px-4 py-2.5 flex items-start gap-3 ${
-                feed.status === "failed" ? "bg-red-50/50" : "bg-green-50/30"
-              }`}
-            >
-              {feed.status === "success" ? (
-                <CheckCircle className="w-3.5 h-3.5 text-green-600 mt-0.5 flex-shrink-0" />
-              ) : (
-                <XCircle className="w-3.5 h-3.5 text-red-500 mt-0.5 flex-shrink-0" />
-              )}
-              <div className="min-w-0 flex-1 space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-foreground">{feed.name}</span>
-                  <span className="text-muted-foreground">{feed.durationMs}ms</span>
-                  {feed.status === "success" && (
-                    <span className="text-green-700">{feed.articleCount} articles</span>
-                  )}
-                </div>
-                <div className="text-muted-foreground truncate">{feed.url}</div>
-                {feed.error && (
-                  <div className="text-red-600 break-all">{feed.error}</div>
+        <div className="border-t border-amber-200">
+          {/* Provider info */}
+          <div className="px-4 py-3 bg-blue-50/40 border-b border-amber-200 space-y-1">
+            <p className="font-semibold text-blue-700">AI Provider</p>
+            <p className="text-blue-600">Provider: {data.provider}</p>
+            <p className="text-blue-600">Generation time: {data.generationTimeMs}ms</p>
+            <p className="text-blue-600">Articles used: {data.articleCount}</p>
+            <p className="text-blue-600">Estimated input tokens: ~{estimatedTokens}</p>
+            {data.failsafeMode && (
+              <p className="text-red-600 font-semibold">⚠ FAILSAFE MODE — {data.failsafeReason}</p>
+            )}
+          </div>
+          {/* Feed diagnostics */}
+          <div className="divide-y divide-amber-100">
+            {feeds.map((feed, i) => (
+              <div
+                key={i}
+                className={`px-4 py-2.5 flex items-start gap-3 ${
+                  feed.status === "failed" ? "bg-red-50/50" : "bg-green-50/30"
+                }`}
+              >
+                {feed.status === "success" ? (
+                  <CheckCircle className="w-3.5 h-3.5 text-green-600 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <XCircle className="w-3.5 h-3.5 text-red-500 mt-0.5 flex-shrink-0" />
                 )}
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-foreground">{feed.name}</span>
+                    <span className="text-muted-foreground">{feed.durationMs}ms</span>
+                    {feed.status === "success" && (
+                      <span className="text-green-700">{feed.articleCount} articles</span>
+                    )}
+                  </div>
+                  <div className="text-muted-foreground truncate">{feed.url}</div>
+                  {feed.error && <div className="text-red-600 break-all">{feed.error}</div>}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -210,9 +332,11 @@ function DebugPanel({ feeds }: { feeds: FeedDiagnostic[] }) {
 
 // ── Briefing Display ─────────────────────────────────────────
 
-type ExtendedNewsSummary = NewsSummary & { debugInfo?: FeedDiagnostic[] };
-
 function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
+  if (data.failsafeMode) {
+    return <FailsafeDisplay data={data} />;
+  }
+
   const s = parseBriefing(data.summary);
   const hasSections = s.headline || s.executiveSummary || s.keyDevelopments.length > 0;
   const [saved, setSaved] = useState(false);
@@ -243,9 +367,7 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
       transition={{ duration: 0.4 }}
       className="space-y-8"
     >
-      {/* Briefing card */}
       <Card className="overflow-hidden border border-border/70 shadow-sm">
-        {/* Card header bar */}
         <div className="px-8 py-5 border-b border-border/50 bg-muted/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="flex-shrink-0 w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center">
@@ -258,7 +380,7 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
               <p className="text-sm font-medium text-foreground">{data.topic.labelTh}</p>
             </div>
           </div>
-          <div className="flex items-center gap-5 text-xs text-muted-foreground">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap justify-end">
             <span className="flex items-center gap-1.5">
               <Clock className="w-3 h-3" />
               {(data.generationTimeMs / 1000).toFixed(1)}s
@@ -278,15 +400,9 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
               disabled={saved}
             >
               {saved ? (
-                <>
-                  <BookmarkCheck className="w-3.5 h-3.5" />
-                  Saved
-                </>
+                <><BookmarkCheck className="w-3.5 h-3.5" />Saved</>
               ) : (
-                <>
-                  <Bookmark className="w-3.5 h-3.5" />
-                  Save
-                </>
+                <><Bookmark className="w-3.5 h-3.5" />Save</>
               )}
             </Button>
           </div>
@@ -300,7 +416,6 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
                   {clean(s.headline)}
                 </h2>
               )}
-
               {s.executiveSummary && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
@@ -315,7 +430,6 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
                   </div>
                 </div>
               )}
-
               {s.keyDevelopments.length > 0 && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-3">
@@ -335,7 +449,6 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
                   </ol>
                 </div>
               )}
-
               {(s.impactAnalysis || s.watchNext) && (
                 <div className="grid sm:grid-cols-2 gap-5 pt-1">
                   {s.impactAnalysis && (
@@ -379,18 +492,16 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
         </CardContent>
 
         <CardFooter className="px-8 py-4 border-t border-border/40 bg-muted/20 flex justify-between items-center">
-          <span className="text-xs text-muted-foreground/60">
-            Powered by {data.provider}
-          </span>
+          <span className="text-xs text-muted-foreground/60">Powered by {data.provider}</span>
           <span className="text-xs text-muted-foreground/60">
             {data.provider === "github" ? "GitHub Models · gpt-4o-mini" : data.provider}
           </span>
         </CardFooter>
       </Card>
 
-      {/* Dev mode: Feed diagnostics debug panel */}
-      {import.meta.env.DEV && data.debugInfo && data.debugInfo.length > 0 && (
-        <DebugPanel feeds={data.debugInfo} />
+      {/* Dev debug panel */}
+      {import.meta.env.DEV && (
+        <DebugPanel data={data} />
       )}
 
       {/* Source articles */}
@@ -414,16 +525,12 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
                     {article.title}
                   </p>
                   {article.source && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {article.source}
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{article.source}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0 text-xs text-muted-foreground">
                   {article.pubDate && (
-                    <span>
-                      {format(new Date(article.pubDate), "d MMM yyyy")}
-                    </span>
+                    <span>{format(new Date(article.pubDate), "d MMM yyyy")}</span>
                   )}
                   <ExternalLink className="w-3 h-3 opacity-40 group-hover:opacity-80 transition-opacity" />
                 </div>
@@ -443,13 +550,21 @@ export default function Home() {
   const summarize = useSummarizeNews();
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState(getSavedCount);
+  const [health, setHealth] = useState<HealthData | null>(null);
   const restoredRef = useRef(false);
+
+  // Load health status in background
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}api/health`)
+      .then((r) => r.json())
+      .then((data: HealthData) => setHealth(data))
+      .catch(() => setHealth(null));
+  }, []);
 
   // Restore last viewed topic once topics are loaded
   useEffect(() => {
     if (restoredRef.current || topicsLoading || !topics || topics.length === 0) return;
     restoredRef.current = true;
-
     const lastTopicId = getLastViewedTopic();
     if (lastTopicId && topics.find((t) => t.id === lastTopicId)) {
       setSelectedTopicId(lastTopicId);
@@ -474,18 +589,12 @@ export default function Home() {
 
   useEffect(() => {
     if (!summarize.isPending) { setMsgIdx(0); return; }
-    const id = setInterval(
-      () => setMsgIdx((p) => (p + 1) % loadingMessages.length),
-      2800,
-    );
+    const id = setInterval(() => setMsgIdx((p) => (p + 1) % loadingMessages.length), 2800);
     return () => clearInterval(id);
   }, [summarize.isPending]);
 
-  // Refresh saved count when a briefing is saved
   useEffect(() => {
-    if (summarize.isSuccess) {
-      setSavedCount(getSavedCount());
-    }
+    if (summarize.isSuccess) setSavedCount(getSavedCount());
   }, [summarize.isSuccess]);
 
   const extendedError = summarize.error as (Error & { response?: { data?: { error?: string } } }) | null;
@@ -503,6 +612,7 @@ export default function Home() {
             <span className="text-sm font-semibold tracking-tight text-foreground">
               Personal AI Newsroom
             </span>
+            {health && <HealthBadge health={health} />}
           </div>
           <Link to="/saved">
             <Button variant="ghost" size="sm" className="gap-2 text-xs">
@@ -519,13 +629,10 @@ export default function Home() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 pt-12 pb-20 space-y-12">
-
         {/* Topic selector */}
         <section className="space-y-6">
           <div className="space-y-1.5">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Select a Topic
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Select a Topic</h1>
             <p className="text-sm text-muted-foreground">
               Choose a subject. The system collects live news and produces a structured intelligence briefing in Thai.
             </p>
@@ -552,31 +659,21 @@ export default function Home() {
                       : "border-border/60 bg-background",
                   ].join(" ")}
                 >
-                  <span
-                    className={[
-                      "w-9 h-9 rounded-lg flex items-center justify-center",
-                      selectedTopicId === topic.id
-                        ? "bg-primary/15"
-                        : "bg-muted/60",
-                    ].join(" ")}
-                  >
+                  <span className={[
+                    "w-9 h-9 rounded-lg flex items-center justify-center",
+                    selectedTopicId === topic.id ? "bg-primary/15" : "bg-muted/60",
+                  ].join(" ")}>
                     <TopicIcon
                       icon={topic.icon}
                       className={[
-                        "w-4.5 h-4.5",
-                        selectedTopicId === topic.id
-                          ? "text-primary"
-                          : "text-muted-foreground",
+                        "w-5 h-5",
+                        selectedTopicId === topic.id ? "text-primary" : "text-muted-foreground",
                       ].join(" ")}
                     />
                   </span>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-semibold text-foreground leading-tight">
-                      {topic.label}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground leading-tight">
-                      {topic.labelTh}
-                    </p>
+                    <p className="text-xs font-semibold text-foreground leading-tight">{topic.label}</p>
+                    <p className="text-[11px] text-muted-foreground leading-tight">{topic.labelTh}</p>
                   </div>
                 </button>
               ))}
@@ -585,7 +682,7 @@ export default function Home() {
         </section>
 
         <AnimatePresence mode="wait">
-          {/* Loading state */}
+          {/* Loading */}
           {summarize.isPending && (
             <motion.div
               key="loading"
@@ -596,17 +693,13 @@ export default function Home() {
             >
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
               <div className="text-center space-y-1.5">
-                <p className="text-sm font-medium text-foreground">
-                  {loadingMessages[msgIdx]}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  การดำเนินการนี้ใช้เวลาประมาณ 5-15 วินาที
-                </p>
+                <p className="text-sm font-medium text-foreground">{loadingMessages[msgIdx]}</p>
+                <p className="text-xs text-muted-foreground">การดำเนินการนี้ใช้เวลาประมาณ 5-15 วินาที</p>
               </div>
             </motion.div>
           )}
 
-          {/* Error state — shows specific reason, not generic message */}
+          {/* Error — shows specific reason */}
           {summarize.isError && (
             <motion.div
               key="error"
@@ -614,18 +707,12 @@ export default function Home() {
               animate={{ opacity: 1 }}
               className="rounded-lg border border-destructive/30 bg-destructive/5 px-6 py-8 space-y-4"
             >
-              <p className="text-sm font-semibold text-destructive">
-                ไม่สามารถสร้างรายงานได้
-              </p>
-              <p className="text-sm text-foreground/80 leading-relaxed">
-                {errorMessage}
-              </p>
+              <p className="text-sm font-semibold text-destructive">ไม่สามารถสร้างรายงานได้</p>
+              <p className="text-sm text-foreground/80 leading-relaxed">{errorMessage}</p>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  selectedTopicId && handleTopicClick(selectedTopicId)
-                }
+                onClick={() => selectedTopicId && handleTopicClick(selectedTopicId)}
               >
                 <RefreshCw className="w-3.5 h-3.5 mr-2" />
                 ลองใหม่อีกครั้ง
