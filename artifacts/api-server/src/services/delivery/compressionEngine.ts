@@ -1,11 +1,16 @@
 // ============================================================
-// COMPRESSION ENGINE — Sprint 17 Task G
+// COMPRESSION ENGINE — Sprint 17 Task G · Sprint 18 Task H Upgrade
 //
 // Adaptive delivery compression that reduces AI cost dynamically.
 // Integrates with: tokenGovernor · degradationEngine · signalModeEngine
 //
 // HIGH TOKEN PRESSURE:  shorter summaries, fewer narratives, compressed insights
 // LOW TOKEN PRESSURE:   full premium briefing (pass-through)
+//
+// Sprint 18 additions:
+//   - Density modes: executive / investor / operator
+//   - "Only new developments" mode (delta-only output)
+//   - Persona-aware compression (different priors per role)
 // ============================================================
 
 import { getTokenGovernorState } from "../intelligence/tokenGovernor.js";
@@ -265,4 +270,183 @@ export function analyzeCompression(
     compressed: compressedDensity,
     retainedRatio: Math.round(retainedRatio * 100) / 100,
   };
+}
+
+// ── Sprint 18: Density mode types ─────────────────────────────
+
+export type PersonaDensityMode =
+  | "executive"   // C-suite: decisions + financial impact only
+  | "investor"    // Portfolio lens: market + earnings + risk
+  | "operator"    // Operator lens: product + regulatory + execution
+  | "analyst"     // Full detail (default)
+  | "delta_only"; // Only new developments since last briefing
+
+export interface PersonaCompressionConfig {
+  mode: PersonaDensityMode;
+  maxBullets: number;
+  maxCharsPerBullet: number;
+  includeMarketNumbers: boolean;
+  includeRegulatoryContext: boolean;
+  includeExecutionDetail: boolean;
+  includeStrategicContext: boolean;
+  prioritizeSections: string[];  // Section keywords to keep
+  deprioritizeSections: string[]; // Section keywords to trim first
+  readTimeTargetSecs: number;
+}
+
+const PERSONA_CONFIGS: Record<PersonaDensityMode, PersonaCompressionConfig> = {
+  executive: {
+    mode: "executive",
+    maxBullets: 3,
+    maxCharsPerBullet: 120,
+    includeMarketNumbers: true,
+    includeRegulatoryContext: false,
+    includeExecutionDetail: false,
+    includeStrategicContext: true,
+    prioritizeSections: ["HEADLINE", "IMPACT", "ACTION", "DECISION"],
+    deprioritizeSections: ["BACKGROUND", "CONTEXT", "DETAIL", "TECHNICAL"],
+    readTimeTargetSecs: 15,
+  },
+  investor: {
+    mode: "investor",
+    maxBullets: 5,
+    maxCharsPerBullet: 150,
+    includeMarketNumbers: true,
+    includeRegulatoryContext: true,
+    includeExecutionDetail: false,
+    includeStrategicContext: true,
+    prioritizeSections: ["EARNINGS", "REVENUE", "MARKET", "RISK", "VALUATION"],
+    deprioritizeSections: ["PRODUCT", "TECHNICAL", "UX"],
+    readTimeTargetSecs: 30,
+  },
+  operator: {
+    mode: "operator",
+    maxBullets: 5,
+    maxCharsPerBullet: 180,
+    includeMarketNumbers: false,
+    includeRegulatoryContext: true,
+    includeExecutionDetail: true,
+    includeStrategicContext: false,
+    prioritizeSections: ["PRODUCT", "REGULATION", "EXECUTION", "TIMELINE"],
+    deprioritizeSections: ["MACRO", "GEOPOLITICS", "EARNINGS"],
+    readTimeTargetSecs: 45,
+  },
+  analyst: {
+    mode: "analyst",
+    maxBullets: 8,
+    maxCharsPerBullet: 300,
+    includeMarketNumbers: true,
+    includeRegulatoryContext: true,
+    includeExecutionDetail: true,
+    includeStrategicContext: true,
+    prioritizeSections: [],  // Keep everything
+    deprioritizeSections: [],
+    readTimeTargetSecs: 90,
+  },
+  delta_only: {
+    mode: "delta_only",
+    maxBullets: 4,
+    maxCharsPerBullet: 200,
+    includeMarketNumbers: true,
+    includeRegulatoryContext: false,
+    includeExecutionDetail: false,
+    includeStrategicContext: false,
+    prioritizeSections: ["NEW", "UPDATE", "BREAKING", "CHANGED", "FIRST"],
+    deprioritizeSections: ["BACKGROUND", "PREVIOUSLY", "REMINDER", "RECAP"],
+    readTimeTargetSecs: 20,
+  },
+};
+
+/**
+ * Get compression config for a persona density mode.
+ */
+export function getPersonaCompressionConfig(mode: PersonaDensityMode): PersonaCompressionConfig {
+  return PERSONA_CONFIGS[mode];
+}
+
+/**
+ * Apply persona-aware compression to a briefing text.
+ * Prioritises sections matching the persona's focus.
+ * "delta_only" mode filters to new-development sentences only.
+ */
+export function compressForPersona(
+  text: string,
+  mode: PersonaDensityMode,
+): string {
+  const config = PERSONA_CONFIGS[mode];
+
+  if (mode === "analyst") return text; // No compression for analyst
+
+  const sentences = text
+    .replace(/([.!?])\s+/g, "$1\n")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // Delta-only mode: keep only sentences that signal new developments
+  const DELTA_SIGNALS = [
+    /\b(new|update|just|announced|launched|released|confirmed|reveals|breaks|first|record)\b/i,
+    /\b(ใหม่|ประกาศ|เปิดตัว|อัปเดต|ล่าสุด|ครั้งแรก|เพิ่งเผย)\b/,
+  ];
+  const RECAP_SIGNALS = [
+    /\b(previously|earlier|background|context|history|recap|reminder|had been)\b/i,
+    /\b(เดิม|ก่อนหน้า|บริบท|ย้อนหลัง|ก่อนหน้านี้)\b/,
+  ];
+
+  if (mode === "delta_only") {
+    const deltaOnly = sentences.filter((s) => {
+      const isRecap = RECAP_SIGNALS.some((p) => p.test(s));
+      if (isRecap) return false;
+      const isDelta = DELTA_SIGNALS.some((p) => p.test(s));
+      return isDelta || (s.match(/\d/) && s.length > 40);
+    });
+    return deltaOnly.slice(0, config.maxBullets).join(" ");
+  }
+
+  // Priority scoring for other persona modes
+  const deprioritizePatterns = config.deprioritizeSections.map(
+    (kw) => new RegExp(`\\b${kw}\\b`, "i")
+  );
+  const prioritizePatterns = config.prioritizeSections.map(
+    (kw) => new RegExp(`\\b${kw}\\b`, "i")
+  );
+
+  const scored = sentences.map((sentence) => {
+    let score = 50; // base
+
+    // Boost prioritized sections
+    if (prioritizePatterns.some((p) => p.test(sentence))) score += 30;
+    // Penalize deprioritized sections
+    if (deprioritizePatterns.some((p) => p.test(sentence))) score -= 30;
+    // Market numbers are important for most modes
+    if (config.includeMarketNumbers && /\d+(\.\d+)?%/.test(sentence)) score += 15;
+    if (!config.includeMarketNumbers && /\$[\d,]+[BMK]?/.test(sentence)) score -= 10;
+    // Regulatory context
+    if (!config.includeRegulatoryContext && /\b(regulation|law|fine|ban|compliance)\b/i.test(sentence)) score -= 20;
+    // Execution detail
+    if (!config.includeExecutionDetail && /\b(product|feature|roadmap|launch|release)\b/i.test(sentence)) score -= 15;
+
+    return { sentence, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  let result = "";
+  let bulletCount = 0;
+  for (const { sentence } of scored) {
+    if (bulletCount >= config.maxBullets) break;
+    const trimmed = sentence.slice(0, config.maxCharsPerBullet);
+    result += (result ? " " : "") + trimmed;
+    bulletCount++;
+  }
+
+  return result || text.slice(0, config.maxBullets * config.maxCharsPerBullet);
+}
+
+/**
+ * Delta mode: strips recap/background sentences, keeping only new developments.
+ * Fast path for returning users who already know the story.
+ */
+export function extractDeltaOnly(text: string): string {
+  return compressForPersona(text, "delta_only");
 }

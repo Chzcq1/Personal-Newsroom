@@ -33,6 +33,8 @@ import OnboardingPage from "@/pages/onboarding";
 import SignalModePage from "@/pages/settings/signal-mode";
 import SystemIntelligencePage from "@/pages/admin/system-intelligence";
 import EfficiencyAdminPage from "@/pages/admin/efficiency";
+import DeliveryPreviewV3Page from "@/pages/settings/delivery-preview-v3";
+import SourceTrustPage from "@/pages/admin/source-trust";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -71,6 +73,8 @@ function Router() {
       <Route path="/settings/signal-mode" component={SignalModePage} />
       <Route path="/admin/system-intelligence" component={SystemIntelligencePage} />
       <Route path="/admin/efficiency" component={EfficiencyAdminPage} />
+      <Route path="/settings/delivery/preview-v3" component={DeliveryPreviewV3Page} />
+      <Route path="/admin/source-trust" component={SourceTrustPage} />
       <Route component={NotFound} />
     </Switch>
   );

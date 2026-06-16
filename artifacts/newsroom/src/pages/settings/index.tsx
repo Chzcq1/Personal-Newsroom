@@ -318,6 +318,48 @@ export default function SettingsPage() {
           </Card>
         </Link>
 
+        {/* Telegram Preview V3 — Sprint 18 */}
+        <Link href="/settings/delivery/preview-v3">
+          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#2AABEE]/10 flex items-center justify-center flex-shrink-0">
+                <Send className="w-4 h-4 text-[#2AABEE]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="font-medium text-white">Telegram Preview V3</p>
+                  <span className="text-[10px] text-[#2AABEE] bg-[#2AABEE]/10 px-1.5 py-0.5 rounded font-medium">NEW</span>
+                </div>
+                <p className="text-sm text-white/50">
+                  Ultra-scannable format — 3 density modes
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Source Trust — Sprint 18 */}
+        <Link href="/admin/source-trust">
+          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                <Eye className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="font-medium text-white">Source Trust Engine</p>
+                  <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded font-medium">NEW</span>
+                </div>
+                <p className="text-sm text-white/50">
+                  Per-source reputation, trust scores, misinfo flags
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
       </main>
     </div>
   );

@@ -1270,3 +1270,151 @@
 - `artifacts/newsroom/src/App.tsx` — added /settings/signal-mode + /admin/system-intelligence routes
 - `artifacts/newsroom/src/pages/settings/index.tsx` — Signal Mode nav item
 - `docs/ARCHITECTURE.md` — Sprint 16 section
+
+## Sprint 18 — Multi-Source Intelligence & Token Sustainability
+
+**Date:** June 16, 2026  
+**Theme:** Cross-platform signal expansion, native Thai quality, and long-term token economics
+
+### Summary
+
+Sprint 18 introduces 8 new services and 4 frontend features that make INFOX cost-sustainable at scale, truly Thai-first in output quality, and multi-platform in signal sourcing. All 13 tasks (A–M) completed.
+
+### New Backend Services
+
+**A — Thai Localization Engine** (`thaiLocalizationEngine.ts`)
+- Thai ratio analysis, English leakage detection, confidence scoring (native/acceptable/degraded/poor/failed)
+- Prompt-injection enforcement, partial repair, preserved brand-name list (40+ brands)
+- `GET /api/admin/localization` for stats
+
+**B — Source Trust Engine** (`sourceTrustEngine.ts`)
+- Per-source trust score (0–100) with 6 weighted sub-scores
+- Clickbait pattern detection (14+ patterns), crypto noise detection, misinformation flagging
+- Stability classes: tier_one/reliable/mixed/unreliable/toxic
+- Temporal decay, `GET /api/admin/source-trust`
+
+**C — Multi-Platform Adapters** (`platformAdapters.ts`)
+- YouTube Channel adapter (RSS, no key required): CNBC, Bloomberg, Lex Fridman, YC, MIT
+- Reddit Expansion: 15 new subreddits (r/SecurityAnalysis, r/singularity, r/LocalLLaMA, etc.)
+- TikTok, Facebook, Instagram stubs (architecture ready, activate with API keys)
+- `GET /api/admin/platform-adapters` for health
+
+**F — Token Survival Engine** (`tokenSurvivalEngine.ts`)
+- 5 survival modes: normal/efficient/frugal/survival/emergency
+- Memoization (content-hash dedup, 30min/2hr TTL), duplicate suppression (15min window)
+- Signal escalation gate, prompt shrinking, waste event tracking
+- `GET /api/admin/token-survival`
+
+**G — Source Priority Orchestrator** (`sourcePriorityOrchestrator.ts`)
+- 8-factor source ranking: trust, recency, specialization, acceleration, cross-confirmation, geopolitical, market sensitivity, tier bonus
+- Hard exclusion for toxic sources (trust class = toxic)
+- `GET /api/admin/source-priority`
+
+**H — Compression Engine Upgrade** (`compressionEngine.ts`)
+- 5 persona density modes: executive (3 bullets/15s), investor (5/30s), operator (5/45s), analyst (full), delta_only (new developments only)
+- `compressForPersona()`, `extractDeltaOnly()` functions
+
+**I — Signal Memory Optimizer** (`signalMemoryOptimizer.ts`)
+- Memory health report (healthy/degraded/critical/overflow)
+- Age scoring (0–100 per narrative), strategic retention (war, election, recession never age out)
+- Compression planning: archive dormant, merge 65%+ similar
+- `GET /api/admin/signal-memory`
+
+**J — BYOK Preparation** (`byokPreparation.ts`)
+- Full architecture: BYOKSlot, BYOKProfile, BYOKEntitlement, ProviderRoutingDecision types
+- Entitlement tiers: anonymous/free/standard/premium
+- Key registration intent + revocation + routing decision
+- Sprint 19 will add live validation + billing
+- `GET /api/admin/byok`
+
+**K — Deployment Hardening** (`deploymentHardening.ts`)
+- Environment validation, runtime detection (Replit/Docker/Railway/Render/Fly.io)
+- Deployment readiness score (0–100), portability audit
+- `GET /api/admin/deployment-readiness`, `GET /api/admin/sprint18`
+
+### Frontend Changes
+
+**D — Signal Card Visual Hierarchy** (`signal-card.tsx`)
+- `SignalCard` component: 5 tiers with urgency glow, confidence ribbon, momentum badge
+- `BreakingSignalBanner` with animated pulse
+- `SignalFeed` with hierarchy-based grouping
+
+**E — Telegram Preview V3** (`delivery-preview-v3.tsx`)
+- 3 density modes: Express (5s), Compact (15s), Standard (30s)
+- Side-by-side comparison view
+- Topic selector (AI/Economy samples)
+- `/settings/delivery/preview-v3` route
+
+**L — Visual & Accessibility Cleanup** (`index.css`)
+- `animate-pulse-slow`, `animate-glow-breaking`, `animate-glow-critical` keyframes
+- WCAG AA contrast utility classes
+- Thin scrollbar styling, focus ring accessibility
+- Thai typography: `.thai-text`, `.thai-headline` (Sarabun font, optimized line-height)
+- Skeleton shimmer animation, mobile 44px touch targets
+
+### New Pages
+- `/settings/delivery/preview-v3` — Telegram Preview V3
+- `/admin/source-trust` — Source Trust Engine dashboard
+
+### New Settings Nav Items
+- Telegram Preview V3 (NEW badge)
+- Source Trust Engine (NEW badge)
+
+### New Documentation
+- `docs/THAI_LOCALIZATION.md`
+- `docs/SOURCE_TRUST_SYSTEM.md`
+- `docs/TOKEN_SURVIVAL.md`
+- `docs/MULTI_SOURCE_INTELLIGENCE.md`
+- `docs/VISUAL_HIERARCHY.md`
+
+### New Admin Routes
+All mounted at `/api/admin/...`:
+- `localization` — Thai localization stats
+- `source-trust` — Source trust profiles
+- `source-trust/decay` — Trigger decay
+- `token-survival` — Survival mode + memo stats
+- `source-priority` — Orchestration snapshot
+- `signal-memory` — Memory optimization report
+- `byok` — BYOK architecture status
+- `platform-adapters` — Platform adapter health
+- `deployment-readiness` — Deployment readiness
+- `sprint18` — Full Sprint 18 summary
+
+### Files Changed
+
+**New services:**
+- `artifacts/api-server/src/services/intelligence/thaiLocalizationEngine.ts`
+- `artifacts/api-server/src/services/intelligence/sourceTrustEngine.ts`
+- `artifacts/api-server/src/services/intelligence/tokenSurvivalEngine.ts`
+- `artifacts/api-server/src/services/intelligence/sourcePriorityOrchestrator.ts`
+- `artifacts/api-server/src/services/intelligence/signalMemoryOptimizer.ts`
+- `artifacts/api-server/src/services/sources/platformAdapters.ts`
+- `artifacts/api-server/src/services/delivery/previewDeliveryV3.ts`
+- `artifacts/api-server/src/services/auth/byokPreparation.ts`
+- `artifacts/api-server/src/services/infra/deploymentHardening.ts`
+
+**Updated services:**
+- `artifacts/api-server/src/services/delivery/compressionEngine.ts` — persona density modes
+
+**New routes:**
+- `artifacts/api-server/src/routes/sprint18Admin.ts`
+
+**Updated routes:**
+- `artifacts/api-server/src/routes/index.ts` — added sprint18AdminRouter
+
+**New frontend:**
+- `artifacts/newsroom/src/components/ui/signal-card.tsx`
+- `artifacts/newsroom/src/pages/settings/delivery-preview-v3.tsx`
+- `artifacts/newsroom/src/pages/admin/source-trust.tsx`
+
+**Updated frontend:**
+- `artifacts/newsroom/src/App.tsx` — 2 new routes
+- `artifacts/newsroom/src/pages/settings/index.tsx` — 2 new nav items
+- `artifacts/newsroom/src/index.css` — Sprint 18 animations + accessibility
+
+**New docs:**
+- `docs/THAI_LOCALIZATION.md`
+- `docs/SOURCE_TRUST_SYSTEM.md`
+- `docs/TOKEN_SURVIVAL.md`
+- `docs/MULTI_SOURCE_INTELLIGENCE.md`
+- `docs/VISUAL_HIERARCHY.md`

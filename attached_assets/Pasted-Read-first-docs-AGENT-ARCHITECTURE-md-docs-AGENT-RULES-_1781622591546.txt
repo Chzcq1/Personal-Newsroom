@@ -1,0 +1,498 @@
+Read first:
+
+* docs/AGENT_ARCHITECTURE.md
+* docs/AGENT_RULES.md
+* docs/ALPHA_GATING.md
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/CLOSED_ALPHA_PLAN.md
+* docs/DELIVERY_INFRASTRUCTURE.md
+* docs/DEPLOYMENT_GUIDE.md
+* docs/DEPLOYMENT_READINESS.md
+* docs/IDENTITY_FOUNDATION.md
+* docs/INTELLIGENCE_MEMORY.md
+* docs/KNOWLEDGE_COMPOUND.md
+* docs/LOGIN_PREPARATION.md
+* docs/PERSISTENT_INFRASTRUCTURE.md
+* docs/PRECISION_INTELLIGENCE.md
+* docs/PROACTIVE_INTELLIGENCE.md
+* docs/PROJECT_VISION.md
+* docs/SIGNAL_MODES.md
+* docs/STRATEGIC_CONTEXT.md
+* docs/SYSTEM_STATUS.md
+* docs/TELEGRAM_FORMATTING.md
+* docs/TOKEN_ECONOMY.md
+* docs/VISUAL_GUIDELINES.md
+
+Preserve all current functionality.
+
+========================================
+SPRINT 18
+MULTI-SOURCE INTELLIGENCE & TOKEN SUSTAINABILITY
+
+Mission:
+
+INFOX must evolve from
+“RSS summarizer”
+into
+“real-time adaptive intelligence infrastructure”.
+
+Current state:
+
+* personalization exists
+* signal modes exist
+* intelligence scoring exists
+* Telegram delivery works
+* PostgreSQL persistence exists
+* degradation systems exist
+* token governance exists
+* Reddit integration exists
+* runtime separation exists
+
+Critical problems:
+
+* English-heavy outputs still leak into Thai briefings
+* source diversity still weak
+* no true cross-platform intelligence layer
+* token usage still dangerous at scale
+* AI pipelines still over-generate
+* feed relevance still unstable during trending spikes
+* no production-grade source prioritization
+* no source trust memory
+* visual hierarchy still weak
+* Replit runtime still primary environment
+
+Goal:
+
+Build the foundation for:
+high-efficiency intelligence generation,
+cross-platform signals,
+stable multilingual delivery,
+and sustainable token economics.
+
+WITHOUT implementing:
+full auth,
+payments,
+or production monetization yet.
+
+========================================
+TASK A — THAI-FIRST INTELLIGENCE PIPELINE
+
+Current issue:
+
+English leaks heavily into feed + summaries.
+
+Implement:
+
+thaiLocalizationEngine.ts
+
+Requirements:
+
+* Thai-first output enforcement
+* preserve global brand/entity names
+* auto-detect untranslated sections
+* partial translation repair
+* translation confidence scoring
+* language consistency validator
+* headline localization refinement
+* Thai readability scoring
+
+Rules:
+
+KEEP:
+OpenAI
+Nvidia
+Bitcoin
+Tesla
+BlackRock
+GPT-5
+
+Translate:
+descriptions,
+analysis,
+implications,
+narratives,
+context.
+
+Goal:
+
+All briefings should feel native Thai,
+not machine-translated English dumps.
+
+========================================
+TASK B — SOURCE TRUST & REPUTATION ENGINE
+
+Create:
+
+sourceTrustEngine.ts
+
+Requirements:
+
+Track per-source:
+
+* factual consistency
+* signal quality
+* noise ratio
+* clickbait likelihood
+* repeated misinformation
+* delivery usefulness
+* user engagement quality
+
+Generate:
+
+* trust score (0–100)
+* source stability class
+* source decay rate
+* source reliability history
+
+Integrate with:
+
+* signal scoring
+* narrative memory
+* crypto filtering
+* delivery ranking
+
+Goal:
+
+INFOX should learn:
+which sources deserve attention.
+
+========================================
+TASK C — MULTI-PLATFORM SIGNAL ARCHITECTURE
+
+Prepare cross-platform intelligence expansion.
+
+Create adapters for:
+
+* X/Twitter
+* TikTok
+* Facebook Pages
+* Instagram
+* YouTube Channels
+* Reddit expansion
+
+Requirements:
+
+* architecture-first
+* disabled safely when tokens absent
+* normalized signal structure
+* engagement scoring
+* velocity tracking
+* trend emergence scoring
+* narrative linking
+
+Do NOT fully activate paid APIs yet.
+
+Focus:
+clean adapter architecture.
+
+========================================
+TASK D — VISUAL INTELLIGENCE HIERARCHY
+
+Current issue:
+
+Feed cards still visually flat.
+
+Implement:
+
+* breaking signal cards
+* critical narrative highlight
+* urgency glow system
+* hierarchy-based sizing
+* executive-focus layout
+* momentum indicators
+* confidence ribbons
+* “why this matters” preview blocks
+
+Goal:
+
+Users should instantly identify:
+what matters most.
+
+Inspired by:
+
+Bloomberg Terminal
+Financial Times
+Reuters Eikon
+Linear
+Notion AI dashboards
+
+========================================
+TASK E — TELEGRAM VISUAL DELIVERY V3
+
+Upgrade Telegram delivery experience.
+
+Requirements:
+
+* ultra-scannable formatting
+* bold entity highlighting
+* spacing optimization
+* compact executive mode
+* optional deep-read expansion
+* better Markdown hierarchy
+* delivery density tuning
+* image-ready architecture
+
+Add:
+
+previewDeliveryV3.ts
+
+Create:
+
+/settings/delivery-preview-v3
+
+Goal:
+
+Telegram should feel:
+fast,
+premium,
+and readable in 10 seconds.
+
+========================================
+TASK F — TOKEN SURVIVAL ARCHITECTURE
+
+Current issue:
+
+Token burn risk still high.
+
+Create:
+
+tokenSurvivalEngine.ts
+
+Requirements:
+
+* adaptive AI routing
+* dynamic prompt shrinking
+* narrative reuse
+* cached analysis inheritance
+* summary memoization
+* duplicate generation prevention
+* signal-based AI escalation
+* token emergency mode
+
+Track:
+
+* token waste
+* repeated prompt patterns
+* expensive entity clusters
+* unnecessary regeneration
+
+Goal:
+
+INFOX must survive:
+1000+ users
+without catastrophic AI cost.
+
+========================================
+TASK G — SOURCE PRIORITY ORCHESTRATOR
+
+Create:
+
+sourcePriorityOrchestrator.ts
+
+Requirements:
+
+Rank sources dynamically by:
+
+* trust score
+* recency
+* topic specialization
+* signal acceleration
+* cross-confirmation
+* geopolitical importance
+* market sensitivity
+* user affinity
+
+Goal:
+
+Not all sources should be treated equally.
+
+INFOX should intelligently decide:
+what deserves AI attention first.
+
+========================================
+TASK H — DELIVERY COMPRESSION INTELLIGENCE V2
+
+Current issue:
+
+Some briefings still overload users.
+
+Upgrade:
+
+compressionEngine.ts
+
+Requirements:
+
+* adaptive density modes
+* executive compression
+* investor compression
+* operator compression
+* context-preserving shortening
+* duplicate narrative collapsing
+* entity merge summarization
+* “only new developments” mode
+
+Goal:
+
+Reduce cognitive overload
+without losing strategic value.
+
+========================================
+TASK I — SIGNAL MEMORY OPTIMIZATION
+
+Current issue:
+
+Narrative memory grows endlessly.
+
+Create:
+
+signalMemoryOptimizer.ts
+
+Requirements:
+
+* narrative aging
+* importance decay
+* strategic retention
+* memory compression
+* duplicate narrative fusion
+* dormant signal archival
+* hot signal prioritization
+
+Goal:
+
+Long-term memory
+must remain efficient and meaningful.
+
+========================================
+TASK J — BYOK (BRING YOUR OWN KEY) PREPARATION
+
+Prepare future user-provided AI keys.
+
+Requirements:
+
+Create architecture for:
+
+* OpenAI API key
+* Anthropic API key
+* Gemini API key
+* GitHub Models token
+
+Add:
+
+* secure encrypted storage preparation
+* entitlement compatibility
+* provider routing preparation
+* quota ownership preparation
+
+Do NOT implement:
+real billing,
+real usage charging,
+or live provider switching yet.
+
+Goal:
+
+Future users can use their own AI credits.
+
+========================================
+TASK K — EXTERNAL DEPLOYMENT HARDENING
+
+Current issue:
+
+System still psychologically tied to Replit.
+
+Prepare production separation.
+
+Requirements:
+
+* remove hidden Replit assumptions
+* runtime portability audit
+* environment validation
+* external cron compatibility
+* deployment health endpoints
+* startup verification report
+* infrastructure readiness checklist
+
+Goal:
+
+INFOX should become:
+host-independent infrastructure.
+
+========================================
+TASK L — VISUAL & ACCESSIBILITY CLEANUP
+
+Fix remaining UI polish issues.
+
+Requirements:
+
+* improve dark-mode contrast
+* remove unreadable navy-on-black text
+* unify spacing system
+* reduce visual fatigue
+* improve mobile readability
+* improve typography hierarchy
+* improve interaction clarity
+* improve feedback button visibility
+
+Goal:
+
+System should feel:
+premium,
+calm,
+and readable for hours.
+
+========================================
+TASK M — DOCUMENTATION
+
+Update:
+
+ARCHITECTURE.md
+CHANGELOG.md
+TOKEN_ECONOMY.md
+VISUAL_GUIDELINES.md
+SYSTEM_STATUS.md
+
+Create:
+
+MULTI_SOURCE_INTELLIGENCE.md
+SOURCE_TRUST_SYSTEM.md
+TOKEN_SURVIVAL.md
+THAI_LOCALIZATION.md
+VISUAL_HIERARCHY.md
+
+Document:
+
+* trust architecture
+* adapter system
+* token survival strategy
+* multilingual pipeline
+* source prioritization
+* deployment portability
+* future BYOK system
+
+========================================
+SUCCESS CRITERIA
+
+After Sprint 18:
+
+* Thai outputs become significantly cleaner
+* source trust scoring exists
+* cross-platform architecture exists
+* visual hierarchy improves dramatically
+* Telegram delivery becomes more readable
+* token survival systems become operational
+* AI cost efficiency improves
+* source prioritization exists
+* memory systems become sustainable
+* INFOX becomes more deployment-independent
+
+Provide implementation report:
+
+Files created
+Files modified
+Token optimization strategy
+Source trust strategy
+Localization architecture
+Visual hierarchy decisions
+Deployment hardening changes
+Known limitations
+Recommended Sprint 19 priorities

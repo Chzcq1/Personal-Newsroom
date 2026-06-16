@@ -24,6 +24,7 @@ import waitlistRouter from "./waitlist.js";
 import signalModeRouter from "./signalMode.js";
 import systemIntelligenceRouter from "./systemIntelligence.js";
 import efficiencyAdminRouter from "./efficiencyAdmin.js";
+import sprint18AdminRouter from "./sprint18Admin.js";
 
 const router: IRouter = Router();
 
@@ -52,5 +53,6 @@ router.use(waitlistRouter);
 router.use(signalModeRouter);
 router.use(systemIntelligenceRouter);
 router.use(efficiencyAdminRouter);
+router.use(sprint18AdminRouter);
 
 export default router;

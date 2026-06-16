@@ -147,3 +147,136 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* ── Sprint 18: Signal Card Animations ─────────────────────── */
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* ── Sprint 18: Urgency Glow Keyframes ──────────────────────── */
+
+@keyframes glow-red {
+  0%, 100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.2); }
+  50%       { box-shadow: 0 0 24px rgba(239, 68, 68, 0.5); }
+}
+
+@keyframes glow-orange {
+  0%, 100% { box-shadow: 0 0 8px rgba(251, 146, 60, 0.15); }
+  50%       { box-shadow: 0 0 16px rgba(251, 146, 60, 0.35); }
+}
+
+.animate-glow-breaking {
+  animation: glow-red 2.5s ease-in-out infinite;
+}
+
+.animate-glow-critical {
+  animation: glow-orange 3s ease-in-out infinite;
+}
+
+/* ── Sprint 18: Dark Mode Contrast Improvements ─────────────── */
+
+/* Ensure text on dark backgrounds meets WCAG AA (4.5:1) */
+.text-readable {
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.text-readable-muted {
+  color: rgba(255, 255, 255, 0.60);
+}
+
+.text-readable-subtle {
+  color: rgba(255, 255, 255, 0.40);
+}
+
+/* ── Sprint 18: Confidence Ribbon Utility ───────────────────── */
+
+.ribbon-left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 8px 0 0 8px;
+}
+
+/* ── Sprint 18: Scrollbar Styling ───────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Sprint 18: Focus Ring Accessibility ────────────────────── */
+
+:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Sprint 18: Thai Typography Enhancement ─────────────────── */
+
+/* Improve Thai character spacing and line height */
+.thai-text {
+  font-family: 'Sarabun', sans-serif;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+}
+
+/* Thai headlines — slightly tighter */
+.thai-headline {
+  font-family: 'Sarabun', sans-serif;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+/* ── Sprint 18: Skeleton Shimmer ────────────────────────────── */
+
+@keyframes shimmer {
+  0%   { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ── Sprint 18: Mobile Touch Targets ────────────────────────── */
+
+@media (max-width: 640px) {
+  /* Ensure minimum 44px touch targets on mobile */
+  button, [role="button"], a {
+    min-height: 40px;
+  }
+
+  /* Improve card padding on mobile */
+  .card-mobile-compact {
+    padding: 12px 14px;
+  }
+}
