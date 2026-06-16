@@ -449,7 +449,7 @@ function FeedbackBar({ item, interests }: { item: FeedItem; interests: string[] 
   }
 
   return (
-    <div className="mt-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="mt-2.5 flex items-center gap-1 transition-opacity">
       <span className="text-[9px] text-white/20 mr-1">Rate:</span>
       <button
         onClick={() => sendFeedback("high_value")}

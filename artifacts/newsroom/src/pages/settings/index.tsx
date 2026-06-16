@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import {
   ArrowLeft, Send, Heart, ChevronRight, Check, X,
-  Clock, Layers, Bug, Brain, Zap, BarChart3,
+  Clock, Layers, Bug, Brain, Zap, BarChart3, Share2, Flame,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -235,6 +235,42 @@ export default function SettingsPage() {
                 <p className="font-medium text-white mb-0.5">Delivery Preview</p>
                 <p className="text-sm text-white/50">
                   Preview morning and evening briefings in Telegram format
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Insight Export */}
+        <Link href="/insights/export">
+          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                <Share2 className="w-4 h-4 text-violet-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-white mb-0.5">Insight Export</p>
+                <p className="text-sm text-white/50">
+                  Generate shareable intelligence cards from any briefing
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Habit Dashboard */}
+        <Link href="/admin/habit">
+          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                <Flame className="w-4 h-4 text-orange-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-white mb-0.5">Habit & Engagement</p>
+                <p className="text-sm text-white/50">
+                  Daily streak, weekly summary, intelligence profile
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />

@@ -15,6 +15,8 @@ import adaptiveRouter from "./adaptive.js";
 import narrativesRouter from "./narratives.js";
 import proactiveIntelligenceRouter from "./proactiveIntelligence.js";
 import adminNarrativesRouter from "./adminNarratives.js";
+import habitRouter from "./habit.js";
+import multimodalRouter from "./multimodal.js";
 
 const router: IRouter = Router();
 
@@ -34,5 +36,7 @@ router.use(adaptiveRouter);
 router.use(narrativesRouter);
 router.use(proactiveIntelligenceRouter);
 router.use(adminNarrativesRouter);
+router.use(habitRouter);
+router.use(multimodalRouter);
 
 export default router;

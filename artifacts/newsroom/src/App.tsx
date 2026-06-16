@@ -23,6 +23,8 @@ import EntitiesDebugPage from "@/pages/debug/entities";
 import NarrativesPage from "@/pages/narratives";
 import AdminNarrativesPage from "@/pages/admin/narratives";
 import FeedEvolutionPage from "@/pages/debug/feed-evolution";
+import InsightExportPage from "@/pages/insights/export";
+import HabitDashboardPage from "@/pages/admin/habit";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,8 @@ function Router() {
       <Route path="/debug/feed-evolution" component={FeedEvolutionPage} />
       <Route path="/narratives" component={NarrativesPage} />
       <Route path="/admin/narratives" component={AdminNarrativesPage} />
+      <Route path="/insights/export" component={InsightExportPage} />
+      <Route path="/admin/habit" component={HabitDashboardPage} />
       <Route component={NotFound} />
     </Switch>
   );

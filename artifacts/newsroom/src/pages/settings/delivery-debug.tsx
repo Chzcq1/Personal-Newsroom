@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Bug, Bot, MessageSquare, ChevronDown, ChevronUp, Send, Sunrise, Sunset, Briefcase, Zap } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Bug, Bot, MessageSquare, ChevronDown, ChevronUp, Send, Sunrise, Sunset, Briefcase, Zap, Smartphone, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getTelegramSettings } from "@/lib/telegramSettings";
@@ -32,6 +32,155 @@ interface DiagnosticReport {
   } | null;
   diagnosis: string[];
   overallOk: boolean;
+}
+
+// ── Telegram Phone Preview — Sprint 13 Task B ────────────────
+
+function PhonePreviewSection() {
+  const [previewType, setPreviewType] = useState<"morning" | "evening">("morning");
+  const [loading, setLoading] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    formatted?: string;
+    articleCount?: number;
+    sourceCount?: number;
+    topicsUsed?: string[];
+    generatedAt?: string;
+  } | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  async function fetchPreview() {
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const res = await fetch(`${BASE}/api/delivery/preview/${previewType}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as typeof previewData & { summary?: string };
+      // The preview endpoint returns summary (raw text), not formatted HTML
+      setPreviewData({ ...data, formatted: data?.summary });
+    } catch (err) {
+      setFetchError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Render Telegram HTML as styled text (simplified — just strip tags for display)
+  function stripTags(html: string): string {
+    return html.replace(/<b>/g, "").replace(/<\/b>/g, "").replace(/<i>/g, "").replace(/<\/i>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  }
+
+  return (
+    <Card className="bg-white/5 border-white/10">
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium text-sm mb-1 flex items-center gap-2">
+              <Smartphone className="w-4 h-4 text-blue-400" />
+              Telegram Phone Preview
+            </p>
+            <p className="text-xs text-white/40">
+              Fetch a formatted briefing without sending to Telegram
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg border border-white/10 overflow-hidden">
+            {(["morning", "evening"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setPreviewType(t)}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  previewType === t
+                    ? "bg-white/10 text-white"
+                    : "text-white/40 hover:text-white/60"
+                }`}
+              >
+                {t === "morning" ? "Morning" : "Evening"}
+              </button>
+            ))}
+          </div>
+          <Button
+            onClick={() => { void fetchPreview(); }}
+            disabled={loading}
+            size="sm"
+            variant="outline"
+            className="border-white/15 text-white hover:bg-white/10 gap-1.5 ml-auto"
+          >
+            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+            {loading ? "Fetching…" : "Preview"}
+          </Button>
+        </div>
+
+        {fetchError && (
+          <p className="text-xs text-red-400">{fetchError}</p>
+        )}
+
+        {previewData && (
+          <>
+            {/* Meta */}
+            <div className="flex items-center gap-3 text-[10px] text-white/30">
+              {previewData.articleCount !== undefined && <span>{previewData.articleCount} articles</span>}
+              {previewData.sourceCount !== undefined && <span>{previewData.sourceCount} sources</span>}
+              {previewData.topicsUsed?.length && <span>{previewData.topicsUsed.join(", ")}</span>}
+            </div>
+
+            {/* Phone mockup */}
+            <div className="flex justify-center">
+              <div className="w-[260px] rounded-[28px] bg-[#1a1a1a] border-2 border-white/10 overflow-hidden shadow-2xl">
+                {/* Phone notch */}
+                <div className="bg-[#1a1a1a] px-4 py-2 flex items-center justify-between border-b border-white/5">
+                  <span className="text-[9px] text-white/40">9:41</span>
+                  <div className="w-12 h-1.5 rounded-full bg-white/20" />
+                  <span className="text-[9px] text-white/40">●●●</span>
+                </div>
+                {/* Telegram header */}
+                <div className="bg-[#212121] px-3 py-2.5 flex items-center gap-2 border-b border-white/5">
+                  <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[8px] text-blue-400 font-bold">IN</span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-white leading-none">INFOX</p>
+                    <p className="text-[8px] text-white/30">Intelligence Bot</p>
+                  </div>
+                </div>
+                {/* Messages */}
+                <div className="bg-[#0e0e0e] px-2 py-3 min-h-[300px] max-h-[400px] overflow-y-auto">
+                  {previewData.formatted ? (
+                    <div className="bg-[#1e2d3d] rounded-lg rounded-tl-none p-2.5 max-w-[90%]">
+                      <pre className="text-[8px] text-white/80 whitespace-pre-wrap leading-relaxed font-sans">
+                        {stripTags(previewData.formatted).slice(0, 800)}
+                        {previewData.formatted.length > 800 ? "\n\n…" : ""}
+                      </pre>
+                      <p className="text-[7px] text-white/20 text-right mt-1.5">
+                        {new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-white/20 text-center mt-8">
+                      No preview available. Check API logs.
+                    </p>
+                  )}
+                </div>
+                {/* Bottom bar */}
+                <div className="bg-[#212121] px-3 py-2 border-t border-white/5">
+                  <div className="w-full h-6 rounded-full bg-white/5 flex items-center px-2">
+                    <span className="text-[8px] text-white/20">Message…</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {!previewData && !loading && (
+          <p className="text-xs text-white/25 text-center py-4">
+            Click Preview to fetch the formatted briefing
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 function StatusIcon({ ok }: { ok: boolean }) {
@@ -543,6 +692,10 @@ export default function DeliveryDebugPage() {
             )}
           </>
         )}
+
+        {/* ── Telegram Phone Preview — Sprint 13 Task B ─────────── */}
+        <PhonePreviewSection />
+
       </main>
     </div>
   );

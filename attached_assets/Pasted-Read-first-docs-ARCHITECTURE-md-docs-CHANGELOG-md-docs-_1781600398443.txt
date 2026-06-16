@@ -1,0 +1,350 @@
+Read first:
+
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/DELIVERY_INFRASTRUCTURE.md
+* docs/TOKEN_ECONOMY.md
+* docs/PROACTIVE_INTELLIGENCE.md
+* docs/VISUAL_GUIDELINES.md
+* docs/AGENT_RULES.md
+
+Preserve all current functionality.
+
+========================================
+SPRINT 13
+EXPERIENCE INTELLIGENCE & VISUAL DELIVERY
+
+Mission:
+
+INFOX must evolve from a powerful intelligence engine into a product users WANT to open every day.
+
+Current state:
+
+* intelligence quality is improving
+* personalization exists
+* Telegram delivery works
+* system architecture is strong
+
+Current weaknesses:
+
+* digest readability still too dense
+* visual storytelling weak
+* emotional engagement low
+* Telegram fatigue risk exists
+* product still feels highly technical
+* no habit-forming interaction loops yet
+
+Goal:
+
+Make INFOX feel:
+premium
+alive
+high-signal
+modern
+personal
+habit-forming
+
+without becoming noisy or social-media-like.
+
+========================================
+TASK A — TELEGRAM VISUAL DIGEST V1
+
+Upgrade Telegram digest rendering.
+
+Requirements:
+
+* clearer hierarchy
+* section spacing
+* bold important entities
+* compact executive cards
+* high-signal formatting
+* mobile-first readability
+
+Implement:
+
+* headline blocks
+* narrative separators
+* short key insight bullets
+* impact highlights
+* momentum labels
+
+Avoid:
+emoji spam
+ASCII clutter
+long paragraph walls
+
+Goal:
+
+Users should understand key developments in under 10 seconds.
+
+========================================
+TASK B — DELIVERY PREVIEW PHONE UI
+
+Current preview feels technical.
+
+Implement realistic phone preview UI.
+
+Requirements:
+
+* Telegram-style phone mockup
+* real digest rendering inside preview
+* morning/evening/intelligence modes
+* responsive rendering
+* dark mode support
+
+Accessible inside:
+/settings/delivery/debug
+
+Goal:
+
+Users visually understand what will arrive on their phone.
+
+========================================
+TASK C — VISUAL STORY CARDS
+
+Upgrade narrative presentation.
+
+Requirements:
+
+* article thumbnails
+* source logos
+* compact image cards
+* narrative hero image support
+* source attribution overlays
+
+Display:
+
+* My Feed
+* Narrative Clusters
+* Intelligence Briefings
+
+Maintain:
+clean newspaper aesthetic.
+
+DO NOT become:
+TikTok-like or noisy.
+
+========================================
+TASK D — READABILITY ENGINE
+
+Implement digest readability optimization.
+
+Requirements:
+
+* paragraph balancing
+* dynamic sentence shortening
+* mobile scan optimization
+* key insight extraction
+* visual density reduction
+
+Goal:
+
+Reduce cognitive fatigue.
+
+========================================
+TASK E — SHAREABLE INSIGHT EXPORTS
+
+Create:
+“Export Insight Card”
+
+Requirements:
+
+Generate beautiful shareable images from:
+
+* Executive Summary
+* Intelligence Briefings
+* Narrative Momentum
+* Key Insight bullets
+
+Design:
+minimal
+premium
+INFOX branded
+
+Export formats:
+
+* portrait story
+* square social card
+
+Goal:
+
+Organic brand growth.
+
+========================================
+TASK F — INTERACTIVE FEEDBACK ACTIONS
+
+Add lightweight briefing feedback.
+
+Inside:
+Telegram previews
+My Feed
+Narrative cards
+
+Actions:
+
+* More like this
+* Less like this
+* High value
+* Irrelevant
+* Follow narrative
+
+Requirements:
+
+* lightweight
+* no social mechanics
+* no comments
+* feed directly into adaptive engine
+
+========================================
+TASK G — SIGNAL-FIRST BRIEFINGS
+
+Current issue:
+
+Some briefings still feel descriptive.
+
+Upgrade prompts:
+
+Every briefing should prioritize:
+
+* what changed
+* why it matters
+* what happens next
+* who is affected
+* opportunity/risk
+
+Reduce:
+generic summarization.
+
+========================================
+TASK H — MULTI-MODAL NEWS PREPARATION
+
+Prepare architecture for:
+
+* audio briefings
+* AI voice summaries
+* podcast-style delivery
+* image-aware intelligence
+* chart rendering
+
+No audio generation yet.
+
+Architecture only.
+
+========================================
+TASK I — SOURCE DEPTH SYSTEM
+
+Current issue:
+
+All sources treated similarly.
+
+Implement source depth tiers.
+
+Examples:
+
+Tier A:
+FT
+Bloomberg
+MIT Tech Review
+
+Tier B:
+TechCrunch
+The Verge
+
+Tier C:
+generic blogs
+
+Use depth tiers in:
+
+* briefing generation
+* signal scoring
+* narrative trust weighting
+
+========================================
+TASK J — DAILY HABIT ENGINE
+
+Create lightweight habit systems.
+
+Examples:
+
+* morning intelligence streak
+* weekly knowledge summary
+* narrative follow tracking
+* evolving intelligence profile
+
+Avoid:
+gamification overload.
+
+Goal:
+
+Increase daily return rate naturally.
+
+========================================
+TASK K — PRE-AUTH USER IDENTITY LAYER
+
+Prepare transition toward real accounts.
+
+Implement anonymous local identity layer:
+
+* persistent local profile id
+* device intelligence state
+* migration-ready memory structure
+
+Goal:
+
+Smooth future transition into:
+
+* login
+* PostgreSQL
+* cloud sync
+* persistent personalization
+
+========================================
+TASK L — DOCUMENTATION
+
+Update:
+
+ARCHITECTURE.md
+CHANGELOG.md
+DELIVERY_INFRASTRUCTURE.md
+TOKEN_ECONOMY.md
+
+Create:
+
+EXPERIENCE_INTELLIGENCE.md
+VISUAL_DELIVERY.md
+
+Document:
+
+visual digest philosophy
+signal-first UX
+readability systems
+shareable intelligence
+future multimodal roadmap
+habit engine strategy
+
+========================================
+SUCCESS CRITERIA
+
+After sprint completion:
+
+* Telegram digest feels premium
+* delivery previews feel realistic
+* briefings become easier to scan
+* visual storytelling exists
+* shareable insight exports work
+* users can shape recommendations faster
+* INFOX feels more alive
+* habit-forming mechanics begin
+* architecture ready for multimodal future
+
+Provide implementation report:
+
+Files created
+Files modified
+Visual rendering decisions
+Readability optimization logic
+Feedback integration design
+Habit engine strategy
+Multimodal preparation architecture
+Known limitations
+Recommended next sprint
