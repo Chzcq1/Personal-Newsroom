@@ -45,8 +45,8 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=23519 BASE_PATH=/ pnpm --filter @workspace/newsroom run dev"
-waitForPort = 23519
+args = "PORT=5000 BASE_PATH=/ pnpm --filter @workspace/newsroom run dev"
+waitForPort = 5000
 
 [agent]
 stack = "BEST_EFFORT_FALLBACK"
@@ -79,6 +79,10 @@ externalPort = 3003
 [[ports]]
 localPort = 23519
 externalPort = 3000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
 
 [userenv]
 
