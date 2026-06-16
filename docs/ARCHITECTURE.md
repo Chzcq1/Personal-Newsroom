@@ -307,3 +307,122 @@ Tracks every request: tokens (estimated at ÷4 chars), cache status, generation 
 ### New interest preset
 1. Add to `INTEREST_DEFINITIONS` in `services/news/feedGenerator.ts`
 2. The constant is also mirrored as `PRESET_INTERESTS` in `lib/interestProfile.ts` (keep in sync)
+
+---
+
+## Sprint 9 — Contextual Intelligence Layer
+
+### Interest Graph Engine (`services/intelligence/interestGraph.ts`)
+
+Replaces the flat keyword-list approach with a weighted entity relationship graph.
+
+**Structure:**
+- Each interest node defines `coreKeywords` and `related[]` edges with weights 0.0–1.0
+- Graph traversal: BFS up to 2 hops with weight decay (×0.7 hop1, ×0.4 hop2)
+- `expandInterests(interests[])` → `Map<entityId, ExpandedEntity>`
+- `getGraphScore(text, expandedMap)` → `{ score: 0–1.0, matchedEntities: string[] }`
+
+**Example (Bitcoin):**
+```
+Bitcoin (1.0)
+  → BitcoinETF (0.9 × 0.7 = 0.63)
+  → BlackRock  (0.7 × 0.7 = 0.49)
+  → SEC        (0.6 × 0.7 = 0.42)
+  → Coinbase   (0.7 × 0.7 = 0.49)
+```
+
+### Semantic Relevance Classifier (`services/intelligence/relevanceClassifier.ts`)
+
+Classifies each article into 4 tiers, combining 4 scoring factors:
+
+| Factor | Weight | Source |
+|---|---|---|
+| Direct keyword score | up to 80 | INTEREST_DEFINITIONS keywords |
+| Graph proximity score | up to 60 | expandInterests() × 0.6 scale |
+| Entity overlap score | up to 30 | Capitalized entity extraction |
+| Source modifier | up to 15 | Source tier (A/B) |
+
+**Classification thresholds:** Direct ≥60 · Contextual ≥30 · Weak ≥10 · Incidental <10
+
+### Narrative Clustering Engine (`services/intelligence/narrativeCluster.ts`)
+
+Groups articles covering the same story using Jaccard similarity on title tokens.
+
+- Tokenises titles (4+ char words, stop words removed)
+- Greedy single-linkage clustering at threshold 0.25
+- Generates narrative headline from most-common terms
+- Extracts dominant entity via capitalized word frequency
+- Marks `isMultiSource: true` when cluster has ≥2 unique sources
+
+### Entity Memory System (`services/intelligence/entityMemory.ts`)
+
+Persistent (in-memory, 7-day TTL) entity tracking layer.
+
+- Auto-detects entities in articles using INTEREST_GRAPH keywords
+- Tracks: mentions per 24h/7d, trend direction (rising/stable/declining)
+- Trend calculation: ratio of last-24h mentions to prior-24h mentions
+- `getRisingEntities(n)` returns most active trending entities
+- Migration path: in-memory → PostgreSQL when user auth is added
+
+### Personal Context Layer (`services/intelligence/personalContext.ts`)
+
+Derives a bias vector per-request from:
+1. Interest graph expansion (entity weights)
+2. Taste learning signals (opens/saves/skips from client)
+3. Rising entity boost (from entityMemory)
+4. Watchlist override (highest weight, explicit)
+
+`applyContextBoost(baseScore, matchedEntities, watchlist, context)` applies the bias to final scores.
+
+### Quality Filters (`routes/feed.ts` — `isLowQuality()`)
+
+Articles are suppressed if they match any of:
+- `relevanceClass === "incidental"` AND `signalScore < 15`
+- Clickbait title patterns (regex list)
+- Word count < 8 AND incidental relevance
+- No description AND not direct relevance
+
+### Taste Learning (`lib/tasteLearning.ts` — frontend)
+
+LocalStorage event log tracking article interactions:
+- `type: "open" | "save" | "skip" | "complete_read"`
+- Derives `TasteSignal` with `openedInterests`, `savedInterests`, `skippedInterests`, `strongInterests`
+- Sent to API with each feed request as `tasteSignal`
+- Backend uses to boost/downweight entity scores in personalContext
+
+### Feed Quality Metrics (`services/analytics/feedQualityMetrics.ts`)
+
+In-memory ring buffer (500 records) tracking per-request quality:
+- Relevance accuracy (% direct + contextual)
+- Clustering rate (% articles in a narrative cluster)
+- Feed diversity (unique sources / total)
+- Filtered count, avg combined score
+- Quality trend detection (improving/stable/degrading)
+
+Accessible at `GET /api/admin/feed-quality` and `/admin/feed-quality` dashboard.
+
+### Multi-Agent Architecture Preparation (`services/intelligence/multiAgentPrep.ts`)
+
+Architecture-only module defining contracts for future specialist agents:
+- `AgentRole`: bull | bear | macro | tech | policy
+- `prepareClusterForAgents()` — distributes NarrativeCluster to relevant agents
+- `isAgentRelevant()` — avoids activating all 5 agents for every cluster
+- `AGENT_SYSTEM_PROMPTS` — role-specific system prompt fragments
+
+### New Routes (Sprint 9)
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/debug/relevance` | GET | Intelligence system overview |
+| `/api/debug/relevance/test` | POST | Test relevance scoring for any text |
+| `/api/debug/graph/:interest` | GET | Visualize interest graph expansion |
+| `/api/debug/entities` | GET | Full entity memory snapshot |
+| `/api/admin/feed-quality` | GET | Feed quality metrics dashboard |
+
+### New Pages (Sprint 9)
+
+| Page | Route | Description |
+|---|---|---|
+| Relevance Inspector | `/debug/relevance` | Graph nodes, entity memory, live test |
+| Feed Quality | `/admin/feed-quality` | Quality metrics, trend, request log |
+

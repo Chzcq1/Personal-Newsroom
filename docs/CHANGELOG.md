@@ -591,3 +591,130 @@
 - `docs/ARCHITECTURE.md` (created)
 - `docs/AGENT_RULES.md` (created)
 - `docs/CHANGELOG.md` (created)
+
+---
+
+## [2026-06-16] — Sprint 9: Contextual Intelligence Layer
+
+**Mission:** Evolve from keyword-based personalization to semantic relevance, narrative clustering, interest graphs, and entity memory.
+
+### Intelligence Services Created
+
+**`services/intelligence/interestGraph.ts`** (Task A)
+- 40+ entity nodes in weighted relationship graph
+- BFS traversal up to 2 hops with decay (×0.7, ×0.4)
+- `expandInterests()` → full entity expansion map
+- `getGraphScore()` → 0.0–1.0 graph-aware relevance
+
+**`services/intelligence/relevanceClassifier.ts`** (Task B)
+- 4-tier classification: direct / contextual / weak / incidental
+- Combines: keyword score + graph proximity + entity overlap + source modifier
+- Recency multiplier: ≤2h = ×1.3, ≤6h = ×1.2
+- `classifyRelevance()` returns full `RelevanceClassification` with explanation
+
+**`services/intelligence/narrativeCluster.ts`** (Task C)
+- Jaccard similarity clustering on title word sets (threshold 0.25)
+- Generates narrative headlines from most-common shared terms
+- Marks `isMultiSource` for clusters with ≥2 unique sources
+- `agentContext` block: future multi-agent compatibility metadata
+
+**`services/intelligence/tasteLearning.ts` (frontend)** (Task D)
+- LocalStorage event log: opens, saves, skips, complete_reads
+- `deriveTasteSignal()` → sent to API per feed request
+- `getTasteStats()` → user-readable learning stats
+- Strong interests: opened ≥3 times in 30 days
+
+**`services/intelligence/entityMemory.ts`** (Task G)
+- Auto-detects entities in articles via INTEREST_GRAPH keywords
+- Tracks 24h/7d mention counts with trend direction
+- Rising entity detection: last24h/prior24h ratio ≥1.5
+- In-memory store, 7-day TTL, 15 developments per entity
+
+**`services/intelligence/personalContext.ts`** (Task H)
+- Derives per-request bias vector from graph + taste + entity memory + watchlist
+- `applyContextBoost()` applies weighted boost to article scores
+- Rising entities receive +8 additional boost
+- Watchlist always scores 1.0 weight
+
+**`services/analytics/feedQualityMetrics.ts`** (Task J)
+- Ring buffer (500 records) per-request quality tracking
+- Quality trend detection comparing recent vs older accuracy
+- `getFeedQualityStats()` includes qualityTrend: improving/stable/degrading
+
+**`services/intelligence/multiAgentPrep.ts`** (Task K)
+- Architecture-only: no active agent processing
+- Defines `AgentRole`, `AgentAnalysisRequest`, `AgentAnalysisResult` types
+- `AGENT_SYSTEM_PROMPTS` — role-specific system prompt fragments for Bull/Bear/Macro/Tech/Policy
+- `isAgentRelevant()` — prevents unnecessary agent activation per cluster type
+
+### Routes Created
+
+**`routes/debug.ts`** (Task E)
+- `GET /api/debug/relevance` — system overview
+- `POST /api/debug/relevance/test` — live relevance testing
+- `GET /api/debug/graph/:interest` — graph expansion visualizer
+- `GET /api/debug/entities` — entity memory snapshot
+
+**`routes/feedQuality.ts`** (Task J)
+- `GET /api/admin/feed-quality` — quality metrics snapshot
+
+### Routes Updated
+
+**`routes/feed.ts`** — Full Sprint 9 intelligence pipeline:
+- Builds PersonalContextProfile per request
+- Classifies all articles with RelevanceClassifier
+- Records entity mentions to EntityMemory
+- Applies quality filters (clickbait, incidental+low-signal, no-description)
+- Clusters narratives and annotates articles with cluster info
+- Builds intelligent feed explanations (Task I)
+- Records FeedQualityMetrics per response
+- New response fields: `narrativeClusters`, `filteredArticles`, `contextSummary`, `feedQuality`, `expandedEntities`
+
+**`routes/index.ts`** — Added debugRouter, feedQualityRouter
+
+### Frontend Updated
+
+**`pages/my-feed.tsx`** (Tasks C, D, F, I, J)
+- Shows RelevanceClassBadge (Direct/Contextual/Weak) per article
+- Narrative Clusters section above individual stories
+- Feed Quality Bar (accuracy%, clustering rate, filtered count)
+- Personal context summary displayed under interests
+- Graph-matched entities shown for contextual articles
+- Sends `tasteSignal` with every feed request
+- Records opens via IntersectionObserver for taste learning
+- Summary bar shows direct/contextual counts separately
+- Links to /debug/relevance and /admin/feed-quality
+
+**`pages/debug/relevance.tsx`** (Task E)
+- 4-tab inspector: Overview, Test, Graph, Memory
+- Live relevance testing with score breakdown bars
+- Interest graph visualizer with hop coloring
+- Entity memory table with trend indicators
+- Stat cards: graph nodes, tracked entities, active stories
+
+**`pages/admin/feed-quality.tsx`** (Task J)
+- Real-time quality stats grid (accuracy, clustering, diversity, filtered)
+- Relevance class distribution bars
+- Per-request log with color-coded class breakdown
+- Auto-refreshes every 30 seconds
+- Quality trend badge (Improving/Stable/Degrading)
+
+**`App.tsx`** — Added routes for /debug/relevance, /admin/feed-quality
+
+### Architecture Decisions
+
+1. **Graph over keywords:** All entity expansion via INTEREST_GRAPH prevents accidental keyword pollution from unrelated contexts.
+2. **4-tier classification:** Enables quality filtering (incidental removed) without discarding edge-relevant stories.
+3. **Narrative clustering is additive:** Clusters displayed above the feed, not replacing individual articles, preserving user agency.
+4. **Taste learning is transparent:** User can see what's being tracked via getTasteStats(); no hidden manipulation.
+5. **Entity memory is stateless per-request:** Server derives context fresh each call from the in-memory store — no session coupling.
+6. **Multi-agent prep is interface-only:** No agent code runs. The architecture is forward-compatible without incurring cost or latency.
+
+### Known Limitations
+
+- Interest graph is static (hardcoded in interestGraph.ts). Dynamic expansion from user feedback is Sprint 10+ work.
+- Narrative clustering uses Jaccard on title tokens — not semantic embeddings. Will miss paraphrase clusters.
+- Entity memory is in-memory: resets on server restart. Persistence requires PostgreSQL integration (post-auth sprint).
+- Taste learning is client-only: resets if user clears localStorage. No sync between devices.
+- Quality filters use heuristics (clickbait regex, word count). False positives possible for short-form legitimate news.
+

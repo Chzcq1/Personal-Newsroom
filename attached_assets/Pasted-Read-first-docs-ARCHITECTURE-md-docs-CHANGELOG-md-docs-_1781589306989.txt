@@ -1,0 +1,346 @@
+Read first:
+
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/AGENT_ARCHITECTURE.md
+* docs/VISUAL_GUIDELINES.md
+* docs/SYSTEM_STATUS.md
+* docs/AGENT_RULES.md
+
+Preserve all current functionality.
+
+========================================
+SPRINT 9
+CONTEXTUAL INTELLIGENCE LAYER
+
+Mission:
+
+INFOX must evolve from keyword-based personalization into contextual intelligence.
+
+Current problem:
+
+Users still receive irrelevant stories because the system matches keywords instead of understanding semantic relevance and narrative context.
+
+Goal:
+
+The feed should feel:
+
+“INFOX understands what I actually care about.”
+
+NOT:
+
+“It found a matching word.”
+
+========================================
+TASK A — INTEREST GRAPH ENGINE
+
+Current system:
+
+Interest = simple keyword list.
+
+Upgrade to:
+
+Interest Graph system.
+
+Example:
+
+BTC
+→ Bitcoin ETF
+→ BlackRock
+→ Coinbase
+→ SEC
+→ Mining
+→ Stablecoins
+→ Ethereum ecosystem
+
+Requirements:
+
+* create interestGraph.ts
+* define related entities
+* support weighted relationships
+* allow future dynamic expansion
+* graph should influence feed ranking
+
+Users interested in BTC should receive:
+
+high-value Bitcoin ecosystem developments
+
+NOT generic “crypto mentions.”
+
+========================================
+TASK B — SEMANTIC RELEVANCE CLASSIFIER
+
+Current issue:
+
+Keyword matching causes noisy feeds.
+
+Implement semantic relevance scoring.
+
+Every article should be classified as:
+
+* Directly relevant
+* Contextually relevant
+* Weakly related
+* Incidental mention
+
+Example:
+
+“Bitcoin ETF inflows surge”
+
+→ Direct relevance
+
+“Startup funded by crypto investors”
+
+→ Weak relevance
+
+Requirements:
+
+* create relevanceClassifier.ts
+* combine:
+    keyword score
+    entity overlap
+    topic similarity
+    narrative relevance
+* expose relevance score in debug mode
+
+Feed ranking must prioritize:
+
+direct relevance first.
+
+========================================
+TASK C — NARRATIVE CLUSTERING ENGINE
+
+Current issue:
+
+Multiple articles repeat the same narrative.
+
+Implement narrative clustering.
+
+Examples:
+
+10 ETF articles
+→ grouped into:
+“Bitcoin ETF momentum accelerating”
+
+Requirements:
+
+* cluster similar stories
+* generate narrative headlines
+* merge duplicate coverage
+* preserve source diversity
+
+Feed should display:
+
+Narrative
+↓
+Supporting sources
+↓
+Why it matters
+
+instead of endless repeated headlines.
+
+========================================
+TASK D — USER TASTE LEARNING
+
+Current issue:
+
+Feed personalization is static.
+
+Implement adaptive taste learning.
+
+Track:
+
+* opened articles
+* saved briefings
+* ignored topics
+* reading completion
+* recurring engagement patterns
+
+Requirements:
+
+* local-only for now
+* transparent logic
+* no dark patterns
+* no addictive optimization
+
+The system should gradually learn:
+
+what the user truly values.
+
+========================================
+TASK E — RELEVANCE DEBUG PANEL
+
+Create developer-grade relevance inspector.
+
+For every feed item show:
+
+* why selected
+* matched interests
+* relevance classification
+* narrative cluster
+* signal score
+* ignored competing stories
+
+Accessible in:
+
+/debug/relevance
+
+Goal:
+
+Understand WHY bad recommendations happen.
+
+========================================
+TASK F — FEED QUALITY FILTERS
+
+Implement stricter quality filtering.
+
+Suppress:
+
+* low-information articles
+* short recycled stories
+* clickbait titles
+* weakly-related mentions
+* duplicate narratives
+
+Prioritize:
+
+* multi-source confirmation
+* high-quality analysis
+* high-signal developments
+* ecosystem-level impact
+
+========================================
+TASK G — ENTITY MEMORY SYSTEM
+
+Create persistent entity tracking.
+
+Examples:
+
+Nvidia
+OpenAI
+Tesla
+Bitcoin
+TSMC
+Federal Reserve
+
+Track:
+
+* recurring narratives
+* trend direction
+* recent developments
+* related entities
+
+This memory layer should improve:
+
+continuity and context awareness.
+
+========================================
+TASK H — PERSONAL CONTEXT LAYER
+
+Build user context profile.
+
+Example:
+
+User focuses on:
+
+* macro
+* AI infrastructure
+* Bitcoin ETF
+* semiconductors
+
+System should bias feed generation accordingly.
+
+Not just keyword matching.
+
+========================================
+TASK I — FEED EXPLANATION REDESIGN
+
+Current explanations are too shallow.
+
+Upgrade feed explanations.
+
+Examples:
+
+“High relevance to your Bitcoin ETF watchlist”
+
+“Continuing Nvidia AI infrastructure narrative”
+
+“Multiple Tier A financial sources confirmed this development”
+
+Users should trust WHY content appears.
+
+========================================
+TASK J — FEED QUALITY METRICS
+
+Create internal quality metrics.
+
+Track:
+
+* relevance accuracy
+* duplicate suppression rate
+* narrative compression ratio
+* average signal score
+* feed diversity
+* ignored irrelevant stories
+
+Display in:
+
+/admin/feed-quality
+
+========================================
+TASK K — PREPARATION FOR MULTI-AGENT ANALYSIS
+
+Prepare narrative architecture for future:
+
+Bull Agent
+Bear Agent
+Macro Agent
+Tech Agent
+Policy Agent
+
+No UI yet.
+
+Architecture only.
+
+Narrative clusters should become future shared context between agents.
+
+========================================
+TASK L — DOCUMENTATION
+
+Update:
+
+ARCHITECTURE.md
+CHANGELOG.md
+AGENT_ARCHITECTURE.md
+
+Add:
+
+Interest Graph
+Semantic Relevance
+Narrative Clustering
+Taste Learning
+Entity Memory
+Feed Quality System
+
+========================================
+SUCCESS CRITERIA
+
+After sprint completion:
+
+* BTC users receive mostly Bitcoin-relevant intelligence
+* weak keyword matches are heavily reduced
+* repeated stories become narrative clusters
+* feed explanations feel intelligent
+* personalization adapts over time
+* narrative continuity improves significantly
+* feed quality noticeably increases
+
+Provide implementation report:
+
+Files created
+Files modified
+Relevance architecture decisions
+Narrative clustering logic
+Known limitations
+Future multi-agent readiness
+Recommended next sprint

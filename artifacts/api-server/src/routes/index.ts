@@ -9,6 +9,8 @@ import feedRouter from "./feed.js";
 import alertsRouter from "./alerts.js";
 import analyticsRouter from "./analytics.js";
 import preferencesRouter from "./preferences.js";
+import debugRouter from "./debug.js";
+import feedQualityRouter from "./feedQuality.js";
 
 const router: IRouter = Router();
 
@@ -22,5 +24,7 @@ router.use(feedRouter);
 router.use(alertsRouter);
 router.use(analyticsRouter);
 router.use(preferencesRouter);
+router.use(debugRouter);
+router.use(feedQualityRouter);
 
 export default router;

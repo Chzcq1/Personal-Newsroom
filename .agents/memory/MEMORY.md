@@ -7,3 +7,4 @@
 - [Sprint 6 Architecture](sprint6-architecture.md) — custom topics (in-memory, kebab-case IDs, no override of built-ins), source registry (Tier A/B/C), digest memory (ring buffer), personality types in promptBuilder
 - [Sprint 7 Visual Layer](sprint7-visual.md) — Bloomberg/FT aesthetic; sourceBranding.ts brand map; readingProgress.ts hook; DENSITY_KEY=ai-newsroom:feed-density; telegramPost() helper in telegram.ts routes
 - [Sprint 8 Intelligence Layer](sprint8-intelligence.md) — signal scoring, story evolution, alert engine, delivery metrics, executive mode; all new services are in-memory ring buffers
+- [Sprint 9 Contextual Intelligence](sprint9-intelligence.md) — interest graph (47 nodes, 2-hop BFS), 4-tier relevance classifier, narrative clustering (Jaccard), entity memory, taste learning (localStorage), multiAgentPrep contracts

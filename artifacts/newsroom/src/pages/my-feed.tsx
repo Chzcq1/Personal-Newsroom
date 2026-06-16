@@ -1,8 +1,15 @@
 // ============================================================
-// MY FEED — Sprint 7 redesign + Sprint 8 Task F (reading memory)
-// Bloomberg/FT minimal intelligence aesthetic
-// Sprint 8 Task F: "Hide read" filter so already-read stories
-//   can be collapsed, showing only fresh signal.
+// MY FEED — Sprint 9 Contextual Intelligence Layer
+//
+// Upgraded from Sprint 8:
+//   • Sends tasteSignal to API (taste learning — Task D)
+//   • Displays relevance class badges (direct/contextual/weak)
+//   • Shows narrative clusters above individual stories (Task C)
+//   • Feed quality bar (accuracy%, clustering rate — Task J)
+//   • Rich selection reasons (Task I)
+//   • Records article opens/skips for adaptive learning (Task D)
+//   • Graph-matched entities shown in detail mode (Task A+B)
+//   • Context summary from personal context layer (Task H)
 // ============================================================
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -18,11 +25,15 @@ import {
   AlignLeft,
   Eye,
   EyeOff,
+  Layers,
+  GitBranch,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInterests } from "@/lib/interestProfile";
 import { getSourceBrand } from "@/lib/sourceBranding";
 import { useReadingProgress } from "@/lib/readingProgress";
+import { recordTasteEvent, deriveTasteSignal } from "@/lib/tasteLearning";
 import { format, formatDistanceToNow } from "date-fns";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -38,20 +49,51 @@ interface FeedItem {
   source: string | null;
   topicId: string;
   relevanceScore: number;
+  relevanceClass: "direct" | "contextual" | "weak" | "incidental";
   matchedInterests: string[];
   matchedWatchlist: string[];
+  graphMatchedEntities: string[];
   selectionReason: string;
   recencyLabel?: string;
   sourceTier?: string;
   imageUrl?: string | null;
+  signalScore: number;
+  narrativeClusterId: string | null;
+  narrativeClusterHeadline: string | null;
+  debug?: {
+    directKeywordScore: number;
+    graphScore: number;
+    entityOverlapScore: number;
+    sourceModifier: number;
+  };
+}
+
+interface NarrativeClusterItem {
+  id: string;
+  headline: string;
+  theme: string;
+  dominantEntity: string | null;
+  articles: Array<{ url: string; title: string; source: string | null }>;
+  sourceCount: number;
+  avgCombinedScore: number;
+  isMultiSource: boolean;
 }
 
 interface FeedResponse {
   items: FeedItem[];
+  narrativeClusters: NarrativeClusterItem[];
   totalArticles: number;
+  filteredArticles: number;
   topicsSearched: string[];
   interestsApplied: string[];
   watchlistApplied: string[];
+  contextSummary: string;
+  feedQuality: {
+    relevanceAccuracy: number;
+    clusteringRate: number;
+    directCount: number;
+    contextualCount: number;
+  };
   generatedAt: string;
 }
 
@@ -60,27 +102,27 @@ type Density = "compact" | "detailed";
 // ── Helpers ───────────────────────────────────────────────────
 
 const TOPIC_LABELS: Record<string, string> = {
-  ai: "AI",
-  technology: "Tech",
-  stocks: "Markets",
-  economy: "Economy",
-  politics: "Politics",
+  ai: "AI", technology: "Tech", stocks: "Markets",
+  economy: "Economy", politics: "Politics",
+};
+
+const CLASS_STYLES: Record<FeedItem["relevanceClass"], { label: string; className: string }> = {
+  direct:      { label: "Direct",      className: "text-emerald-400 border-emerald-400/30" },
+  contextual:  { label: "Contextual",  className: "text-sky-400 border-sky-400/30" },
+  weak:        { label: "Weak",        className: "text-white/30 border-white/15" },
+  incidental:  { label: "Incidental",  className: "text-white/20 border-white/10" },
 };
 
 function readingTime(text: string | null | undefined): string | null {
   if (!text) return null;
   const words = text.trim().split(/\s+/).length;
-  const mins = Math.max(1, Math.ceil(words / 200));
-  return `${mins} min`;
+  return `${Math.max(1, Math.ceil(words / 200))} min`;
 }
 
 function formatAge(pubDate: string | null): string {
   if (!pubDate) return "";
-  try {
-    return formatDistanceToNow(new Date(pubDate), { addSuffix: true });
-  } catch {
-    return format(new Date(pubDate), "MMM d, HH:mm");
-  }
+  try { return formatDistanceToNow(new Date(pubDate), { addSuffix: true }); }
+  catch { return format(new Date(pubDate), "MMM d, HH:mm"); }
 }
 
 // ── Sub-components ────────────────────────────────────────────
@@ -116,6 +158,16 @@ function RecencyBadge({ label }: { label?: string }) {
   );
 }
 
+function RelevanceClassBadge({ cls }: { cls: FeedItem["relevanceClass"] }) {
+  const s = CLASS_STYLES[cls];
+  if (cls === "incidental") return null;
+  return (
+    <span className={`text-[9px] font-medium border px-1 py-0.5 rounded leading-none ${s.className}`}>
+      {s.label}
+    </span>
+  );
+}
+
 function TopicTag({ topicId }: { topicId: string }) {
   const label = TOPIC_LABELS[topicId] ?? topicId;
   return (
@@ -125,42 +177,90 @@ function TopicTag({ topicId }: { topicId: string }) {
   );
 }
 
-// ── Thumbnail (Tasks B, I, J) ─────────────────────────────────
-
 function ArticleThumbnail({ imageUrl, title }: { imageUrl: string | null | undefined; title: string }) {
   const [failed, setFailed] = useState(false);
-
   if (!imageUrl || failed) return null;
-
   return (
     <div className="flex-shrink-0 w-20 h-14 rounded overflow-hidden bg-white/5">
-      <img
-        src={imageUrl}
-        alt={title}
-        loading="lazy"
-        className="w-full h-full object-cover"
-        onError={() => setFailed(true)}
-      />
+      <img src={imageUrl} alt={title} loading="lazy"
+        className="w-full h-full object-cover" onError={() => setFailed(true)} />
     </div>
   );
 }
 
-// ── FeedCard (Tasks C, D, E, F, H) ───────────────────────────
+// ── Narrative Cluster Card ────────────────────────────────────
+
+function NarrativeClusterCard({ cluster }: { cluster: NarrativeClusterItem }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-lg border border-sky-500/20 bg-sky-500/5 p-3.5">
+      <div className="flex items-start gap-2.5">
+        <div className="flex-shrink-0 mt-0.5">
+          <Layers className="w-3.5 h-3.5 text-sky-400/70" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-[12px] font-semibold text-white/80 leading-snug line-clamp-2">
+              {cluster.headline}
+            </p>
+            <span className="flex-shrink-0 text-[9px] text-sky-400/70 border border-sky-400/20 px-1.5 py-0.5 rounded leading-none whitespace-nowrap">
+              {cluster.articles.length} stories
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            {cluster.dominantEntity && (
+              <span className="text-[10px] text-white/40">{cluster.dominantEntity}</span>
+            )}
+            {cluster.isMultiSource && (
+              <span className="flex items-center gap-0.5 text-[9px] text-emerald-400/60">
+                <GitBranch className="w-2.5 h-2.5" />
+                {cluster.sourceCount} sources
+              </span>
+            )}
+            {cluster.theme && (
+              <span className="text-[9px] text-white/25 truncate">{cluster.theme}</span>
+            )}
+          </div>
+
+          {expanded && (
+            <ul className="mt-2.5 space-y-1.5 border-t border-white/5 pt-2.5">
+              {cluster.articles.map((a) => (
+                <li key={a.url} className="flex items-start gap-2">
+                  <span className="flex-shrink-0 w-1 h-1 rounded-full bg-white/25 mt-1.5" />
+                  <a href={a.url} target="_blank" rel="noopener noreferrer"
+                    className="text-[11px] text-white/55 hover:text-white/80 transition-colors leading-snug line-clamp-1">
+                    {a.title}
+                    {a.source && <span className="text-white/30 ml-1.5">— {a.source}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button onClick={() => setExpanded((v) => !v)}
+            className="mt-1.5 text-[10px] text-sky-400/50 hover:text-sky-400/80 transition-colors">
+            {expanded ? "Collapse" : `Show ${cluster.articles.length} articles →`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── FeedCard ──────────────────────────────────────────────────
 
 function FeedCard({
-  item,
-  density,
-  markRead,
-  isRead,
+  item, density, markRead, isRead, interests,
 }: {
   item: FeedItem;
   density: Density;
   markRead: (url: string) => void;
   isRead: boolean;
+  interests: string[];
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // IntersectionObserver — mark as read when 50% visible (Task F)
   useEffect(() => {
     const el = cardRef.current;
     if (!el || isRead) return;
@@ -169,41 +269,38 @@ function FeedCard({
         if (entries[0].isIntersecting) {
           markRead(item.url);
           observer.disconnect();
+          // Taste learning: record implicit read (scrolled into view)
+          if (item.matchedInterests[0]) {
+            recordTasteEvent({ type: "open", interest: item.matchedInterests[0] ?? null, topicId: item.topicId, url: item.url });
+          }
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [item.url, isRead, markRead]);
+  }, [item.url, isRead, markRead, item.matchedInterests, item.topicId]);
 
   const rt = readingTime(item.description);
 
   if (density === "compact") {
     return (
-      <div
-        ref={cardRef}
+      <div ref={cardRef}
         className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-colors cursor-default ${
-          isRead
-            ? "border-white/5 hover:border-white/8 bg-white/[0.02]"
-            : "border-white/8 hover:border-white/15 bg-white/[0.03] hover:bg-white/[0.05]"
-        }`}
-      >
+          isRead ? "border-white/5 hover:border-white/8 bg-white/[0.02]" : "border-white/8 hover:border-white/15 bg-white/[0.03] hover:bg-white/[0.05]"
+        }`}>
         <SourceAvatar source={item.source} />
         <div className="flex-1 min-w-0">
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <a href={item.url} target="_blank" rel="noopener noreferrer"
             className={`block text-[13px] font-medium leading-snug truncate transition-colors hover:text-white ${
               isRead ? "text-white/50" : "text-white/90"
-            }`}
-          >
+            }`}>
             {item.title}
           </a>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <RecencyBadge label={item.recencyLabel} />
+          <RelevanceClassBadge cls={item.relevanceClass} />
           <span className="text-[10px] text-white/30 whitespace-nowrap hidden sm:block">
             {item.pubDate ? formatAge(item.pubDate) : ""}
           </span>
@@ -215,14 +312,10 @@ function FeedCard({
 
   // Detailed mode
   return (
-    <div
-      ref={cardRef}
+    <div ref={cardRef}
       className={`rounded-lg border p-4 transition-colors group ${
-        isRead
-          ? "border-white/5 hover:border-white/10 bg-white/[0.02]"
-          : "border-white/8 hover:border-white/15 bg-white/[0.03] hover:bg-white/[0.05]"
-      }`}
-    >
+        isRead ? "border-white/5 hover:border-white/10 bg-white/[0.02]" : "border-white/8 hover:border-white/15 bg-white/[0.03] hover:bg-white/[0.05]"
+      }`}>
       {/* Meta row */}
       <div className="flex items-center gap-2 mb-2.5">
         <SourceAvatar source={item.source} />
@@ -244,18 +337,15 @@ function FeedCard({
           )}
         </div>
         <TierBadge tier={item.sourceTier} />
+        <RelevanceClassBadge cls={item.relevanceClass} />
       </div>
 
       {/* Title + image */}
       <div className="flex items-start gap-3 mb-2">
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
+        <a href={item.url} target="_blank" rel="noopener noreferrer"
           className={`flex-1 text-[13px] font-semibold leading-snug transition-colors hover:text-white line-clamp-2 ${
             isRead ? "text-white/55" : "text-white/90"
-          }`}
-        >
+          }`}>
           {item.title}
         </a>
         <ArticleThumbnail imageUrl={item.imageUrl} title={item.title} />
@@ -266,6 +356,28 @@ function FeedCard({
         <p className="text-[12px] text-white/50 leading-relaxed line-clamp-2 mb-2.5">
           {item.description}
         </p>
+      )}
+
+      {/* Graph entities (if contextual match) */}
+      {item.graphMatchedEntities.length > 0 && item.relevanceClass === "contextual" && (
+        <div className="flex items-center gap-1.5 mb-2">
+          <GitBranch className="w-3 h-3 text-sky-400/50 flex-shrink-0" />
+          <span className="text-[10px] text-sky-400/50">
+            Via: {item.graphMatchedEntities.slice(0, 3).join(", ")}
+          </span>
+        </div>
+      )}
+
+      {/* Narrative cluster badge */}
+      {item.narrativeClusterHeadline && (
+        <div className="flex items-center gap-1.5 mb-2">
+          <Layers className="w-3 h-3 text-sky-400/40 flex-shrink-0" />
+          <span className="text-[10px] text-white/30 truncate max-w-[300px]">
+            {item.narrativeClusterHeadline.length > 60
+              ? item.narrativeClusterHeadline.slice(0, 60) + "…"
+              : item.narrativeClusterHeadline}
+          </span>
+        </div>
       )}
 
       {/* Footer row */}
@@ -279,12 +391,8 @@ function FeedCard({
             </span>
           )}
         </div>
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-shrink-0 inline-flex items-center gap-1 text-[11px] text-white/40 hover:text-white/70 transition-colors"
-        >
+        <a href={item.url} target="_blank" rel="noopener noreferrer"
+          className="flex-shrink-0 inline-flex items-center gap-1 text-[11px] text-white/40 hover:text-white/70 transition-colors">
           Read
           <ExternalLink className="w-3 h-3" />
         </a>
@@ -293,7 +401,7 @@ function FeedCard({
   );
 }
 
-// ── Feed section skeleton ─────────────────────────────────────
+// ── Skeleton ──────────────────────────────────────────────────
 
 function SkeletonCard({ density }: { density: Density }) {
   if (density === "compact") {
@@ -318,6 +426,39 @@ function SkeletonCard({ density }: { density: Density }) {
   );
 }
 
+// ── Feed Quality Bar ──────────────────────────────────────────
+
+function FeedQualityBar({ fq, filtered }: {
+  fq: FeedResponse["feedQuality"];
+  filtered: number;
+}) {
+  return (
+    <div className="flex items-center gap-3 text-[10px] text-white/25 flex-wrap">
+      <span className="flex items-center gap-1">
+        <TrendingUp className="w-3 h-3" />
+        <span className={fq.relevanceAccuracy >= 70 ? "text-emerald-400/60" : "text-white/35"}>
+          {fq.relevanceAccuracy}% relevant
+        </span>
+      </span>
+      {fq.clusteringRate > 0 && (
+        <>
+          <span>·</span>
+          <span className="flex items-center gap-1">
+            <Layers className="w-3 h-3" />
+            {fq.clusteringRate}% clustered
+          </span>
+        </>
+      )}
+      {filtered > 0 && (
+        <>
+          <span>·</span>
+          <span>{filtered} low-quality filtered</span>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────
 
 export default function MyFeedPage() {
@@ -327,12 +468,9 @@ export default function MyFeedPage() {
     try {
       const stored = localStorage.getItem(DENSITY_KEY);
       return stored === "compact" || stored === "detailed" ? stored : "detailed";
-    } catch {
-      return "detailed";
-    }
+    } catch { return "detailed"; }
   });
 
-  // Sprint 8 Task F — hide-read filter
   const [hideRead, setHideRead] = useState(() => {
     try { return localStorage.getItem("ai-newsroom:hide-read") === "true"; } catch { return false; }
   });
@@ -340,18 +478,22 @@ export default function MyFeedPage() {
   const handleHideReadToggle = useCallback(() => {
     setHideRead((prev) => {
       const next = !prev;
-      try { localStorage.setItem("ai-newsroom:hide-read", String(next)); } catch { /* ignore */ }
+      try { localStorage.setItem("ai-newsroom:hide-read", String(next)); } catch { /**/ }
       return next;
     });
   }, []);
 
   const [watchlistInput, setWatchlistInput] = useState("");
   const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [showClusters, setShowClusters] = useState(true);
 
   const handleDensityToggle = useCallback((next: Density) => {
     setDensity(next);
-    try { localStorage.setItem(DENSITY_KEY, next); } catch { /* ignore */ }
+    try { localStorage.setItem(DENSITY_KEY, next); } catch { /**/ }
   }, []);
+
+  // Derive taste signal (from localStorage events)
+  const tasteSignal = deriveTasteSignal();
 
   const { data, isLoading, error, refetch, isFetching } = useQuery<FeedResponse>({
     queryKey: ["my-feed", interests, watchlist],
@@ -359,7 +501,7 @@ export default function MyFeedPage() {
       const res = await fetch(`${BASE}/api/feed/personal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interests, watchlist }),
+        body: JSON.stringify({ interests, watchlist, tasteSignal }),
       });
       if (!res.ok) throw new Error("Failed to fetch personal feed");
       return res.json();
@@ -387,8 +529,22 @@ export default function MyFeedPage() {
     ? (data?.items.filter((i) => readUrls.has(i.url)).length ?? 0)
     : 0;
 
-  const matchedItems = visibleItems.filter((i) => i.relevanceScore > 0);
-  const otherItems = visibleItems.filter((i) => i.relevanceScore === 0);
+  // Sprint 9 — segment by relevance class
+  const directItems = visibleItems.filter((i) => i.relevanceClass === "direct");
+  const contextualItems = visibleItems.filter((i) => i.relevanceClass === "contextual");
+  const weakItems = visibleItems.filter((i) => i.relevanceClass === "weak");
+  const incidentalItems = visibleItems.filter((i) => i.relevanceClass === "incidental");
+
+  // Legacy fallback: if no relevanceClass, use score-based split
+  const hasClassification = visibleItems.some((i) => i.relevanceClass);
+  const matchedItems = hasClassification
+    ? [...directItems, ...contextualItems]
+    : visibleItems.filter((i) => i.relevanceScore > 0);
+  const otherItems = hasClassification
+    ? [...weakItems, ...incidentalItems]
+    : visibleItems.filter((i) => i.relevanceScore === 0);
+
+  const narrativeClusters = (data?.narrativeClusters ?? []).filter((c) => c.isMultiSource);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -408,23 +564,16 @@ export default function MyFeedPage() {
                 ? <span>{interests.length} interest{interests.length !== 1 ? "s" : ""}</span>
                 : <span>All topics</span>}
               {data && readCount > 0 && (
-                <>
-                  <span>·</span>
-                  <span>{readCount} of {allUrls.length} read</span>
-                </>
+                <><span>·</span><span>{readCount} of {allUrls.length} read</span></>
               )}
               {data && (
-                <>
-                  <span>·</span>
-                  <span>{format(new Date(data.generatedAt), "HH:mm")}</span>
-                </>
+                <><span>·</span><span>{format(new Date(data.generatedAt), "HH:mm")}</span></>
               )}
             </div>
           </div>
 
           {/* Controls */}
           <div className="flex items-center gap-1.5">
-            {/* Hide read toggle — Sprint 8 Task F */}
             <button
               onClick={handleHideReadToggle}
               className={`p-1.5 rounded-md border transition-colors ${
@@ -432,37 +581,25 @@ export default function MyFeedPage() {
                   ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
                   : "border-white/10 text-white/40 hover:text-white/60"
               }`}
-              title={hideRead ? "Showing unread only" : "Show unread only"}
-            >
+              title={hideRead ? "Showing unread only" : "Show unread only"}>
               {hideRead ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
 
-            {/* Density toggle */}
             <div className="flex rounded-md border border-white/10 overflow-hidden">
-              <button
-                onClick={() => handleDensityToggle("compact")}
+              <button onClick={() => handleDensityToggle("compact")}
                 className={`p-1.5 transition-colors ${density === "compact" ? "bg-white/15 text-white" : "text-white/40 hover:text-white/60"}`}
-                title="Compact view"
-              >
+                title="Compact view">
                 <LayoutList className="w-3.5 h-3.5" />
               </button>
-              <button
-                onClick={() => handleDensityToggle("detailed")}
+              <button onClick={() => handleDensityToggle("detailed")}
                 className={`p-1.5 transition-colors ${density === "detailed" ? "bg-white/15 text-white" : "text-white/40 hover:text-white/60"}`}
-                title="Detailed view"
-              >
+                title="Detailed view">
                 <AlignLeft className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="text-white/50 hover:text-white px-2"
-              title="Refresh"
-            >
+            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}
+              className="text-white/50 hover:text-white px-2" title="Refresh">
               <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             </Button>
           </div>
@@ -488,6 +625,11 @@ export default function MyFeedPage() {
             </div>
           )}
 
+          {/* Personal context summary */}
+          {data?.contextSummary && (
+            <p className="text-[10px] text-white/25 italic">{data.contextSummary}</p>
+          )}
+
           {interests.length === 0 && !isLoading && (
             <div className="flex items-start gap-2.5 p-3 bg-amber-500/8 border border-amber-500/20 rounded-lg">
               <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
@@ -502,21 +644,14 @@ export default function MyFeedPage() {
 
           {/* Watchlist */}
           <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={watchlistInput}
+            <input type="text" value={watchlistInput}
               onChange={(e) => setWatchlistInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddWatchlist()}
               placeholder="Track a keyword or company…"
               className="flex-1 text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-white/25 focus:outline-none focus:border-white/25 transition-colors"
             />
-            <Button
-              size="sm"
-              onClick={handleAddWatchlist}
-              disabled={!watchlistInput.trim()}
-              variant="outline"
-              className="border-white/15 text-white/70 hover:text-white hover:bg-white/8 px-3 text-xs"
-            >
+            <Button size="sm" onClick={handleAddWatchlist} disabled={!watchlistInput.trim()}
+              variant="outline" className="border-white/15 text-white/70 hover:text-white hover:bg-white/8 px-3 text-xs">
               Add
             </Button>
           </div>
@@ -524,17 +659,11 @@ export default function MyFeedPage() {
           {watchlist.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {watchlist.map((term) => (
-                <span
-                  key={term}
-                  className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded-full"
-                >
+                <span key={term}
+                  className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 bg-amber-500/10 text-amber-300 border border-amber-500/20 rounded-full">
                   {term}
-                  <button
-                    onClick={() => setWatchlist((v) => v.filter((t) => t !== term))}
-                    className="hover:text-amber-100 ml-0.5 leading-none"
-                  >
-                    ×
-                  </button>
+                  <button onClick={() => setWatchlist((v) => v.filter((t) => t !== term))}
+                    className="hover:text-amber-100 ml-0.5 leading-none">×</button>
                 </span>
               ))}
             </div>
@@ -565,22 +694,49 @@ export default function MyFeedPage() {
         {data && !isLoading && (
           <>
             {/* Summary row */}
-            <div className="flex items-center justify-between text-[11px] text-white/35">
-              <span>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-[11px] text-white/35">
                 {data.totalArticles} articles
-                {matchedItems.length > 0 && (
-                  <> · <span className="text-white/55">{matchedItems.length} matched</span></>
+                {directItems.length > 0 && (
+                  <> · <span className="text-emerald-400/60">{directItems.length} direct</span></>
                 )}
-                {data.topicsSearched.length > 0 && (
-                  <> · {data.topicsSearched.length} topics</>
+                {contextualItems.length > 0 && (
+                  <> · <span className="text-sky-400/60">{contextualItems.length} contextual</span></>
                 )}
+                {data.topicsSearched.length > 0 && <> · {data.topicsSearched.length} topics</>}
                 {hideRead && hiddenReadCount > 0 && (
                   <> · <span className="text-amber-400/70">{hiddenReadCount} read hidden</span></>
                 )}
               </span>
+              {data.feedQuality && (
+                <FeedQualityBar fq={data.feedQuality} filtered={data.filteredArticles ?? 0} />
+              )}
             </div>
 
-            {/* Matched items */}
+            {/* Narrative Clusters */}
+            {narrativeClusters.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-2.5">
+                  <p className="text-[10px] font-semibold text-sky-400/60 uppercase tracking-widest flex items-center gap-1.5">
+                    <Layers className="w-3 h-3" />
+                    Narrative Clusters
+                  </p>
+                  <button onClick={() => setShowClusters((v) => !v)}
+                    className="text-[10px] text-white/25 hover:text-white/45 transition-colors">
+                    {showClusters ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {showClusters && (
+                  <div className="space-y-2.5">
+                    {narrativeClusters.slice(0, 5).map((c) => (
+                      <NarrativeClusterCard key={c.id} cluster={c} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Direct matches */}
             {matchedItems.length > 0 && (
               <section>
                 <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-2.5">
@@ -588,13 +744,8 @@ export default function MyFeedPage() {
                 </p>
                 <div className={density === "compact" ? "space-y-1.5" : "space-y-3"}>
                   {matchedItems.map((item) => (
-                    <FeedCard
-                      key={item.url}
-                      item={item}
-                      density={density}
-                      markRead={markRead}
-                      isRead={readUrls.has(item.url)}
-                    />
+                    <FeedCard key={item.url} item={item} density={density}
+                      markRead={markRead} isRead={readUrls.has(item.url)} interests={interests} />
                   ))}
                 </div>
               </section>
@@ -608,13 +759,8 @@ export default function MyFeedPage() {
                 </p>
                 <div className={density === "compact" ? "space-y-1.5" : "space-y-3"}>
                   {otherItems.map((item) => (
-                    <FeedCard
-                      key={item.url}
-                      item={item}
-                      density={density}
-                      markRead={markRead}
-                      isRead={readUrls.has(item.url)}
-                    />
+                    <FeedCard key={item.url} item={item} density={density}
+                      markRead={markRead} isRead={readUrls.has(item.url)} interests={interests} />
                   ))}
                 </div>
               </section>
@@ -628,6 +774,20 @@ export default function MyFeedPage() {
                 <p className="text-xs text-white/20 mt-1">Try refreshing or adjusting your interests.</p>
               </div>
             )}
+
+            {/* Debug link */}
+            <div className="pt-2 border-t border-white/5 flex items-center gap-3">
+              <Link href="/debug/relevance">
+                <span className="text-[10px] text-white/20 hover:text-white/40 transition-colors cursor-pointer">
+                  Relevance Inspector →
+                </span>
+              </Link>
+              <Link href="/admin/feed-quality">
+                <span className="text-[10px] text-white/20 hover:text-white/40 transition-colors cursor-pointer">
+                  Feed Quality →
+                </span>
+              </Link>
+            </div>
           </>
         )}
       </main>

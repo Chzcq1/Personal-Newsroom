@@ -196,3 +196,84 @@ Critical signals (e.g. AlertAgent fires on a market crash) bypass normal queuing
 ---
 
 *Last updated: Sprint 8 — June 2026*
+
+---
+
+## Sprint 9 Update — Narrative Clusters as Agent Context
+
+### What Changed
+
+Sprint 9 introduces narrative clusters as a first-class data structure (`NarrativeCluster` in `narrativeCluster.ts`). These clusters are the foundational unit for future multi-agent analysis.
+
+### Why Clusters as Agent Context
+
+Each agent needs shared situational awareness about what stories are trending. Rather than sending raw articles to every agent (expensive, redundant), the orchestrator will send pre-built clusters. Each cluster represents a confirmed narrative — multiple sources covering the same development.
+
+This mirrors how human analysts work: they first cluster incoming intelligence into "themes," then each analyst reasons from their domain lens.
+
+### Multi-Agent Contract (Sprint 9 Architecture Layer)
+
+`services/intelligence/multiAgentPrep.ts` defines the interface layer:
+
+```typescript
+AgentRole = "bull" | "bear" | "macro" | "tech" | "policy"
+
+AgentAnalysisRequest = {
+  clusterId: string
+  cluster: NarrativeCluster
+  userInterests: string[]
+  role: AgentRole
+  maxTokens?: number
+}
+
+AgentAnalysisResult = {
+  clusterId: string
+  role: AgentRole
+  perspective: string
+  signals: string[]
+  recommendation: "watch" | "act" | "ignore"
+  confidence: number   // 0–1
+}
+```
+
+### Agent Activation Logic
+
+Not every cluster warrants all 5 agents. `isAgentRelevant(role, cluster)` gates activation:
+
+| Agent | Activation Condition |
+|---|---|
+| Bull / Bear | `isMultiSource === true` only |
+| Macro | Cluster contains: rate, inflation, gdp, fed, treasury, yield |
+| Tech | Cluster contains: nvidia, openai, chip, gpu, model, launch, ai |
+| Policy | Cluster contains: regulation, sec, congress, ban, law, ruling |
+
+### Orchestrator (Not Yet Implemented)
+
+When agents are activated, the orchestrator will:
+1. Call `clusterNarratives()` to get current clusters
+2. Call `prepareClusterForAgents(cluster, interests)` to get agent requests
+3. For each relevant agent: call `summaryService` with role-specific system prompt from `AGENT_SYSTEM_PROMPTS`
+4. Merge agent results into a unified perspective response
+5. Surface to user via `/api/news/summarize` multi-agent mode
+
+### Upgrade Path from Current Architecture
+
+```
+CURRENT (Sprint 9):
+  RSS → collect → classify → cluster → rank → feed
+
+NEXT (Sprint 10 — Agent Layer):
+  RSS → collect → classify → cluster
+                                ↓
+              [Bull] [Bear] [Macro] [Tech] [Policy]
+                                ↓
+                       merge + synthesize
+                                ↓
+                    user receives multi-perspective brief
+```
+
+The `cluster.agentContext.canBeSharedBetweenAgents` flag marks clusters that are high-quality enough (multi-source, high score) to route to the agent layer. Single-source or low-score clusters bypass agents entirely.
+
+---
+
+*Last updated: Sprint 9 — June 2026*
