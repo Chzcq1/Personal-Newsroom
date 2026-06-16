@@ -23,6 +23,7 @@ import knowledgeCompoundRouter from "./knowledgeCompound.js";
 import waitlistRouter from "./waitlist.js";
 import signalModeRouter from "./signalMode.js";
 import systemIntelligenceRouter from "./systemIntelligence.js";
+import efficiencyAdminRouter from "./efficiencyAdmin.js";
 
 const router: IRouter = Router();
 
@@ -50,5 +51,6 @@ router.use(knowledgeCompoundRouter);
 router.use(waitlistRouter);
 router.use(signalModeRouter);
 router.use(systemIntelligenceRouter);
+router.use(efficiencyAdminRouter);
 
 export default router;

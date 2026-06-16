@@ -124,6 +124,12 @@ export default function SystemIntelligencePage() {
               {data.signalMode.label}
             </span>
           )}
+          <Link href="/admin/efficiency">
+            <Button variant="ghost" size="sm" className="text-white/40 hover:text-white text-xs gap-1.5">
+              <Zap className="w-3.5 h-3.5" />
+              Efficiency
+            </Button>
+          </Link>
         </div>
       </header>
 

@@ -32,6 +32,7 @@ import EconomicsPage from "@/pages/admin/economics";
 import OnboardingPage from "@/pages/onboarding";
 import SignalModePage from "@/pages/settings/signal-mode";
 import SystemIntelligencePage from "@/pages/admin/system-intelligence";
+import EfficiencyAdminPage from "@/pages/admin/efficiency";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,7 @@ function Router() {
       <Route path="/admin/habit" component={HabitDashboardPage} />
       <Route path="/settings/signal-mode" component={SignalModePage} />
       <Route path="/admin/system-intelligence" component={SystemIntelligencePage} />
+      <Route path="/admin/efficiency" component={EfficiencyAdminPage} />
       <Route component={NotFound} />
     </Switch>
   );

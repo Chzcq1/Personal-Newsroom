@@ -1110,6 +1110,91 @@
 
 ---
 
+## Sprint 17 — Intelligence Efficiency & Source Expansion (June 2026)
+
+**Theme**: Transform from a smart intelligence platform into efficient, scalable intelligence infrastructure — token economy optimization, AI cost control, source expansion, intelligence caching, runtime independence, and signal ingestion architecture.
+
+### New Features
+
+#### 3-Layer AI Pipeline (Task A + J + B)
+- **AI Pipeline** — routes intelligence work through cheap (Layer 1), mid (Layer 2), and premium (Layer 3) tiers
+- **Degradation Engine** — 5-level system (0=normal → 4=emergency) with auto-evaluation + manual override
+- **Token Governor** — hard-limit budget enforcement with per-feature tracking and pressure levels
+- Auto-triggers degradation when token budget pressure reaches 75%/85%/95%/98%
+
+#### Intelligence Cache (Task C)
+- 5 typed cache categories: `briefing`, `narrative`, `insights`, `signal_score`, `source_health`
+- TTL-based with stale-with-grace (15-min grace window to prevent stampedes)
+- LRU eviction at 500 entries
+- Hit ratio analytics + admin visibility
+
+#### Source Expansion Foundation (Tasks D + E + F)
+- **Unified Source Contract** (`ISourceAdapter`) — all sources produce `NormalizedArticle` with confidence metadata
+- **Reddit Adapter** — monitors 10 subreddits (investing, MachineLearning, CryptoCurrency, geopolitics, etc.) via public JSON API (no auth needed)
+- **Twitter/X Adapter** — architecture ready; enabled only when `TWITTER_BEARER_TOKEN` is set; includes trend acceleration detection
+
+#### Compression Engine V2 (Task G)
+- 5 delivery tiers: `full` → `standard` → `compact` → `minimal` → `emergency`
+- Profile auto-selected based on degradation level + token pressure + signal mode
+- Information-density compression algorithm (scores sentences by numbers, action verbs, entities)
+- Signal density analytics: `retainedRatio` shows what fraction of content was preserved
+
+#### Runtime Separation (Task H)
+- Full classification of all INFOX services by persistence requirement and sleep safety
+- P0 services at risk during Replit sleep: Delivery Scheduler + Narrative Memory
+- 3-phase migration plan: QStash scheduler → PostgreSQL checkpoints → Redis cache
+- `recordRuntimePing()` detects sleep gaps
+
+#### User-Owned AI Provider Model (Task M)
+- Session tier abstraction: anonymous / free / standard / premium
+- Per-tier entitlements: daily token budgets, feature flags, BYOK capability
+- `checkEntitlement()` — feature gate for premium insights, Telegram, scheduling, custom topics
+- Architecture ready for Stripe-backed tier upgrades (Sprint 18+)
+
+### New Admin API Routes (all under `/api/admin/`)
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/admin/degradation` | GET | Degradation level + history |
+| `/admin/degradation` | POST | Set level manually (0–4) |
+| `/admin/degradation` | DELETE | Clear manual override |
+| `/admin/token-governor` | GET | Budget snapshot + pressure level |
+| `/admin/intelligence-cache` | GET | Cache stats + entries |
+| `/admin/sources` | GET | Source adapter health checks |
+| `/admin/runtime` | GET | Runtime stats + migration plan |
+| `/admin/pipeline` | GET | AI pipeline stats + session info |
+
+### New Documentation
+- `docs/AI_PIPELINE.md` — 3-layer pipeline architecture
+- `docs/TOKEN_GOVERNOR.md` — budget enforcement + pressure levels
+- `docs/SOURCE_EXPANSION.md` — Reddit/Twitter adapter architecture
+- `docs/DEGRADATION_STRATEGY.md` — 5-level degradation system
+- `docs/CACHING_STRATEGY.md` — Intelligence cache design
+- `docs/RUNTIME_SEPARATION.md` — Sleep safety classification + migration plan
+- `docs/COMPRESSION_ENGINE.md` — Adaptive delivery compression
+- `docs/USER_AI_PROVIDER_MODEL.md` — Session tiers + BYOK architecture
+
+### Files Added
+**New services:**
+- `artifacts/api-server/src/services/intelligence/aiPipeline.ts`
+- `artifacts/api-server/src/services/intelligence/degradationEngine.ts`
+- `artifacts/api-server/src/services/intelligence/tokenGovernor.ts`
+- `artifacts/api-server/src/services/cache/intelligenceCache.ts`
+- `artifacts/api-server/src/services/sources/sourceAdapter.ts`
+- `artifacts/api-server/src/services/sources/redditSourceAdapter.ts`
+- `artifacts/api-server/src/services/sources/twitterSignalAdapter.ts`
+- `artifacts/api-server/src/services/delivery/compressionEngine.ts`
+- `artifacts/api-server/src/services/runtime/runtimeSeparation.ts`
+- `artifacts/api-server/src/services/auth/userSession.ts`
+
+**New routes:**
+- `artifacts/api-server/src/routes/efficiencyAdmin.ts`
+
+**Updated:**
+- `artifacts/api-server/src/routes/index.ts` — added efficiencyAdminRouter
+
+---
+
 ## Sprint 16 — Strategic Intelligence Layer (June 2026)
 
 **Theme**: Transform from "AI summarises news" → "AI helps users understand what matters and what to do next."

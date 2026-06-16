@@ -722,3 +722,64 @@ Sprint 16 transforms the system from "AI summarises news" into "AI helps users u
 2. **Confidence scoring is additive**: Each signal class has a minimum floor score; sources, freshness, and entity confirmation add points above the floor. This prevents gaming and ensures a minimum bar per class.
 3. **Strategic context is non-blocking**: If the AI provider fails to generate strategic context, the briefing degrades to V2 format — no silent crash, no blank section.
 4. **System intelligence dashboard is read-only**: `/api/admin/system-intelligence` is a GET-only aggregation endpoint. It reads from multiple in-memory stores and returns a JSON snapshot. No mutations.
+
+---
+
+## Sprint 17 — Intelligence Efficiency & Source Expansion
+
+Sprint 17 transforms the infrastructure layer: token budgets enforce themselves, sources grow beyond RSS, cached intelligence avoids re-computation, and the platform is classified for always-on migration.
+
+### New Services
+
+| Service | Path | Responsibility |
+|---------|------|----------------|
+| AI Pipeline | `services/intelligence/aiPipeline.ts` | 3-layer routing: cheap → mid → premium; escalation gates |
+| Degradation Engine | `services/intelligence/degradationEngine.ts` | 5-level quality degradation; auto-evaluation every 15 min |
+| Token Governor | `services/intelligence/tokenGovernor.ts` | Hard-limit budget enforcement; per-feature tracking; pressure levels |
+| Intelligence Cache | `services/cache/intelligenceCache.ts` | 5-type TTL cache; stale-with-grace; LRU eviction at 500 entries |
+| Source Adapter | `services/sources/sourceAdapter.ts` | `ISourceAdapter` contract; unified `NormalizedArticle`; aggregate fetch |
+| Reddit Adapter | `services/sources/redditSourceAdapter.ts` | 10 subreddits; public JSON API; engagement normalisation |
+| Twitter Adapter | `services/sources/twitterSignalAdapter.ts` | Architecture-ready; acceleration detection; requires bearer token |
+| Compression Engine | `services/delivery/compressionEngine.ts` | 5-tier adaptive delivery; density scoring; profile auto-selection |
+| Runtime Separation | `services/runtime/runtimeSeparation.ts` | Sleep safety classification; P0/P1/P2 migration plan |
+| User Session | `services/auth/userSession.ts` | 4-tier entitlements; BYOK architecture; feature gating |
+
+### New API Routes
+
+All routes are under `/api/admin/` and registered via `routes/efficiencyAdmin.ts`:
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/admin/degradation` | GET | Snapshot + history |
+| `/admin/degradation` | POST | Set level 0–4 |
+| `/admin/degradation` | DELETE | Clear manual override |
+| `/admin/token-governor` | GET | Budget snapshot |
+| `/admin/intelligence-cache` | GET | Stats + entries |
+| `/admin/sources` | GET | Adapter health |
+| `/admin/runtime` | GET | Sleep safety + migration plan |
+| `/admin/pipeline` | GET | Pipeline stats |
+
+### Architecture Decisions (Sprint 17)
+
+1. **Degradation beats everything**: The degradation level is the highest-priority signal in both `compressionEngine.ts` (profile selection) and `aiPipeline.ts` (tier gating). All other pressure signals (token pressure, signal mode) are checked only if degradation level is 0.
+
+2. **Source adapters are fault-isolated**: Every `ISourceAdapter.fetch()` must never throw — it must catch all errors internally and return `[]`. The `fetchFromAllSources()` aggregator uses `Promise.allSettled()` so one failing adapter cannot block others.
+
+3. **Twitter is architecture-gated**: `TwitterSignalAdapter.isEnabled` is `false` unless `TWITTER_BEARER_TOKEN` is set. The adapter returns empty arrays when disabled. This keeps the pipeline architecture tested without requiring a paid Twitter API subscription.
+
+4. **Cache key discipline**: Intelligence cache keys are always objects (`{ type, topic, mode, lang }`), never raw strings. The `buildCacheKey()` helper normalises them. This prevents key collisions between language variants.
+
+5. **User sessions are stateless-first**: The session store is in-memory (no DB required) and sessions are keyed on client UUID from `localStorage`. Sessions survive page reloads but not server restarts — acceptable for Sprint 17; Sprint 18+ will add DB-backed sessions.
+
+6. **Compression profile is chosen once per request**: `selectCompressionProfile()` is called once at the start of each `/api/news/summarize` request and the profile is passed to all downstream services (article slicing, summary trimming, section inclusion). This prevents inconsistent profiles within a single briefing.
+
+### New Documentation
+
+- `docs/AI_PIPELINE.md`
+- `docs/TOKEN_GOVERNOR.md`
+- `docs/SOURCE_EXPANSION.md`
+- `docs/DEGRADATION_STRATEGY.md`
+- `docs/CACHING_STRATEGY.md`
+- `docs/RUNTIME_SEPARATION.md`
+- `docs/COMPRESSION_ENGINE.md`
+- `docs/USER_AI_PROVIDER_MODEL.md`

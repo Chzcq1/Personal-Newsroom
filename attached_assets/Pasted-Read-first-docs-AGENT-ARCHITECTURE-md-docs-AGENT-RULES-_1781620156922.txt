@@ -1,0 +1,628 @@
+Read first:
+
+* docs/AGENT_ARCHITECTURE.md
+* docs/AGENT_RULES.md
+* docs/ALPHA_GATING.md
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/CLOSED_ALPHA_PLAN.md
+* docs/DELIVERY_INFRASTRUCTURE.md
+* docs/DEPLOYMENT_GUIDE.md
+* docs/DEPLOYMENT_READINESS.md
+* docs/IDENTITY_FOUNDATION.md
+* docs/INTELLIGENCE_MEMORY.md
+* docs/KNOWLEDGE_COMPOUND.md
+* docs/LOGIN_PREPARATION.md
+* docs/PERSISTENT_INFRASTRUCTURE.md
+* docs/PRECISION_INTELLIGENCE.md
+* docs/PROACTIVE_INTELLIGENCE.md
+* docs/PROJECT_VISION.md
+* docs/SIGNAL_MODES.md
+* docs/STRATEGIC_INTELLIGENCE.md
+* docs/CONFIDENCE_SYSTEM.md
+* docs/ACTIONABLE_INTELLIGENCE.md
+* docs/SYSTEM_STATUS.md
+* docs/TELEGRAM_FORMATTING.md
+* docs/TOKEN_ECONOMY.md
+* docs/VISUAL_GUIDELINES.md
+
+Follow all architecture and safety rules strictly.
+
+Do NOT overwrite existing systems unless required.
+Do NOT break any current APIs, intelligence layers, queues, or delivery pipelines.
+Preserve all current functionality.
+
+Before modifying files:
+
+1. Explain what will change
+2. Explain why
+3. Explain expected system impact
+4. Explain token-cost impact
+
+========================================
+SPRINT 17
+INTELLIGENCE EFFICIENCY & SOURCE EXPANSION
+
+Mission:
+
+INFOX must evolve from:
+
+"Smart intelligence platform"
+
+into:
+
+"Efficient scalable intelligence infrastructure."
+
+Sprint 17 focuses on:
+
+* token economy optimization
+* AI cost control
+* source expansion
+* intelligence compression
+* runtime independence
+* real-world scalability
+* signal ingestion architecture
+
+This sprint is about:
+making INFOX sustainable.
+
+========================================
+CORE PROBLEM
+
+Current intelligence quality is improving rapidly.
+
+But:
+
+* token usage is growing too fast
+* AI calls are becoming layered
+* runtime dependency still exists
+* source coverage is still limited
+* RSS alone is no longer enough
+* expensive summaries are repeated unnecessarily
+
+If this architecture scales without optimization:
+
+* costs explode
+* latency increases
+* Replit instability becomes dangerous
+* monetization becomes impossible
+
+Goal:
+
+Create:
+an intelligent low-cost scalable pipeline.
+
+========================================
+SPRINT 17 OBJECTIVE
+
+Transform INFOX into:
+
+A scalable AI intelligence engine
+capable of serving real users efficiently.
+
+========================================
+TASK A — MULTI-LAYER AI PIPELINE
+
+Create:
+services/intelligence/aiPipeline.ts
+
+Requirements:
+
+Separate intelligence generation into layers:
+
+LAYER 1 — Cheap Processing
+* dedupe
+* entity extraction
+* source scoring
+* trend scoring
+* classification
+* clustering
+
+NO premium LLM calls allowed.
+
+Use:
+rules
+heuristics
+lightweight NLP
+cached embeddings
+keyword scoring
+
+----------------------------------------
+
+LAYER 2 — Mid Intelligence
+Use:
+small/cheap models only
+
+Tasks:
+* narrative labeling
+* topic grouping
+* relevance explanation
+* contextual summaries
+
+----------------------------------------
+
+LAYER 3 — Premium Intelligence
+Use expensive models ONLY for:
+
+* critical narratives
+* executive briefings
+* strategic insights
+* actionable intelligence
+* top-ranked signals
+
+Requirements:
+
+* escalation gating
+* confidence-aware escalation
+* token budget awareness
+* mode-aware escalation
+
+Goal:
+
+Reduce unnecessary premium token usage.
+
+========================================
+TASK B — TOKEN BUDGET ENGINE V2
+
+Upgrade:
+TOKEN_ECONOMY.md
+
+Create:
+services/intelligence/tokenGovernor.ts
+
+Requirements:
+
+Track:
+
+* tokens per user
+* tokens per feature
+* tokens per narrative
+* tokens per delivery
+* tokens per signal mode
+
+Add hard limits:
+
+* daily budget
+* session budget
+* emergency degradation mode
+
+System behavior:
+
+If token pressure rises:
+
+* compress summaries
+* reduce article count
+* disable expensive insights
+* skip low-priority narratives
+* downgrade model tier
+
+Goal:
+
+INFOX survives high usage safely.
+
+========================================
+TASK C — INTELLIGENCE CACHE SYSTEM
+
+Current issue:
+
+same narratives are regenerated repeatedly.
+
+Create:
+
+services/cache/
+services/intelligence/intelligenceCache.ts
+
+Requirements:
+
+Cache:
+
+* narrative summaries
+* confidence analysis
+* strategic context
+* action insights
+* Telegram-ready briefings
+
+Cache keys should include:
+
+* signal mode
+* personality
+* language
+* maturity level
+
+Add:
+
+* TTL policies
+* stale refresh support
+* cache hit analytics
+
+Goal:
+
+Avoid regenerating intelligence unnecessarily.
+
+========================================
+TASK D — SOURCE EXPANSION FOUNDATION
+
+Prepare ingestion architecture for:
+
+* X/Twitter
+* Reddit
+* YouTube transcripts
+* TikTok metadata
+* Facebook public pages
+* research papers
+* SEC/company filings
+
+Create:
+services/sources/
+
+Requirements:
+
+* unified source contract
+* source adapters
+* normalized ingestion structure
+* source confidence metadata
+* source latency tracking
+
+Do NOT fully scrape platforms yet.
+
+Prepare:
+architecture + adapters + mock ingestion pipeline.
+
+========================================
+TASK E — REDDIT SIGNAL INGESTION V1
+
+Create:
+redditSourceAdapter.ts
+
+Requirements:
+
+Support:
+
+* subreddit monitoring
+* post scoring
+* engagement signals
+* early trend extraction
+* crypto/AI/news filtering
+
+Track:
+
+* velocity
+* repetition
+* sentiment hints
+* emerging entity spikes
+
+Focus:
+
+* AI
+* Crypto
+* Markets
+* Geopolitics
+* Technology
+
+Goal:
+
+Detect narratives before RSS catches up.
+
+========================================
+TASK F — X/TWITTER SIGNAL PREP
+
+Create:
+twitterSignalAdapter.ts
+
+Requirements:
+
+Prepare architecture for:
+
+* trending entities
+* post clustering
+* influential account monitoring
+* signal acceleration
+* narrative emergence
+
+Do NOT scrape aggressively.
+
+Focus:
+future compatibility + architecture only.
+
+========================================
+TASK G — DELIVERY COMPRESSION ENGINE
+
+Create:
+services/delivery/compressionEngine.ts
+
+Requirements:
+
+Telegram delivery should adapt dynamically.
+
+Examples:
+
+HIGH TOKEN PRESSURE:
+* shorter summaries
+* fewer narratives
+* compressed strategic insights
+
+LOW TOKEN PRESSURE:
+* full premium briefing
+
+Add:
+
+* adaptive read length
+* dynamic narrative count
+* signal-density scoring
+
+Goal:
+
+Maintain value while reducing AI cost.
+
+========================================
+TASK H — EXTERNAL RUNTIME PREPARATION
+
+Current issue:
+
+INFOX still depends too heavily on Replit runtime.
+
+Create:
+services/runtime/
+
+Requirements:
+
+Prepare architecture for:
+
+* external workers
+* external scheduler
+* stateless API mode
+* external cron systems
+* multi-instance safety
+
+Document:
+
+* what services require persistence
+* what breaks during runtime sleep
+* worker ownership model
+
+Goal:
+
+Prepare migration off Replit.
+
+========================================
+TASK I — SOURCE RELIABILITY SCORING
+
+Create:
+services/intelligence/sourceReliability.ts
+
+Requirements:
+
+Track:
+
+* source consistency
+* source latency
+* false-signal frequency
+* narrative quality
+* confirmation history
+
+Assign:
+
+* reliability score
+* trust tier
+* volatility score
+
+Use in:
+
+* confidence scoring
+* priority hierarchy
+* signal mode engine
+
+Goal:
+
+Improve:
+signal trust quality over time.
+
+========================================
+TASK J — INTELLIGENCE DEGRADATION MODES
+
+Create:
+services/intelligence/degradationEngine.ts
+
+Requirements:
+
+If systems become overloaded:
+
+LEVEL 1
+* reduce narrative depth
+
+LEVEL 2
+* disable expensive insights
+
+LEVEL 3
+* delivery-only mode
+
+LEVEL 4
+* emergency minimal summaries
+
+Requirements:
+
+* automatic activation
+* admin visibility
+* graceful degradation
+
+Goal:
+
+INFOX should never hard-fail from usage spikes.
+
+========================================
+TASK K — FEED PRECISION V3
+
+Upgrade:
+interestGraph.ts
+relevanceClassifier.ts
+priorityHierarchy.ts
+
+Problem:
+Broad feeds still include weak/noisy articles.
+
+Requirements:
+
+* stronger contextual filtering
+* topic affinity weighting
+* anti-noise suppression
+* stronger watchlist relevance
+* source-aware filtering
+
+Special focus:
+
+Crypto:
+* remove influencer spam
+* remove low-trust speculative content
+* require narrative confirmation for hype stories
+
+Goal:
+
+Feed becomes:
+high-signal by default.
+
+========================================
+TASK L — VISUAL SIGNAL COMPRESSION
+
+Upgrade feed UX.
+
+Requirements:
+
+* more compact intelligence cards
+* scan-first hierarchy
+* adaptive density
+* expandable insights
+* reduced cognitive overload
+
+Add:
+
+* quick-glance mode
+* executive compact mode
+* signal heat indicators
+
+Goal:
+
+Users understand:
+the world state in under 30 seconds.
+
+========================================
+TASK M — PRE-AUTH PREPARATION
+
+Prepare architecture for Sprint 18–19.
+
+Do NOT implement auth/payments yet.
+
+Prepare:
+
+* user session abstraction
+* usage tracking
+* entitlement architecture
+* trial gating
+* API ownership mapping
+* AI provider abstraction
+
+Critical requirement:
+
+System must support:
+
+USER-PROVIDED AI TOKENS
+
+Future users should be able to:
+
+* connect their own GitHub Models token
+* connect OpenAI keys
+* connect Anthropic keys
+
+Benefits:
+
+* drastically reduces INFOX infrastructure cost
+* enables hybrid monetization
+* reduces platform burn rate
+
+Prepare:
+provider ownership architecture.
+
+========================================
+TASK N — OBSERVABILITY V2
+
+Upgrade:
+/admin/system-intelligence
+
+Add:
+
+* cache hit ratio
+* token burn heatmap
+* source latency
+* degradation level
+* AI escalation ratio
+* premium-vs-cheap model usage
+* source reliability trends
+* runtime sleep detection
+
+Goal:
+
+Founders understand:
+how close INFOX is to scaling safely.
+
+========================================
+TASK O — DOCUMENTATION
+
+Update:
+
+* ARCHITECTURE.md
+* CHANGELOG.md
+* TOKEN_ECONOMY.md
+* DEPLOYMENT_GUIDE.md
+* STRATEGIC_INTELLIGENCE.md
+* SYSTEM_STATUS.md
+
+Create:
+
+* AI_PIPELINE.md
+* SOURCE_EXPANSION.md
+* RUNTIME_SEPARATION.md
+* TOKEN_GOVERNOR.md
+* CACHING_STRATEGY.md
+* USER_AI_PROVIDER_MODEL.md
+* DEGRADATION_STRATEGY.md
+
+Document:
+
+* AI escalation strategy
+* cache architecture
+* source ingestion model
+* token protection systems
+* runtime migration plan
+* hybrid AI ownership model
+* graceful degradation strategy
+
+========================================
+SUCCESS CRITERIA
+
+After Sprint 17:
+
+* token usage becomes controlled
+* premium AI calls become selective
+* cache system reduces regeneration
+* Reddit ingestion foundation exists
+* Twitter ingestion architecture exists
+* source reliability scoring exists
+* degradation system exists
+* delivery adapts to token pressure
+* runtime separation begins
+* user-owned AI provider architecture exists
+* feed precision improves significantly
+* INFOX becomes economically scalable
+
+Provide implementation report:
+
+* files created
+* files modified
+* token optimization decisions
+* cache strategy
+* escalation logic
+* degradation strategy
+* source ingestion architecture
+* runtime separation plan
+* provider abstraction strategy
+* known scalability risks
+* recommended Sprint 18
