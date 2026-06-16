@@ -1,16 +1,16 @@
 // ============================================================
-// PROMPT BUILDER — Sprint 6 Task E + J
+// PROMPT BUILDER — Sprint 8 update
 //
-// Three prompt types:
+// Four prompt types:
 //   buildBriefingPrompt()        — Standard topic briefing (home page)
-//   buildMorningBriefingPrompt() — Morning cross-topic briefing (07:00)
-//   buildEveningBriefingPrompt() — Evening daily recap (18:00)
+//   buildMorningBriefingPrompt() — Morning cross-topic briefing
+//   buildEveningBriefingPrompt() — Evening daily recap
+//   buildExecutiveBriefingPrompt() — 5-bullet executive mode (Task G)
 //
-// Sprint 6 changes:
-//   Task E — Thai localization: explicit rules to preserve English
-//             brand/product names, write natural Thai analysis
-//   Task H — Digest context: optional param for digest memory
-//   Task J — Personality foundation: optional personality parameter
+// Sprint 8 additions:
+//   Task E — Personality UI: all personalities now fully described
+//   Task G — Executive mode: 5-bullet, impact-first, ≤90s reading
+//   Task C — Story evolution context support in all prompts
 //
 // STRICT: no markdown, no emojis in output, Thai language only.
 // ============================================================
@@ -22,9 +22,7 @@ export interface BriefingPrompt {
   userPrompt: string;
 }
 
-// ── Personality Foundation (Task J) ─────────────────────────
-// Architecture ready for future UI. Not exposed in frontend yet.
-// Personality is injected as an additional instruction block.
+// ── Personality Foundation ───────────────────────────────────
 
 export type BriefingPersonality =
   | "analyst"
@@ -35,14 +33,14 @@ export type BriefingPersonality =
 
 const PERSONALITY_INSTRUCTIONS: Record<BriefingPersonality, string> = {
   analyst:
-    "วิเคราะห์เชิงลึก เน้นผลกระทบเชิงโครงสร้างและนัยระยะยาว อ้างอิงข้อมูลและตัวเลขเสมอ",
+    "วิเคราะห์เชิงลึก เน้นผลกระทบเชิงโครงสร้างและนัยระยะยาว อ้างอิงข้อมูลและตัวเลขเสมอ ระบุสาเหตุและผลลัพธ์ที่เชื่อมโยงกัน",
   concise:
-    "กระชับ ตรงประเด็น ไม่ยืดเยื้อ เน้นข้อเท็จจริงที่สำคัญที่สุดในแต่ละจุด",
+    "กระชับ ตรงประเด็น ไม่ยืดเยื้อ เน้นข้อเท็จจริงที่สำคัญที่สุดในแต่ละจุด ตัดคำฟุ่มเฟือยออกทั้งหมด",
   financial:
-    "เน้นมุมมองการลงทุน ราคาหลักทรัพย์ ผลประกอบการ และนัยต่อตลาดการเงิน",
-  neutral: "รายงานข้อเท็จจริงอย่างสมดุล ไม่แสดงความเห็นส่วนตัว",
+    "เน้นมุมมองการลงทุน ราคาหลักทรัพย์ ผลประกอบการ กำไร-ขาดทุน และนัยต่อตลาดการเงินและผู้ถือหุ้น",
+  neutral: "รายงานข้อเท็จจริงอย่างสมดุล นำเสนอมุมมองหลายด้าน ไม่แสดงความเห็นส่วนตัวหรือตัดสิน",
   aggressive:
-    "ตั้งคำถามท้าทาย วิเคราะห์ความเสี่ยงที่คนอื่นมองข้าม และระบุสัญญาณเตือนอย่างตรงไปตรงมา",
+    "ตั้งคำถามท้าทายสมมติฐาน วิเคราะห์ความเสี่ยงที่คนอื่นมองข้าม ระบุสัญญาณเตือนอย่างตรงไปตรงมา และชี้ให้เห็นสิ่งที่อาจผิดพลาด",
 };
 
 // ── Shared constraints ───────────────────────────────────────
@@ -65,6 +63,7 @@ export function buildBriefingPrompt(
   topic: string,
   trendContext?: string,
   personality?: BriefingPersonality,
+  storyContext?: string,
 ): BriefingPrompt {
   const articleText = articles
     .slice(0, 10)
@@ -113,7 +112,11 @@ WHAT TO WATCH NEXT
     ? `\n\nบริบทย้อนหลัง (Trend Memory):\n${trendContext}\n\nในการวิเคราะห์ให้ระบุด้วยว่า อะไรเปลี่ยนแปลงจากบริบทก่อนหน้า อะไรต่อเนื่อง และอะไรที่เป็นเรื่องใหม่ทั้งหมด`
     : "";
 
-  const userPrompt = `เขียนรายงานข่าวกรองเชิงวิเคราะห์เกี่ยวกับ "${topic}" จากบทความต่อไปนี้:${trendSection}\n\n${articleText}`;
+  const storySection = storyContext
+    ? `\n\n${storyContext}\n\nใช้บริบทต่อเนื่องนี้เพื่อระบุว่าเรื่องราวใดกำลังพัฒนาต่อเนื่อง และบอกผู้อ่านว่ามีอะไรใหม่หรือเปลี่ยนแปลงไปจากก่อน`
+    : "";
+
+  const userPrompt = `เขียนรายงานข่าวกรองเชิงวิเคราะห์เกี่ยวกับ "${topic}" จากบทความต่อไปนี้:${trendSection}${storySection}\n\n${articleText}`;
 
   return { systemPrompt, userPrompt };
 }
@@ -124,6 +127,8 @@ export function buildMorningBriefingPrompt(
   articles: Article[],
   topicLabels: string[],
   digestContext?: string,
+  storyContext?: string,
+  personality?: BriefingPersonality,
 ): BriefingPrompt {
   const articleText = articles
     .slice(0, 12)
@@ -135,15 +140,20 @@ export function buildMorningBriefingPrompt(
 
   const topicsStr = topicLabels.join(", ");
 
-  const digestSection = digestContext
-    ? `\n\n${digestContext}`
+  const digestSection = digestContext ? `\n\n${digestContext}` : "";
+  const storySection = storyContext
+    ? `\n\n${storyContext}\n\nอ้างอิงเรื่องราวต่อเนื่องเหล่านี้ในการเขียน เพื่อให้ผู้อ่านเห็นว่าสถานการณ์พัฒนาอย่างไรจากวันก่อน`
+    : "";
+
+  const personalityNote = personality
+    ? `\nสไตล์การเขียน: ${PERSONALITY_INSTRUCTIONS[personality]}`
     : "";
 
   const systemPrompt = `คุณคือผู้ช่วยส่วนตัวด้านข่าวกรองที่จัดทำรายงานเช้าสำหรับผู้บริหาร เพื่อให้เขาเริ่มต้นวันด้วยข้อมูลที่สำคัญที่สุด
 
 พันธกิจ: สังเคราะห์ข้อมูลข้ามหัวข้อ (${topicsStr}) และระบุ 5 พัฒนาการสำคัญที่สุดที่เกิดขึ้นในช่วงที่ผ่านมา เน้นสิ่งที่ผู้อ่านต้องรู้ก่อนเริ่มงาน
 
-${SHARED_RULES}
+${SHARED_RULES}${personalityNote}
 - ความยาวเป้าหมาย: 400–700 คำภาษาไทย (อ่านจบใน 2–4 นาที)
 - เน้นความสั้นกระชับ ตรงประเด็น ไม่ยืดเยื้อ
 
@@ -169,7 +179,7 @@ IMPACT ANALYSIS
 WHAT TO WATCH TODAY
 [2–3 ประโยค: เหตุการณ์ การประกาศ หรือข้อมูลเศรษฐกิจที่จะเกิดขึ้นวันนี้ และเหตุใดจึงสำคัญ]`;
 
-  const userPrompt = `จัดทำ Morning Intelligence Briefing จากบทความข่าวล่าสุดต่อไปนี้ ซึ่งรวบรวมจากหัวข้อ: ${topicsStr}${digestSection}\n\n${articleText}`;
+  const userPrompt = `จัดทำ Morning Intelligence Briefing จากบทความข่าวล่าสุดต่อไปนี้ ซึ่งรวบรวมจากหัวข้อ: ${topicsStr}${digestSection}${storySection}\n\n${articleText}`;
 
   return { systemPrompt, userPrompt };
 }
@@ -180,6 +190,8 @@ export function buildEveningBriefingPrompt(
   articles: Article[],
   topicLabels: string[],
   digestContext?: string,
+  storyContext?: string,
+  personality?: BriefingPersonality,
 ): BriefingPrompt {
   const articleText = articles
     .slice(0, 12)
@@ -191,15 +203,20 @@ export function buildEveningBriefingPrompt(
 
   const topicsStr = topicLabels.join(", ");
 
-  const digestSection = digestContext
-    ? `\n\n${digestContext}`
+  const digestSection = digestContext ? `\n\n${digestContext}` : "";
+  const storySection = storyContext
+    ? `\n\n${storyContext}\n\nเปรียบเทียบกับบริบทต่อเนื่องเหล่านี้เพื่อแสดงให้เห็นว่าเรื่องราวพัฒนาอย่างไรตลอดวัน`
+    : "";
+
+  const personalityNote = personality
+    ? `\nสไตล์การเขียน: ${PERSONALITY_INSTRUCTIONS[personality]}`
     : "";
 
   const systemPrompt = `คุณคือผู้ช่วยส่วนตัวด้านข่าวกรองที่จัดทำรายงานเย็น เพื่อให้ผู้บริหารเข้าใจสิ่งที่เกิดขึ้นตลอดวัน และเตรียมพร้อมสำหรับวันพรุ่งนี้
 
 พันธกิจ: สังเคราะห์พัฒนาการสำคัญจากหลายหัวข้อ (${topicsStr}) บอกว่าอะไรเปลี่ยนแปลงไปจากเช้า อะไรน่าแปลกใจ และอะไรที่ต้องติดตามพรุ่งนี้
 
-${SHARED_RULES}
+${SHARED_RULES}${personalityNote}
 - ความยาวเป้าหมาย: 600–900 คำภาษาไทย (อ่านจบใน 3–5 นาที)
 - เปรียบเทียบสถานการณ์ตอนเช้าและตอนเย็นเมื่อข้อมูลอนุญาต
 
@@ -218,7 +235,52 @@ WHAT CHANGED
 WHAT MATTERS TOMORROW
 [2–3 ประโยค: สิ่งที่ต้องติดตามในวันพรุ่งนี้ ระบุชื่อเหตุการณ์ เวลา หรือการประกาศที่เฉพาะเจาะจง และเหตุใดจึงสำคัญ]`;
 
-  const userPrompt = `จัดทำ Evening Intelligence Recap จากบทความข่าวล่าสุดต่อไปนี้ ซึ่งรวบรวมจากหัวข้อ: ${topicsStr}${digestSection}\n\n${articleText}`;
+  const userPrompt = `จัดทำ Evening Intelligence Recap จากบทความข่าวล่าสุดต่อไปนี้ ซึ่งรวบรวมจากหัวข้อ: ${topicsStr}${digestSection}${storySection}\n\n${articleText}`;
+
+  return { systemPrompt, userPrompt };
+}
+
+// ── Executive briefing prompt — Sprint 8 Task G ──────────────
+
+export function buildExecutiveBriefingPrompt(
+  articles: Article[],
+  topicLabels: string[],
+): BriefingPrompt {
+  const articleText = articles
+    .slice(0, 12)
+    .map(
+      (a, i) =>
+        `${i + 1}. ${a.title}\nแหล่งที่มา: ${(a as { source?: string }).source ?? "ไม่ระบุ"}\n${a.description ?? "(ไม่มีรายละเอียด)"}`,
+    )
+    .join("\n\n");
+
+  const topicsStr = topicLabels.join(", ");
+
+  const systemPrompt = `คุณคือผู้ช่วยส่วนตัวด้านข่าวกรองสำหรับผู้บริหารที่มีเวลาจำกัด
+
+พันธกิจ: สรุป 5 ข้อที่สำคัญที่สุดและมีผลกระทบสูงสุด โดยเน้น "ผลกระทบ" ก่อน ไม่ใช่ "เหตุการณ์"
+ผู้อ่านต้องเข้าใจสาระสำคัญทั้งหมดในการอ่านภายใน 90 วินาที
+
+${SHARED_RULES}
+- ความยาวเป้าหมาย: ไม่เกิน 250 คำภาษาไทย (อ่านจบใน 60–90 วินาที)
+- แต่ละข้อเริ่มต้นด้วยผลกระทบก่อน ตามด้วยเหตุการณ์ — ไม่ใช่กลับกัน
+- ห้ามใช้คำฟุ่มเฟือย ทุกคำต้องมีความหมาย
+
+รูปแบบผลลัพธ์ที่ต้องใช้ให้ตรงทุกตัวอักษร:
+
+EXECUTIVE BRIEFING
+[วันที่และเวลา ICT]
+
+1. [ผลกระทบก่อน — เหตุการณ์ในประโยคเดียว เฉพาะเจาะจง มีตัวเลขหรือชื่อ]
+2. [ผลกระทบก่อน — เหตุการณ์ในประโยคเดียว เฉพาะเจาะจง มีตัวเลขหรือชื่อ]
+3. [ผลกระทบก่อน — เหตุการณ์ในประโยคเดียว เฉพาะเจาะจง มีตัวเลขหรือชื่อ]
+4. [ผลกระทบก่อน — เหตุการณ์ในประโยคเดียว เฉพาะเจาะจง มีตัวเลขหรือชื่อ]
+5. [ผลกระทบก่อน — เหตุการณ์ในประโยคเดียว เฉพาะเจาะจง มีตัวเลขหรือชื่อ]
+
+WATCH
+[ประโยคเดียว: สิ่งที่ต้องจับตาวันนี้]`;
+
+  const userPrompt = `จัดทำ Executive Briefing 5 ข้อจากบทความต่อไปนี้ หัวข้อ: ${topicsStr}\n\n${articleText}`;
 
   return { systemPrompt, userPrompt };
 }

@@ -10,8 +10,11 @@ import InterestsPage from "@/pages/settings/interests";
 import DeliveryDebugPage from "@/pages/settings/delivery-debug";
 import SchedulerPage from "@/pages/settings/scheduler";
 import TopicsPage from "@/pages/settings/topics";
+import PersonalityPage from "@/pages/settings/personality";
+import PreferencesPage from "@/pages/settings/preferences";
 import DeliveryPreviewPage from "@/pages/delivery-preview";
 import AdminCostsPage from "@/pages/admin-costs";
+import AdminAnalyticsPage from "@/pages/admin/analytics";
 import MyFeedPage from "@/pages/my-feed";
 import NotFound from "@/pages/not-found";
 
@@ -29,8 +32,11 @@ function Router() {
       <Route path="/settings/interests" component={InterestsPage} />
       <Route path="/settings/scheduler" component={SchedulerPage} />
       <Route path="/settings/topics" component={TopicsPage} />
+      <Route path="/settings/personality" component={PersonalityPage} />
+      <Route path="/settings/preferences" component={PreferencesPage} />
       <Route path="/delivery-preview" component={DeliveryPreviewPage} />
       <Route path="/admin/costs" component={AdminCostsPage} />
+      <Route path="/admin/analytics" component={AdminAnalyticsPage} />
       <Route component={NotFound} />
     </Switch>
   );

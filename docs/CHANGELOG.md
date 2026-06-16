@@ -2,6 +2,86 @@
 
 ---
 
+## [2026-06-16] — Sprint 8: Habit Loop & Intelligence Companion
+
+**What:** Twelve-task sprint adding flexible delivery scheduling, smart digest compression, story evolution engine, priority alerts, personality UI, reading memory filter, executive mode, signal/noise scoring, delivery metrics dashboard, visual refinement, future agent architecture docs, and documentation updates.
+
+**Why:** The product was broadcasting content at users rather than building a habit loop. A truly useful intelligence companion must compress noise, surface emerging narratives, alert on critical events, and adapt its format to the user's context (busy executive vs. deep analyst). This sprint establishes the intelligence primitives that make INFOX feel like an active analyst, not a RSS reader.
+
+### Task A — Flexible Delivery Scheduling
+- `lib/schedulerSettings.ts` (new): `ScheduleSlot` type with `hour`, `minute`, `label`, `enabled`, `daysFilter` (all/weekdays/weekends); localStorage key `ai-newsroom:schedule-v2`; `addSlot`, `removeSlot`, `toggleSlot`, `updateSlotDaysFilter`, `getNextDeliveryForSlot`, `getDaysFilterLabel` helpers
+- `pages/settings/scheduler.tsx` rewritten: slot cards with enable/disable toggle, days filter chips (Every day / Mon–Fri / Sat–Sun), countdown to next delivery, add-slot form with hour/minute dropdowns and label field; max 10 slots; delivery pipeline explainer section
+
+### Task B — Smart Digest Compression
+- `deliveryEngine.ts`: `compressDigest()` function ranks articles by signal score via `rankBySignal()`, deduplicates by title key (first 5 significant words), applies `filterLowSignal()` with minimum floor; articles entering the AI are the highest-impact subset rather than raw chronological order
+- Logging records raw vs. compressed article count at every delivery run
+
+### Task C — Story Evolution Engine
+- `services/intelligence/storyEvolution.ts` (new): tracks 30+ named entities (Nvidia, OpenAI, Bitcoin, NATO, etc.) across deliveries; `recordStoryMentions(articles, topicId, briefingType)` extracts entity mentions; `getActiveStories(topicId)` returns active threads sorted by recency; `formatStoryContextForAI(topicId)` formats a Thai-language context block for AI prompt injection; stories expire after 72h; max 10 mentions per story (ring buffer)
+- `deliveryEngine.ts`: calls `recordStoryMentions()` after collection; injects `formatStoryContextForAI()` output into `summarizeDelivery()` as `storyContext` param
+- `summaryService.ts`: `summarizeDelivery()` now accepts `storyContext?` param; passed through to `promptBuilder.ts`
+- `promptBuilder.ts`: `buildMorningBriefingPrompt()` and `buildEveningBriefingPrompt()` include story context block when provided
+
+### Task D — Priority Alert Engine
+- `services/delivery/alertEngine.ts` (new): `checkForAlerts(articles, watchlist)` — detects high-signal articles matching market move, AI development, geopolitical, or watchlist patterns; max 3 alerts per 6h window; 24h per-entity cooldown; min signal score 80; `getRecentAlerts(hours)` and `getAlertStats()` for dashboard
+- `routes/alerts.ts` (new): `GET /api/alerts/recent`, `GET /api/alerts/stats`, `POST /api/alerts/check` (manual trigger with watchlist)
+- `deliveryEngine.ts`: calls `checkForAlerts()` on raw articles after collection; alert count logged; alerts returned in `DeliveryEngineResult`
+
+### Task E — Personality UI
+- `lib/personalitySettings.ts` (new): 5 personality types — Analyst, Concise, Financial, Neutral, Contrarian; localStorage key `ai-newsroom:personality`; `getPersonality()`, `setPersonality()`, `getPersonalityOption()` helpers
+- `pages/settings/personality.tsx` (new): one-button-per-personality UI with color-coded active state (blue/emerald/amber/slate/rose); tone description shown per personality; saved to localStorage
+- `pages/settings/index.tsx`: Briefing Personality card shows current active personality name
+- `promptBuilder.ts`: `PERSONALITY_INSTRUCTIONS` map now covers all 5 personalities with full Thai-language instructions
+
+### Task F — Reading Memory Filter
+- `pages/my-feed.tsx`: `hideRead` state persisted to localStorage key `ai-newsroom:hide-read`; eye/eye-off toggle button in feed header; when active, filters `visibleItems` to exclude URLs already in `readUrls` Set; summary row shows "X read hidden" count in amber; toggle state survives page refresh
+
+### Task G — Executive Mode
+- `lib/executiveMode.ts` (new): localStorage key `ai-newsroom:executive-mode`; `getExecutiveMode()`, `setExecutiveMode()`, `isExecutiveModeEnabled()` helpers
+- `pages/settings/preferences.tsx` (new): executive mode toggle with preview of 5-bullet format; reading time guide comparing all briefing types; pill badge shows active mode
+- `promptBuilder.ts`: `buildExecutiveBriefingPrompt()` (new) — 5-bullet impact-first format, ≤250 Thai words, under 90s reading time; each bullet starts with impact before event
+- `summaryService.ts`: `summarizeExecutive(articles, topicLabels)` (new method)
+- `pages/settings/index.tsx`: Preferences card shows Exec Mode badge when active
+
+### Task H — Signal vs. Noise Scoring
+- `services/intelligence/signalScoring.ts` (new): multi-factor signal scoring system; factors: source quality (Tier A=25/B=15/C=5 pts), recency (≤1h=30/≤3h=25/≤6h=18/≤12h=12/≤24h=6), geopolitical significance (keyword matches, cap 24), watchlist relevance (15 per hit, cap 30), multi-source confirmation (10/18/25 for 1/2/3+ confirms), trend momentum (capitals+numbers+length, cap 15); total max ~140; `scoreSignal()`, `rankBySignal()`, `filterLowSignal()` exports; thresholds: critical ≥100, high ≥70, low <20
+
+### Task I — Delivery Quality Metrics
+- `services/analytics/deliveryMetrics.ts` (new): `DeliveryRecord` type; `recordDelivery()`, `analyzeDeliveryText()`, `getDeliveryLog()`, `getDeliveryStats()`, `getAnalyticsSnapshot()` — in-memory ring buffer max 200 records; tracks word count, reading time, article count, generation time, signal distribution
+- `routes/analytics.ts` (new): `GET /api/admin/analytics` — returns stats, alert stats, recent deliveries, active stories, trend memory
+- `pages/admin/analytics.tsx` (new): three-tab dashboard (Overview / Deliveries / Intelligence); stat cards for success rate, reading time, generation time; 7-day delivery breakdown; signal quality distribution; recent delivery log; active story threads; trend memory panel
+
+### Task J — Visual Refinement
+- `pages/settings/index.tsx` rewritten: section groupings (Delivery / Personalisation / Content / Tools); all settings cards with icon + description + status badge; Delivery Analytics and Delivery Preview accessible from settings
+- `pages/settings/personality.tsx`: color-coded card selection with per-personality accent colors; active badge with checkmark; tone line in personality color
+
+### Task K — Future Agent Architecture
+- `docs/AGENT_ARCHITECTURE.md` (new): 5-layer architecture (Orchestrator → Specialist Agents → Memory System → Tool Use → Inter-Agent Communication); specialist agent table; memory layer types; migration path from current pipeline; design principles; security considerations; evaluation metrics table
+
+### Task L — Documentation
+- `docs/CHANGELOG.md`: Sprint 8 entry (this)
+- `docs/ARCHITECTURE.md`: new backend routes (alerts, analytics, preferences), Sprint 8 additions to summaryService and intelligence services
+
+**Files created:**
+- `services/intelligence/signalScoring.ts`
+- `services/delivery/alertEngine.ts`
+- `services/intelligence/storyEvolution.ts`
+- `services/analytics/deliveryMetrics.ts`
+- `routes/alerts.ts`, `routes/analytics.ts`, `routes/preferences.ts`
+- `lib/schedulerSettings.ts`, `lib/personalitySettings.ts`, `lib/executiveMode.ts`
+- `pages/settings/scheduler.tsx` (rewrite), `pages/settings/personality.tsx`, `pages/settings/preferences.tsx`
+- `pages/admin/analytics.tsx`
+- `docs/AGENT_ARCHITECTURE.md`
+
+**Files modified:**
+- `services/ai/promptBuilder.ts`, `services/ai/summaryService.ts`
+- `services/delivery/deliveryEngine.ts`
+- `routes/index.ts`
+- `pages/my-feed.tsx`, `pages/settings/index.tsx`, `App.tsx`
+- `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`
+
+---
+
 ## [2026-06-16] — Sprint 7: Visual Intelligence & Trust Layer
 
 **What:** Twelve-task sprint transforming INFOX into a Bloomberg/FT-quality media product. Telegram test-send button, smart image layer, article card redesign, trust indicators, compact/detailed density modes, reading progress, delivery preview phone mockup, source visual identity, image content safety, performance optimization (lazy loading), Visual Language Standard, and documentation.

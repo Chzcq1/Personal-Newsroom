@@ -34,6 +34,7 @@ import {
   buildBriefingPrompt,
   buildMorningBriefingPrompt,
   buildEveningBriefingPrompt,
+  buildExecutiveBriefingPrompt,
   type BriefingPersonality,
 } from "./promptBuilder.js";
 import { logger } from "../../lib/logger.js";
@@ -95,6 +96,7 @@ export async function summarizeArticles(
   topic: string,
   trendContext?: string,
   personality?: BriefingPersonality,
+  storyContext?: string,
 ): Promise<string> {
   if (articles.length === 0) {
     return `ไม่พบบทความที่เกี่ยวข้องกับหัวข้อ "${topic}" ในขณะนี้ กรุณาลองใหม่อีกครั้ง`;
@@ -107,6 +109,7 @@ export async function summarizeArticles(
       topic,
       articleCount: articles.length,
       hasTrend: !!trendContext,
+      hasStoryContext: !!storyContext,
       personality: personality ?? "default",
     },
     "Summarizing articles",
@@ -117,8 +120,35 @@ export async function summarizeArticles(
     topic,
     trendContext,
     personality,
+    storyContext,
   );
   return withRetry(() => provider.complete(systemPrompt, userPrompt), `summarize:${topic}`);
+}
+
+/**
+ * Generate a compact 5-bullet executive briefing.
+ * Under 90 seconds reading time. Impact-first format.
+ * Sprint 8 Task G.
+ */
+export async function summarizeExecutive(
+  articles: Article[],
+  topicLabels: string[],
+): Promise<string> {
+  if (articles.length === 0) {
+    throw new Error("No articles for executive briefing");
+  }
+  const provider = await getProvider();
+  const { systemPrompt, userPrompt } = buildExecutiveBriefingPrompt(articles, topicLabels);
+
+  logger.info(
+    { provider: provider.providerName, articleCount: articles.length },
+    "Generating executive briefing",
+  );
+
+  return withRetry(
+    () => provider.complete(systemPrompt, userPrompt),
+    "executive-briefing",
+  );
 }
 
 /**
@@ -133,6 +163,8 @@ export async function summarizeDelivery(
   type: BriefingType,
   topicLabels: string[],
   digestContext?: string,
+  storyContext?: string,
+  personality?: BriefingPersonality,
 ): Promise<string> {
   if (articles.length === 0) {
     throw new Error("No articles provided for delivery briefing");
@@ -141,8 +173,8 @@ export async function summarizeDelivery(
   const provider = await getProvider();
   const { systemPrompt, userPrompt } =
     type === "morning"
-      ? buildMorningBriefingPrompt(articles, topicLabels, digestContext)
-      : buildEveningBriefingPrompt(articles, topicLabels, digestContext);
+      ? buildMorningBriefingPrompt(articles, topicLabels, digestContext, storyContext, personality)
+      : buildEveningBriefingPrompt(articles, topicLabels, digestContext, storyContext, personality);
 
   logger.info(
     {
@@ -151,6 +183,7 @@ export async function summarizeDelivery(
       articleCount: articles.length,
       topicLabels,
       hasDigestContext: !!digestContext,
+      hasStoryContext: !!storyContext,
     },
     "Generating delivery briefing",
   );

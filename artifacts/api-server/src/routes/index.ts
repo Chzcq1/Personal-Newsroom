@@ -6,6 +6,9 @@ import telegramRouter from "./telegram.js";
 import deliveryRouter from "./delivery.js";
 import costsRouter from "./costs.js";
 import feedRouter from "./feed.js";
+import alertsRouter from "./alerts.js";
+import analyticsRouter from "./analytics.js";
+import preferencesRouter from "./preferences.js";
 
 const router: IRouter = Router();
 
@@ -16,5 +19,8 @@ router.use(telegramRouter);
 router.use(deliveryRouter);
 router.use(costsRouter);
 router.use(feedRouter);
+router.use(alertsRouter);
+router.use(analyticsRouter);
+router.use(preferencesRouter);
 
 export default router;

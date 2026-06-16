@@ -24,12 +24,43 @@ Express API Server (port 8080)
   ├── routes/delivery.ts    POST /api/delivery/morning|evening
   │                         GET  /api/delivery/preview/morning|evening
   ├── routes/costs.ts       GET  /api/admin/costs           ← Sprint 5: cost analytics
-  └── routes/feed.ts        POST /api/feed/personal         ← Sprint 7: + imageUrl field per article
+  ├── routes/feed.ts        POST /api/feed/personal         ← Sprint 7: + imageUrl field per article
+  ├── routes/alerts.ts      GET  /api/alerts/recent         ← Sprint 8: priority alert engine
+  │                         GET  /api/alerts/stats
+  │                         POST /api/alerts/check
+  ├── routes/analytics.ts   GET  /api/admin/analytics       ← Sprint 8: delivery quality metrics
+  └── routes/preferences.ts GET  /api/preferences/executive ← Sprint 8: exec mode (client-side V1)
 ```
 
 ---
 
 ## Backend Services
+
+### Intelligence Layer — Sprint 8 (`services/intelligence/`, `services/analytics/`)
+
+```
+signalScoring.ts
+  scoreSignal(article, allArticles, watchlist)   → SignalScore (total 0–140, label: critical/high/medium/low)
+  rankBySignal(articles, watchlist)              → articles sorted by signal score descending
+  filterLowSignal(articles, minArticles, wl)     → removes low-signal articles, floor enforced
+
+storyEvolution.ts
+  recordStoryMentions(articles, topicId, type)   → tracks entity appearances across deliveries
+  getActiveStories(topicId)                      → StoryEntry[] sorted by recency
+  formatStoryContextForAI(topicId)               → Thai-language context block for prompt injection
+  getAllActiveStories()                          → all stories (for analytics)
+
+alertEngine.ts  (in services/delivery/ — operates on articles + watchlist)
+  checkForAlerts(articles, watchlist)            → PriorityAlert[] (max 3 per 6h window)
+  getRecentAlerts(hours)                        → recent alerts from in-memory history
+  getAlertStats()                               → { totalInLast24h, totalInLast6h, lastAlertAt }
+
+deliveryMetrics.ts
+  recordDelivery(record)                        → appends to ring buffer (max 200)
+  analyzeDeliveryText(text)                     → { wordCount, estimatedReadingTimeSecs }
+  getDeliveryStats()                            → aggregate stats
+  getAnalyticsSnapshot()                        → full analytics for dashboard
+```
 
 ### AI Layer (`services/ai/`)
 
@@ -41,6 +72,10 @@ summaryService.ts              ← ONLY entry point for AI calls
     → geminiProvider.ts        ← Google Gemini (AI_PROVIDER=gemini)
   → promptBuilder.ts           ← All prompt templates
 ```
+
+**Sprint 8 additions to summaryService.ts:**
+- `summarizeExecutive(articles, topicLabels)` — 5-bullet executive briefing (Task G)
+- `summarizeDelivery()` now accepts `storyContext?` and `personality?` params
 
 **Key rules:**
 - `summaryService.ts` is the **only** file that imports from `aiProvider.ts`

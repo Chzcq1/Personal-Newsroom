@@ -1,8 +1,8 @@
 // ============================================================
-// MY FEED — Sprint 7 redesign
+// MY FEED — Sprint 7 redesign + Sprint 8 Task F (reading memory)
 // Bloomberg/FT minimal intelligence aesthetic
-// Tasks: B (images), C (card redesign), D (trust indicators),
-//        E (compact/detailed), F (reading progress), H (source identity)
+// Sprint 8 Task F: "Hide read" filter so already-read stories
+//   can be collapsed, showing only fresh signal.
 // ============================================================
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -16,6 +16,8 @@ import {
   AlertTriangle,
   LayoutList,
   AlignLeft,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInterests } from "@/lib/interestProfile";
@@ -330,6 +332,19 @@ export default function MyFeedPage() {
     }
   });
 
+  // Sprint 8 Task F — hide-read filter
+  const [hideRead, setHideRead] = useState(() => {
+    try { return localStorage.getItem("ai-newsroom:hide-read") === "true"; } catch { return false; }
+  });
+
+  const handleHideReadToggle = useCallback(() => {
+    setHideRead((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("ai-newsroom:hide-read", String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
   const [watchlistInput, setWatchlistInput] = useState("");
   const [watchlist, setWatchlist] = useState<string[]>([]);
 
@@ -363,8 +378,17 @@ export default function MyFeedPage() {
     }
   }
 
-  const matchedItems = data?.items.filter((i) => i.relevanceScore > 0) ?? [];
-  const otherItems = data?.items.filter((i) => i.relevanceScore === 0) ?? [];
+  // Sprint 8 Task F — apply hide-read filter
+  const visibleItems = hideRead
+    ? (data?.items ?? []).filter((i) => !readUrls.has(i.url))
+    : (data?.items ?? []);
+
+  const hiddenReadCount = hideRead
+    ? (data?.items.filter((i) => readUrls.has(i.url)).length ?? 0)
+    : 0;
+
+  const matchedItems = visibleItems.filter((i) => i.relevanceScore > 0);
+  const otherItems = visibleItems.filter((i) => i.relevanceScore === 0);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -400,6 +424,19 @@ export default function MyFeedPage() {
 
           {/* Controls */}
           <div className="flex items-center gap-1.5">
+            {/* Hide read toggle — Sprint 8 Task F */}
+            <button
+              onClick={handleHideReadToggle}
+              className={`p-1.5 rounded-md border transition-colors ${
+                hideRead
+                  ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                  : "border-white/10 text-white/40 hover:text-white/60"
+              }`}
+              title={hideRead ? "Showing unread only" : "Show unread only"}
+            >
+              {hideRead ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+
             {/* Density toggle */}
             <div className="flex rounded-md border border-white/10 overflow-hidden">
               <button
@@ -536,6 +573,9 @@ export default function MyFeedPage() {
                 )}
                 {data.topicsSearched.length > 0 && (
                   <> · {data.topicsSearched.length} topics</>
+                )}
+                {hideRead && hiddenReadCount > 0 && (
+                  <> · <span className="text-amber-400/70">{hiddenReadCount} read hidden</span></>
                 )}
               </span>
             </div>
