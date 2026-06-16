@@ -609,10 +609,11 @@ export default function Home() {
       <header className="border-b border-border/60 bg-background/95 sticky top-0 z-10 backdrop-blur">
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-2.5">
-            <Newspaper className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold tracking-tight text-foreground">
-              Personal AI Newsroom
-            </span>
+            <img
+              src={`${import.meta.env.BASE_URL}logo.png`}
+              alt="INFOX"
+              className="h-7 w-auto object-contain"
+            />
             {health && <HealthBadge health={health} />}
           </div>
           <div className="flex items-center gap-1">
@@ -645,11 +646,18 @@ export default function Home() {
       <main className="max-w-4xl mx-auto px-6 pt-12 pb-20 space-y-12">
         {/* Topic selector */}
         <section className="space-y-6">
-          <div className="space-y-1.5">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Select a Topic</h1>
-            <p className="text-sm text-muted-foreground">
-              Choose a subject. The system collects live news and produces a structured intelligence briefing in Thai.
-            </p>
+          <div className="space-y-3">
+            <img
+              src={`${import.meta.env.BASE_URL}logo.png`}
+              alt="INFOX"
+              className="h-12 w-auto object-contain"
+            />
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">Select a Topic</h1>
+              <p className="text-sm text-muted-foreground">
+                Choose a subject. The system collects live news and produces a structured intelligence briefing in Thai.
+              </p>
+            </div>
           </div>
 
           {topicsLoading ? (
