@@ -1,0 +1,30 @@
+app = "infox"
+primary_region = "sin"
+
+[build]
+  dockerfile = "deployment/Dockerfile"
+
+[env]
+  PORT = "8080"
+  NODE_ENV = "production"
+  AI_PROVIDER = "github"
+  SCHEDULER_TIMEZONE = "Asia/Bangkok"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.checks]
+    path = "/api/health"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

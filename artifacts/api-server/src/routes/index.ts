@@ -17,6 +17,8 @@ import proactiveIntelligenceRouter from "./proactiveIntelligence.js";
 import adminNarrativesRouter from "./adminNarratives.js";
 import habitRouter from "./habit.js";
 import multimodalRouter from "./multimodal.js";
+import identityRouter from "./identity.js";
+import economicsRouter from "./economics.js";
 
 const router: IRouter = Router();
 
@@ -38,5 +40,7 @@ router.use(proactiveIntelligenceRouter);
 router.use(adminNarrativesRouter);
 router.use(habitRouter);
 router.use(multimodalRouter);
+router.use(identityRouter);
+router.use(economicsRouter);
 
 export default router;

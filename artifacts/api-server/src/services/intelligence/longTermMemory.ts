@@ -222,18 +222,18 @@ export interface MigrationStatus {
 
 /**
  * Get current migration status.
- * Phase 1: in-memory (current)
- * Phase 2: PostgreSQL (next sprint — requires Replit DB provisioning)
+ * Phase 1: in-memory (complete)
+ * Phase 2: PostgreSQL (active — Sprint 14)
  * Phase 3: PostgreSQL + vector embeddings
  * Phase 4: Distributed multi-device
  */
 export function getMigrationStatus(): MigrationStatus {
   return {
-    phase: 1,
-    description: "In-memory with localStorage client-side sync",
-    currentStorage: "in-memory",
-    nextStep: "Provision Replit PostgreSQL DB, activate USE_POSTGRES=true env var",
-    readyForMigration: true, // interfaces are all defined; no code changes needed in consumers
+    phase: 2,
+    description: "PostgreSQL active via Drizzle ORM + in-memory fallback when DB absent",
+    currentStorage: "postgresql",
+    nextStep: "Add pgvector extension for semantic entity search (Phase 3)",
+    readyForMigration: true,
   };
 }
 

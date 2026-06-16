@@ -25,6 +25,8 @@ import AdminNarrativesPage from "@/pages/admin/narratives";
 import FeedEvolutionPage from "@/pages/debug/feed-evolution";
 import InsightExportPage from "@/pages/insights/export";
 import HabitDashboardPage from "@/pages/admin/habit";
+import EconomicsPage from "@/pages/admin/economics";
+import OnboardingPage from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/saved" component={SavedBriefings} />
       <Route path="/my-feed" component={MyFeedPage} />
       <Route path="/settings" component={SettingsPage} />
@@ -48,6 +51,7 @@ function Router() {
       <Route path="/admin/analytics" component={AdminAnalyticsPage} />
       <Route path="/admin/delivery" component={AdminDeliveryPage} />
       <Route path="/admin/feed-quality" component={FeedQualityPage} />
+      <Route path="/admin/economics" component={EconomicsPage} />
       <Route path="/debug/relevance" component={RelevanceDebugPage} />
       <Route path="/debug/entities" component={EntitiesDebugPage} />
       <Route path="/debug/feed-evolution" component={FeedEvolutionPage} />

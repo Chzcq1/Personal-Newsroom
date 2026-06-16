@@ -1,0 +1,19 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "deployment/Dockerfile"
+
+[deploy]
+startCommand = "node --enable-source-maps ./dist/index.mjs"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[[services]]
+name = "infox-api"
+
+[services.variables]
+NODE_ENV = "production"
+PORT = "8080"
+AI_PROVIDER = "github"
+SCHEDULER_TIMEZONE = "Asia/Bangkok"

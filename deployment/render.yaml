@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: infox-api
+    runtime: docker
+    dockerfilePath: deployment/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: NODE_ENV
+        value: production
+      - key: AI_PROVIDER
+        value: github
+      - key: SCHEDULER_TIMEZONE
+        value: Asia/Bangkok
+      - key: DATABASE_URL
+        fromDatabase:
+          name: infox-db
+          property: connectionString
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+
+databases:
+  - name: infox-db
+    plan: free
+    databaseName: infox
+    user: infox

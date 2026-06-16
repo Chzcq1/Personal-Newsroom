@@ -1,0 +1,392 @@
+Read first:
+
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/EXPERIENCE_INTELLIGENCE.md
+* docs/VISUAL_DELIVERY.md
+* docs/DELIVERY_INFRASTRUCTURE.md
+* docs/TOKEN_ECONOMY.md
+* docs/AGENT_ARCHITECTURE.md
+* docs/SYSTEM_STATUS.md
+* docs/AGENT_RULES.md
+
+Preserve all current functionality.
+
+========================================
+SPRINT 14
+PERSISTENT INFRASTRUCTURE & IDENTITY FOUNDATION
+===============================================
+
+Mission:
+
+INFOX must evolve from a Replit-dependent AI project into a persistent deployable intelligence platform.
+
+Current state:
+
+* intelligence systems are strong
+* UX and delivery experience are improving
+* Telegram integration works
+* personalization exists
+* architecture is modularizing
+
+Critical problems:
+
+* system depends entirely on active Replit runtime
+* memory is partially temporary
+* localStorage still owns important state
+* no persistent user layer
+* delivery reliability still fragile
+* deployment architecture not production-ready
+* no long-term data ownership model
+
+Goal:
+
+Create the foundational infrastructure required for:
+
+* persistent users
+* long-term memory
+* reliable delivery
+* future billing
+* cloud deployment
+* real-world operation
+
+WITHOUT implementing full auth or payments yet.
+
+========================================
+TASK A — POSTGRESQL FOUNDATION
+==============================
+
+Integrate PostgreSQL as the primary persistent storage layer.
+
+Requirements:
+
+* create database connection architecture
+* environment-based DB config
+* repository abstraction layer
+* migration-ready schema structure
+
+Recommended:
+Prisma OR Drizzle ORM
+
+Prepare schemas for:
+
+* user_profiles
+* saved_briefings
+* delivery_logs
+* user_preferences
+* user_interests
+* user_watchlists
+* narrative_memory
+* delivery_schedules
+* feedback_actions
+
+Do NOT implement:
+full production auth yet.
+
+Goal:
+
+INFOX must stop relying on temporary runtime state.
+
+========================================
+TASK B — STORAGE ABSTRACTION LAYER
+==================================
+
+Current issue:
+
+Many services directly depend on localStorage or in-memory state.
+
+Create:
+
+/services/storage/
+/repositories/
+
+Requirements:
+
+* storage interface contracts
+* swap-ready architecture
+* local vs persistent storage adapters
+* future Redis compatibility
+
+Goal:
+
+Allow migration between:
+memory → PostgreSQL → distributed infra
+without rewriting business logic.
+
+========================================
+TASK C — ANONYMOUS IDENTITY SYSTEM
+==================================
+
+Implement persistent anonymous identity.
+
+Requirements:
+
+* device-level anonymous profile id
+* persistent intelligence state
+* migration-ready identity structure
+* ownership binding for preferences and briefings
+
+Support:
+
+* local identity persistence
+* future account upgrade path
+* future cloud sync
+
+Do NOT implement:
+password auth
+OAuth
+email verification
+
+This is:
+identity preparation only.
+
+========================================
+TASK D — PERSISTENT USER MEMORY
+===============================
+
+Move critical memory systems into DB persistence.
+
+Persist:
+
+* user interests
+* narrative follows
+* delivery preferences
+* feedback learning
+* read history
+* briefing saves
+* entity affinity
+* personality selection
+
+Goal:
+
+User intelligence profile survives:
+
+* refresh
+* restart
+* redeploy
+* infrastructure migration
+
+========================================
+TASK E — DELIVERY QUEUE FOUNDATION
+==================================
+
+Current issue:
+
+Telegram delivery still tied too closely to runtime lifecycle.
+
+Create:
+
+deliveryQueue.ts
+
+Requirements:
+
+* queued delivery records
+* pending/sent/failed states
+* retry architecture
+* replay support
+* scheduling persistence
+* delivery ownership model
+
+Do NOT add Redis yet.
+
+In-memory + DB hybrid acceptable.
+
+Goal:
+
+Prepare durable delivery infrastructure.
+
+========================================
+TASK F — DEPLOYMENT SEPARATION
+==============================
+
+Prepare INFOX for deployment outside Replit.
+
+Create:
+
+deployment/
+docker/
+env/
+
+Requirements:
+
+* environment separation
+* production env schema
+* Docker preparation
+* runtime config abstraction
+* scheduler separation prep
+* worker process prep
+
+Document support for:
+
+* Railway
+* Render
+* Fly.io
+* VPS deployment
+
+Do NOT migrate yet.
+
+Preparation only.
+
+========================================
+TASK G — BACKGROUND WORKER ARCHITECTURE
+=======================================
+
+Prepare persistent worker model.
+
+Requirements:
+
+Create architecture for:
+
+* digest generation worker
+* Telegram delivery worker
+* retry worker
+* narrative update worker
+* analytics aggregation worker
+
+No distributed queue yet.
+
+Focus:
+clean separation of responsibilities.
+
+========================================
+TASK H — COST & USAGE INTELLIGENCE
+==================================
+
+Expand analytics systems.
+
+Track:
+
+* estimated cost per user
+* delivery cost
+* AI generation cost
+* topic-level burn rate
+* digest frequency cost
+* estimated monthly infrastructure cost
+
+Create:
+/admin/economics
+
+Goal:
+
+Understand:
+whether INFOX can become financially sustainable.
+
+========================================
+TASK I — CLOSED ALPHA PREPARATION
+=================================
+
+Prepare system for first real users.
+
+Create:
+
+* onboarding flow placeholder
+* welcome intelligence setup
+* first-time preference selection
+* starter topic presets
+* founder access architecture
+
+Add:
+Founding Member concept preparation.
+
+Do NOT add payments yet.
+
+========================================
+TASK J — DATA OWNERSHIP MODEL
+=============================
+
+Define user ownership boundaries.
+
+Requirements:
+
+Document and implement ownership rules for:
+
+* briefings
+* schedules
+* feedback
+* interests
+* narratives
+* saved items
+* delivery history
+
+Prepare:
+future account migration support.
+
+========================================
+TASK K — RELIABILITY & RECOVERY
+===============================
+
+Strengthen operational stability.
+
+Implement:
+
+* startup recovery checks
+* DB connection recovery
+* failed job restoration
+* corrupted state protection
+* graceful degraded mode
+
+Goal:
+
+INFOX should survive:
+runtime failures
+server restarts
+deployment changes
+
+========================================
+TASK L — DOCUMENTATION
+======================
+
+Update:
+
+ARCHITECTURE.md
+CHANGELOG.md
+DELIVERY_INFRASTRUCTURE.md
+EXPERIENCE_INTELLIGENCE.md
+TOKEN_ECONOMY.md
+
+Create:
+
+PERSISTENT_INFRASTRUCTURE.md
+IDENTITY_FOUNDATION.md
+DEPLOYMENT_GUIDE.md
+CLOSED_ALPHA_PLAN.md
+
+Document:
+
+* database architecture
+* identity strategy
+* deployment roadmap
+* worker architecture
+* queue strategy
+* recovery systems
+* persistent memory model
+* closed alpha launch strategy
+
+========================================
+SUCCESS CRITERIA
+================
+
+After Sprint 14:
+
+* INFOX no longer depends entirely on temporary state
+* persistent database exists
+* anonymous identity exists
+* user memory survives restarts
+* delivery system becomes durable
+* deployment preparation is complete
+* infrastructure is migration-ready
+* economics visibility exists
+* closed alpha preparation begins
+
+Provide implementation report:
+
+Files created
+Files modified
+Database schema decisions
+Identity architecture
+Queue design
+Worker architecture
+Deployment preparation
+Recovery strategy
+Known limitations
+Recommended next sprint

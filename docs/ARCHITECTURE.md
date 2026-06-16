@@ -592,3 +592,86 @@ Clean Bloomberg/FT-style formatting for 4 briefing types:
 - Reading time calibrated for Thai text (~440 chars/min)
 - Footer: `─── INFOX · {time} ICT ───`
 
+---
+
+## Sprint 14 — Persistent Infrastructure & Identity Foundation
+
+### DB Schema (11 tables)
+
+All Drizzle ORM table definitions live in `lib/db/src/schema/`. Run `pnpm --filter @workspace/db run push` to apply.
+
+| Table | Purpose |
+|---|---|
+| `userProfiles` | Anonymous identity, onboarding state, founding-member flag |
+| `userPreferences` | Topic subscriptions, delivery schedule, personality mode |
+| `savedBriefings` | User-saved briefing content with metadata |
+| `feedbackEvents` | Per-article engagement signals (open/save/skip/thumbs) |
+| `deliveryHistory` | Every Telegram delivery record with status + token cost |
+| `deliveryQueue` | Durable outbox — persists retry state across restarts |
+| `narrativeThreads` | Named story arcs across multiple briefings |
+| `entityMemoryEntries` | Per-entity mention count, sentiment, last-seen time |
+| `analyticsSnapshots` | Daily/weekly aggregated usage metrics |
+| `workerCheckpoints` | Worker heartbeats + last-run timestamps |
+| `systemConfig` | Key-value store for runtime configuration |
+
+### Storage Abstraction Layer
+
+`artifacts/api-server/src/services/storage/` defines a single `IRepository<T>` interface. Two adapters ship:
+
+- **`memoryAdapter`** — in-process Map; zero dependencies; used when `DATABASE_URL` is absent
+- **`pgAdapter`** — Drizzle ORM + PostgreSQL; activated automatically when `DATABASE_URL` is present
+
+Five repositories wrap the adapters: `userProfileRepository`, `userPreferencesRepository`, `savedBriefingRepository`, `feedbackRepository`, `deliveryQueueRepository`.
+
+### Worker Architecture
+
+`artifacts/api-server/src/workers/` houses a lightweight background-job system:
+
+- **`baseWorker`** — `setInterval` wrapper with error isolation per tick
+- **`retryWorker`** — re-queues failed deliveries every 60 s
+- **`narrativeWorker`** — refreshes narrative threads every 30 min
+- **`analyticsWorker`** — writes daily snapshots every 15 min
+- **`workerRegistry`** — starts/stops all workers; called from `server/index.ts` on boot
+
+### Startup Recovery (`startupRecovery.ts`)
+
+On every boot: verifies DB connection, recovers stale delivery-queue items, logs storage mode (memory vs PostgreSQL). If DB is unreachable, server degrades gracefully to in-memory mode without crashing.
+
+### Identity API Routes
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/identity/sync` | POST | Upsert anonymous profile from browser fingerprint |
+| `/api/identity/:id` | GET | Retrieve persisted profile |
+| `/api/identity/:id/onboarding` | POST | Mark onboarding complete + founding-member flag |
+| `/api/identity/:id/feedback` | POST | Record article engagement event |
+| `/api/identity/:id/briefings` | GET | List saved briefings for profile |
+| `/api/identity/briefing` | POST | Persist a briefing |
+| `/api/identity/briefing/:id` | DELETE | Remove a saved briefing |
+
+### Economics API Routes
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/economics/summary` | GET | Token budget usage, cost estimate, model breakdown |
+| `/api/economics/reset` | POST | Reset usage counters for current period |
+
+### New Pages (Sprint 14)
+
+| Page | Route | Description |
+|---|---|---|
+| Onboarding | `/onboarding` | 4-step founding-member signup flow |
+| Cost Visibility | `/admin/economics` | Token usage, cost estimates, model breakdown |
+
+### Deployment Files
+
+`deployment/` contains: `Dockerfile`, `docker-compose.yml`, `.env.example`, `railway.toml`, `render.yaml`, `fly.toml`. The app is environment-portable — all secrets via env vars, no hardcoded hostnames.
+
+### Architecture Decisions (Sprint 14)
+
+1. **Graceful degradation over hard fail:** If `DATABASE_URL` is absent, the server runs fully on in-memory adapters. No crash, no data loss for the session.
+2. **Repository pattern for all DB access:** Consumers never touch Drizzle directly — adapters are swappable without touching business logic.
+3. **Workers are isolated:** Each worker tick is wrapped in try/catch; one failing worker cannot kill others or the main process.
+4. **Identity is anonymous-first:** No auth required. Profile is keyed on a client-generated UUID stored in localStorage. Migration to authenticated accounts is additive.
+5. **Persist-before-send pattern:** Delivery queue entries are written to DB before Telegram is called, ensuring no silent drops on process crash.
+

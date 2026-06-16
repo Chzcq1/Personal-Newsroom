@@ -547,7 +547,8 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
 // ── Main Page ───────────────────────────────────────────────
 
 export default function Home() {
-  const { data: topics, isLoading: topicsLoading } = useGetTopics();
+  const { data: topicsRaw, isLoading: topicsLoading } = useGetTopics();
+  const topics = Array.isArray(topicsRaw) ? topicsRaw : [];
   const summarize = useSummarizeNews();
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState(getSavedCount);

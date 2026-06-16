@@ -960,3 +960,96 @@
 - Taste learning is client-only: resets if user clears localStorage. No sync between devices.
 - Quality filters use heuristics (clickbait regex, word count). False positives possible for short-form legitimate news.
 
+---
+
+## Sprint 14 — Persistent Infrastructure & Identity Foundation
+
+**Date:** 2026-06-16  
+**Theme:** Move from Replit-dependent volatile state to a persistent, deployable intelligence platform.
+
+### New Files
+
+**`lib/db/src/schema/`** (11 tables — Tasks A)
+- `userProfiles.ts`, `userPreferences.ts`, `savedBriefings.ts`, `feedbackEvents.ts`, `deliveryHistory.ts`, `deliveryQueue.ts`, `narrativeThreads.ts`, `entityMemoryEntries.ts`, `analyticsSnapshots.ts`, `workerCheckpoints.ts`, `systemConfig.ts`
+- All pushed to PostgreSQL via `pnpm --filter @workspace/db run push`
+
+**`artifacts/api-server/src/services/storage/`** (Task B)
+- `IRepository.ts` — generic CRUD interface (findById, findMany, upsert, delete, count)
+- `memoryAdapter.ts` — in-process Map; zero-dep fallback when DB absent
+- `pgAdapter.ts` — Drizzle ORM wrapper; activated when `DATABASE_URL` is present
+
+**`artifacts/api-server/src/repositories/`** (Task B)
+- `userProfileRepository.ts`, `userPreferencesRepository.ts`, `savedBriefingRepository.ts`, `feedbackRepository.ts`, `deliveryQueueRepository.ts`
+
+**`artifacts/api-server/src/routes/identity.ts`** (Task C)
+- 7 endpoints for anonymous profile sync, onboarding, feedback, and briefing persistence
+- Manual validation (no zod dependency) matching existing route style
+
+**`artifacts/api-server/src/routes/economics.ts`** (Task H)
+- `GET /api/economics/summary` — token budget usage + cost estimate
+- `POST /api/economics/reset` — reset counters for current period
+
+**`artifacts/api-server/src/services/delivery/deliveryQueue.ts`** (Task E)
+- DB-backed outbox: enqueue → send → ack/nack flow
+- In-memory fallback when DB unavailable
+- Persist-before-send pattern: DB write precedes every Telegram call
+
+**`artifacts/api-server/src/workers/`** (Task G)
+- `baseWorker.ts` — setInterval with per-tick error isolation
+- `retryWorker.ts` — re-queues failed deliveries (60 s interval)
+- `narrativeWorker.ts` — refreshes narrative threads (30 min interval)
+- `analyticsWorker.ts` — writes daily snapshots (15 min interval)
+- `workerRegistry.ts` — starts/stops all workers on server boot
+
+**`artifacts/api-server/src/services/infra/startupRecovery.ts`** (Task K)
+- DB health check on boot (with latency logging)
+- Recovers stale in-flight delivery queue items
+- Graceful degradation to memory mode if DB unreachable
+
+**`deployment/`** (Task F)
+- `Dockerfile`, `docker-compose.yml`, `.env.example`
+- `railway.toml`, `render.yaml`, `fly.toml` — platform-specific configs
+
+**`artifacts/newsroom/src/pages/onboarding.tsx`** (Task I)
+- 4-step founding-member signup flow
+- Steps: Welcome → Topics → Delivery → Confirm
+- Writes profile via `/api/identity/sync` + `/api/identity/:id/onboarding`
+
+**`artifacts/newsroom/src/pages/admin/economics.tsx`** (Task H)
+- Token budget usage bars per mode (Default / Executive / Intelligence)
+- Cost estimate table, model breakdown, period reset button
+
+**New docs** (Task J/L)
+- `docs/PERSISTENT_INFRASTRUCTURE.md` — storage layer design + migration guide
+- `docs/IDENTITY_FOUNDATION.md` — anonymous identity + onboarding design
+- `docs/DEPLOYMENT_GUIDE.md` — Railway / Render / Fly.io deployment instructions
+- `docs/CLOSED_ALPHA_PLAN.md` — founding-member rollout strategy
+
+### Modified Files
+
+**`artifacts/api-server/src/index.ts`** — calls `runStartupRecovery()` and `startAllWorkers()` on boot  
+**`artifacts/api-server/src/routes/index.ts`** — registers identity and economics routers  
+**`artifacts/newsroom/src/App.tsx`** — adds `/onboarding` and `/admin/economics` routes  
+**`artifacts/newsroom/src/pages/home.tsx`** — defensive `Array.isArray` guard on topics query data  
+**`artifacts/api-server/src/services/intelligence/longTermMemory.ts`** — `getMigrationStatus()` updated to Phase 2 (PostgreSQL active)
+
+### Bug Fixes
+
+- `home.tsx`: `topics?.map is not a function` — pre-existing crash when React Query returned a stale non-array cache hit. Fixed with `Array.isArray(topicsRaw)` guard.
+- `identity.ts`: Build failure — `zod/v4` not installed in `@workspace/api-server`. Replaced with manual type-guard validation matching existing route style.
+
+### Architecture Decisions
+
+1. **Graceful degradation over hard fail:** Missing `DATABASE_URL` degrades to in-memory adapters without crashing — identical API surface.
+2. **Repository pattern isolates DB access:** Consumers never touch Drizzle directly; adapter swap requires zero consumer changes.
+3. **Workers are isolated per-tick:** Each tick wrapped in try/catch; one broken worker cannot kill others or the main process.
+4. **Identity is anonymous-first:** Profile keyed on client-generated UUID (localStorage). Authenticated migration is purely additive.
+5. **Persist-before-send:** Delivery queue entry is committed to DB before Telegram is called — no silent message loss on crash.
+
+### Known Limitations (Sprint 14)
+
+- User preferences table is defined but not yet wired to the delivery scheduler (uses env-var config today).
+- Analytics snapshots are written but not yet surfaced on a dedicated page beyond the economics route.
+- Worker checkpoints are stored but no admin page shows worker health yet.
+- Onboarding writes to DB but the frontend does not yet read back a persisted profile on subsequent sessions.
+
