@@ -30,6 +30,8 @@ import InsightExportPage from "@/pages/insights/export";
 import HabitDashboardPage from "@/pages/admin/habit";
 import EconomicsPage from "@/pages/admin/economics";
 import OnboardingPage from "@/pages/onboarding";
+import SignalModePage from "@/pages/settings/signal-mode";
+import SystemIntelligencePage from "@/pages/admin/system-intelligence";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -65,6 +67,8 @@ function Router() {
       <Route path="/admin/narratives" component={AdminNarrativesPage} />
       <Route path="/insights/export" component={InsightExportPage} />
       <Route path="/admin/habit" component={HabitDashboardPage} />
+      <Route path="/settings/signal-mode" component={SignalModePage} />
+      <Route path="/admin/system-intelligence" component={SystemIntelligencePage} />
       <Route component={NotFound} />
     </Switch>
   );

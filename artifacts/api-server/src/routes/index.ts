@@ -21,6 +21,8 @@ import identityRouter from "./identity.js";
 import economicsRouter from "./economics.js";
 import knowledgeCompoundRouter from "./knowledgeCompound.js";
 import waitlistRouter from "./waitlist.js";
+import signalModeRouter from "./signalMode.js";
+import systemIntelligenceRouter from "./systemIntelligence.js";
 
 const router: IRouter = Router();
 
@@ -46,5 +48,7 @@ router.use(identityRouter);
 router.use(economicsRouter);
 router.use(knowledgeCompoundRouter);
 router.use(waitlistRouter);
+router.use(signalModeRouter);
+router.use(systemIntelligenceRouter);
 
 export default router;

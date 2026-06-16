@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import {
   ArrowLeft, Send, Heart, ChevronRight, Check, X,
   Clock, Layers, Bug, Brain, Zap, BarChart3, Share2, Flame,
-  TrendingUp, Eye,
+  TrendingUp, Eye, Radio,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -293,6 +293,24 @@ export default function SettingsPage() {
                 <p className="font-medium text-white mb-0.5">Habit & Engagement</p>
                 <p className="text-sm text-white/50">
                   Daily streak, weekly summary, intelligence profile
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Signal Mode — Sprint 16 */}
+        <Link href="/settings/signal-mode">
+          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                <Radio className="w-4 h-4 text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-white mb-0.5">Signal Mode</p>
+                <p className="text-sm text-white/50">
+                  Speed vs. verification — Safe, Balanced, or Raw Signal
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />

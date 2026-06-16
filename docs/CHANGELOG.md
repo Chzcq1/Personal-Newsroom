@@ -1107,3 +1107,81 @@
 - Worker checkpoints are stored but no admin page shows worker health yet.
 - Onboarding writes to DB but the frontend does not yet read back a persisted profile on subsequent sessions.
 
+
+---
+
+## Sprint 16 — Strategic Intelligence Layer (June 2026)
+
+**Theme**: Transform from "AI summarises news" → "AI helps users understand what matters and what to do next."
+
+### New Features
+
+#### Signal Mode System
+- 3-mode control: **Safe** (multi-source verified), **Balanced** (default), **Raw Signal** (max speed)
+- `/settings/signal-mode` — settings page with mode cards, risk indicators, pros/cons
+- `/api/signal-mode` GET/POST — sync mode between client and server
+- LocalStorage persistence (`ai-newsroom:signal-mode`) + server-side state
+
+#### Strategic Intelligence Services
+- **Priority Hierarchy** — 5-tier article classification: `critical` / `high` / `medium` / `context` / `noise`
+- **Confidence Scoring** — 0–100 score per article/cluster + 5 signal classes: experimental → early_signal → developing → confirmed → established
+- **Strategic Context** — personalised "why this matters" explanation, narrative positioning, second-order implications
+- **Action Insight** — strategic implications (3–5 bullets), watch entities, urgency level (watch/prepare/act)
+
+#### Briefing Formatter V3
+6-section premium structure:
+1. Headline Signal
+2. Why This Matters (strategic context)
+3. Key Signals (priority-ranked)
+4. Strategic Watchlist (action insights)
+5. Confidence Tier badge
+6. Estimated read time
+
+#### System Intelligence Dashboard (`/admin/system-intelligence`)
+- Top 10 narratives by maturity + mention count
+- Top 10 accelerating entities by 24h velocity
+- Signal/noise ratio gauge
+- Narrative maturity distribution (progress bars)
+- Delivery success rate
+- AI token consumption estimates
+- Adaptation signals (top boosted/suppressed entities)
+
+### New Routes
+- `GET /api/signal-mode` — current mode + config
+- `POST /api/signal-mode` — set mode
+- `GET /api/signal-mode/configs` — all mode definitions
+- `GET /api/admin/system-intelligence` — full intelligence observability
+
+### New Pages
+- `/settings/signal-mode` — Signal Mode configuration
+- `/admin/system-intelligence` — System Intelligence dashboard
+
+### New Documentation
+- `docs/SIGNAL_MODES.md` — Signal Mode user guide
+- `docs/CONFIDENCE_SYSTEM.md` — Confidence scoring deep dive
+- `docs/ACTIONABLE_INTELLIGENCE.md` — Action insight architecture
+- `docs/STRATEGIC_CONTEXT.md` — Strategic context personalisation
+
+### Files Changed
+**New services:**
+- `artifacts/api-server/src/services/intelligence/signalModeEngine.ts`
+- `artifacts/api-server/src/services/intelligence/priorityHierarchy.ts`
+- `artifacts/api-server/src/services/intelligence/confidenceScoring.ts`
+- `artifacts/api-server/src/services/intelligence/strategicContext.ts`
+- `artifacts/api-server/src/services/intelligence/actionInsight.ts`
+- `artifacts/api-server/src/services/delivery/briefingFormatterV3.ts`
+
+**New routes:**
+- `artifacts/api-server/src/routes/signalMode.ts`
+- `artifacts/api-server/src/routes/systemIntelligence.ts`
+
+**New frontend:**
+- `artifacts/newsroom/src/pages/settings/signal-mode.tsx`
+- `artifacts/newsroom/src/pages/admin/system-intelligence.tsx`
+- `artifacts/newsroom/src/lib/signalMode.ts`
+
+**Updated:**
+- `artifacts/api-server/src/routes/index.ts` — added signalModeRouter + systemIntelligenceRouter
+- `artifacts/newsroom/src/App.tsx` — added /settings/signal-mode + /admin/system-intelligence routes
+- `artifacts/newsroom/src/pages/settings/index.tsx` — Signal Mode nav item
+- `docs/ARCHITECTURE.md` — Sprint 16 section

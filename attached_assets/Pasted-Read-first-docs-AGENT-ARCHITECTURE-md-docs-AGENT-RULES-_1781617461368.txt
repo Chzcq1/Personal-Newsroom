@@ -1,0 +1,558 @@
+Read first:
+
+* docs/AGENT_ARCHITECTURE.md
+* docs/AGENT_RULES.md
+* docs/ALPHA_GATING.md
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/CLOSED_ALPHA_PLAN.md
+* docs/DELIVERY_INFRASTRUCTURE.md
+* docs/DEPLOYMENT_GUIDE.md
+* docs/DEPLOYMENT_READINESS.md
+* docs/IDENTITY_FOUNDATION.md
+* docs/INTELLIGENCE_MEMORY.md
+* docs/KNOWLEDGE_COMPOUND.md
+* docs/LOGIN_PREPARATION.md
+* docs/PERSISTENT_INFRASTRUCTURE.md
+* docs/PRECISION_INTELLIGENCE.md
+* docs/PROACTIVE_INTELLIGENCE.md
+* docs/PROJECT_VISION.md
+* docs/SYSTEM_STATUS.md
+* docs/TELEGRAM_FORMATTING.md
+* docs/TOKEN_ECONOMY.md
+* docs/VISUAL_GUIDELINES.md
+
+Follow all architecture and safety rules strictly.
+
+Do NOT overwrite existing systems unless required.
+Do NOT break any existing routes or intelligence pipelines.
+Preserve all current functionality.
+
+Before modifying files:
+
+1. Explain what will change
+2. Explain why
+3. Explain expected system impact
+
+========================================
+SPRINT 16
+STRATEGIC INTELLIGENCE LAYER
+
+Mission:
+
+INFOX must evolve from:
+
+"AI summarizes news"
+
+into:
+
+"AI helps users understand what matters and what to do next."
+
+Sprint 16 focuses on:
+
+* strategic intelligence
+* signal hierarchy
+* user decision support
+* speed vs trust control
+* premium-grade intelligence UX
+* actionable insight systems
+
+This sprint is NOT about auth/payments yet.
+
+This sprint upgrades:
+the intelligence layer itself.
+
+========================================
+CORE PROBLEM
+
+Current system is strong at:
+
+* summarization
+* filtering
+* personalization
+* delivery
+
+But still weak at:
+
+* urgency interpretation
+* strategic prioritization
+* decision assistance
+* speed-vs-trust balancing
+* narrative importance ranking
+
+Users still see:
+"a list of news"
+
+Instead of:
+"a hierarchy of important signals."
+
+========================================
+SPRINT 16 OBJECTIVE
+
+Transform INFOX into:
+
+A Strategic Intelligence Operating System.
+
+The system should begin answering:
+
+* Why does this matter?
+* Why did I receive this?
+* How urgent is this?
+* How trustworthy is this?
+* What should I pay attention to next?
+* What changed since yesterday?
+* Is this early signal or confirmed signal?
+
+========================================
+TASK A — SIGNAL MODE SYSTEM
+
+Create:
+
+/settings/signal-mode
+
+Add 3 intelligence modes:
+
+1. SAFE MODE
+   * highly verified
+   * multi-source confirmation required
+   * low noise
+   * slower but safer
+
+2. BALANCED MODE
+   * current default behavior
+   * moderate verification
+   * moderate speed
+
+3. RAW SIGNAL MODE
+   * prioritize speed
+   * allow emerging signals
+   * tolerate partial confirmation
+   * optimized for traders / analysts
+
+Requirements:
+
+* persist mode selection
+* apply globally to:
+  - feed ranking
+  - Telegram delivery
+  - alert engine
+  - signal filtering
+* add visual explanation cards
+* show risk/reliability indicators
+
+Backend:
+Create:
+services/intelligence/signalModeEngine.ts
+
+========================================
+TASK B — STRATEGIC PRIORITY ENGINE
+
+Current issue:
+all cards visually feel similar.
+
+Create:
+services/intelligence/priorityHierarchy.ts
+
+Requirements:
+
+Rank narratives into:
+
+* Critical
+* Major
+* Emerging
+* Contextual
+* Noise
+
+Use signals from:
+
+* trend acceleration
+* entity influence
+* source quality
+* urgency keywords
+* watchlist relevance
+* geopolitical importance
+* market impact
+* multi-source confirmation
+
+Frontend:
+
+Create visual hierarchy:
+
+* Top signal hero card
+* Major narratives section
+* Emerging signals section
+* Filtered/low-priority collapsed section
+
+Goal:
+
+INFOX should visually behave like:
+an AI newspaper front page.
+
+========================================
+TASK C — WHY THIS MATTERS ENGINE
+
+Create:
+services/intelligence/strategicContext.ts
+
+Requirements:
+
+For every major narrative:
+
+generate:
+"Why this matters to YOU"
+
+Examples:
+
+"You follow Nvidia and AI infrastructure.
+This development may affect GPU supply chains over the next 2–4 weeks."
+
+"This signal matches your Bitcoin ETF watchlist and has accelerated across 4 financial sources."
+
+Requirements:
+
+* personalized explanation layer
+* watchlist-aware
+* interest-aware
+* narrative-aware
+* generated without excessive token usage
+
+Inject into:
+feed cards
+Telegram digest
+executive summaries
+
+========================================
+TASK D — SIGNAL CONFIDENCE SYSTEM
+
+Create:
+services/intelligence/confidenceScoring.ts
+
+Generate:
+
+* confidence score (0–100)
+* trust label
+* source agreement level
+* freshness score
+* signal maturity score
+
+Signal classes:
+
+* Experimental
+* Early Signal
+* Developing
+* Confirmed
+* Institutional
+
+Display:
+
+* confidence badge
+* maturity badge
+* source confirmation count
+
+Goal:
+
+Users understand:
+whether information is speculative or highly confirmed.
+
+========================================
+TASK E — ACTIONABLE INSIGHT ENGINE
+
+Create:
+services/intelligence/actionInsight.ts
+
+Generate:
+
+* strategic implications
+* possible next effects
+* what to monitor next
+* sectors/entities potentially impacted
+
+Examples:
+
+"This may increase pressure on GPU suppliers over the next quarter."
+
+"Watch:
+TSMC, Nvidia supply chain, AI cloud providers."
+
+Requirements:
+
+* concise
+* executive-grade
+* avoid hallucination
+* no financial advice claims
+* probabilistic wording only
+
+Inject into:
+
+* Executive Mode
+* Telegram Pro digests
+* narrative detail pages
+
+========================================
+TASK F — DELIVERY EXPERIENCE V3
+
+Upgrade Telegram delivery formatting again.
+
+Create:
+services/delivery/briefingFormatterV3.ts
+
+Requirements:
+
+Telegram briefing structure:
+
+1. HEADLINE
+2. Why this matters
+3. Key signals
+4. Strategic watchlist
+5. Confidence level
+6. Read time estimate
+
+Improve:
+
+* spacing
+* scan readability
+* visual hierarchy
+* markdown consistency
+* mobile readability
+
+Add:
+
+* "Why you received this"
+* signal confidence tag
+* signal mode indicator
+
+Goal:
+
+Telegram should feel like:
+a premium intelligence terminal.
+
+========================================
+TASK G — VISUAL INTELLIGENCE FEED
+
+Upgrade feed visuals.
+
+Requirements:
+
+* breaking signal hero section
+* urgency glow states
+* narrative cluster cards
+* momentum indicators
+* confidence chips
+* trend arrows
+* signal badges
+
+Fix:
+
+* dark mode contrast issues
+* low-visibility metadata buttons
+* weak hierarchy in vertical feeds
+
+Goal:
+
+The feed should visually communicate:
+importance before reading.
+
+========================================
+TASK H — PERSONAL INTELLIGENCE MEMORY V2
+
+Upgrade:
+knowledgeCompound.ts
+entityMemory.ts
+userIntelligenceProfile.ts
+
+Add:
+
+* user curiosity drift
+* recurring interests
+* ignored narratives
+* strategic focus detection
+* attention patterns
+
+Generate:
+
+* weekly intelligence evolution
+* signal preference profile
+* topic fatigue detection
+
+Goal:
+
+INFOX begins understanding:
+how users consume intelligence over time.
+
+========================================
+TASK I — PREMIUM INTELLIGENCE PREPARATION
+
+Prepare architecture for future premium plans.
+
+Create:
+
+/docs/PREMIUM_INTELLIGENCE.md
+
+Define:
+
+FREE:
+* daily digest
+* limited signals
+* standard summaries
+
+PRO:
+* raw signal mode
+* strategic insights
+* advanced Telegram delivery
+* custom schedules
+* watchlist alerts
+* executive intelligence
+* insight exports without watermark
+
+ENTERPRISE:
+* multi-agent analysis
+* intelligence teams
+* API access
+* organization dashboards
+
+Do NOT implement payments yet.
+
+Preparation only.
+
+========================================
+TASK J — DEPLOYMENT RISK REDUCTION
+
+Prepare system to reduce Replit dependency.
+
+Requirements:
+
+* isolate runtime-sensitive services
+* abstract scheduler layer
+* prepare external cron compatibility
+* improve startup recovery
+* improve worker resiliency
+
+Document:
+what breaks if runtime sleeps.
+
+Goal:
+
+Prepare transition to:
+persistent cloud infrastructure.
+
+========================================
+TASK K — INTELLIGENCE CARD EXPORT V2
+
+Upgrade existing Insight Export system.
+
+Requirements:
+
+Support:
+
+* Breaking Signal cards
+* Strategic Insight cards
+* Executive Briefing cards
+* Market Pulse cards
+
+Add:
+
+* signal confidence
+* generated timestamp
+* INFOX branding
+* premium watermark rules
+
+Improve:
+
+* typography
+* hierarchy
+* mobile export quality
+* dark/light variants
+
+Goal:
+
+Make INFOX exports feel:
+Bloomberg-grade.
+
+========================================
+TASK L — SYSTEM OBSERVABILITY
+
+Create:
+
+/admin/system-intelligence
+
+Show:
+
+* top narratives
+* top accelerating entities
+* signal/noise ratio
+* confidence distribution
+* delivery success
+* AI token consumption
+* source quality breakdown
+* user intelligence trends
+
+Goal:
+
+Founders should understand:
+whether INFOX intelligence quality is improving.
+
+========================================
+TASK M — DOCUMENTATION
+
+Update:
+
+* ARCHITECTURE.md
+* CHANGELOG.md
+* PRECISION_INTELLIGENCE.md
+* PROACTIVE_INTELLIGENCE.md
+* TELEGRAM_FORMATTING.md
+* TOKEN_ECONOMY.md
+* VISUAL_GUIDELINES.md
+
+Create:
+
+* STRATEGIC_INTELLIGENCE.md
+* SIGNAL_MODES.md
+* CONFIDENCE_SYSTEM.md
+* ACTIONABLE_INTELLIGENCE.md
+* PREMIUM_INTELLIGENCE.md
+
+Document:
+
+* signal hierarchy model
+* confidence scoring model
+* strategic insight generation
+* signal mode architecture
+* visual intelligence hierarchy
+* premium intelligence roadmap
+* future enterprise direction
+
+========================================
+SUCCESS CRITERIA
+
+After Sprint 16:
+
+* INFOX understands signal importance
+* users can control speed vs trust
+* feed becomes hierarchical
+* strategic insights exist
+* Telegram becomes premium-grade
+* confidence system exists
+* actionable intelligence exists
+* intelligence memory deepens
+* premium architecture is prepared
+* Replit dependency is reduced
+* exports become share-worthy
+* INFOX feels less like a news app
+  and more like:
+  an intelligence operating system
+
+Provide implementation report:
+
+* files created
+* files modified
+* intelligence architecture changes
+* hierarchy model decisions
+* confidence scoring strategy
+* signal mode logic
+* Telegram V3 decisions
+* memory evolution strategy
+* premium preparation strategy
+* deployment risk analysis
+* known limitations
+* recommended Sprint 17

@@ -675,3 +675,50 @@ On every boot: verifies DB connection, recovers stale delivery-queue items, logs
 4. **Identity is anonymous-first:** No auth required. Profile is keyed on a client-generated UUID stored in localStorage. Migration to authenticated accounts is additive.
 5. **Persist-before-send pattern:** Delivery queue entries are written to DB before Telegram is called, ensuring no silent drops on process crash.
 
+
+---
+
+## Sprint 16 — Strategic Intelligence Layer
+
+Sprint 16 transforms the system from "AI summarises news" into "AI helps users understand what matters and what to do next."
+
+### New Services
+
+| Service | Path | Responsibility |
+|---------|------|----------------|
+| Signal Mode Engine | `services/intelligence/signalModeEngine.ts` | User-controlled speed/verification balance (safe/balanced/raw) |
+| Priority Hierarchy | `services/intelligence/priorityHierarchy.ts` | 5-tier signal classification for feed ranking |
+| Confidence Scoring | `services/intelligence/confidenceScoring.ts` | 0–100 score + 5 signal classes per article/cluster |
+| Strategic Context | `services/intelligence/strategicContext.ts` | Personalised "why this matters" explanation |
+| Action Insight | `services/intelligence/actionInsight.ts` | Strategic implications + watch-entity list |
+| Briefing Formatter V3 | `services/delivery/briefingFormatterV3.ts` | 6-section premium briefing structure |
+
+### New API Routes
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/signal-mode` | GET | Current mode + config |
+| `/api/signal-mode` | POST | Set mode (`safe`/`balanced`/`raw`) |
+| `/api/signal-mode/configs` | GET | All mode definitions (for settings UI) |
+| `/api/admin/system-intelligence` | GET | Full intelligence observability dashboard data |
+
+### New Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Signal Mode | `/settings/signal-mode` | User chooses speed vs. verification mode |
+| System Intelligence | `/admin/system-intelligence` | Narrative/entity/delivery/token observability |
+
+### New Documentation
+
+- `docs/SIGNAL_MODES.md` — Signal Mode user guide
+- `docs/CONFIDENCE_SYSTEM.md` — Confidence scoring algorithm
+- `docs/ACTIONABLE_INTELLIGENCE.md` — Action insight system
+- `docs/STRATEGIC_CONTEXT.md` — Strategic context personalisation layer
+
+### Architecture Decisions (Sprint 16)
+
+1. **Signal Mode is a server-side knob with client persistence**: Mode is stored in the API server process state and synced from localStorage on each client session start. This ensures consistent filtering across all server-side workers (not just the frontend).
+2. **Confidence scoring is additive**: Each signal class has a minimum floor score; sources, freshness, and entity confirmation add points above the floor. This prevents gaming and ensures a minimum bar per class.
+3. **Strategic context is non-blocking**: If the AI provider fails to generate strategic context, the briefing degrades to V2 format — no silent crash, no blank section.
+4. **System intelligence dashboard is read-only**: `/api/admin/system-intelligence` is a GET-only aggregation endpoint. It reads from multiple in-memory stores and returns a JSON snapshot. No mutations.
