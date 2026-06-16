@@ -29,6 +29,7 @@ export interface Article {
   description?: string;
   url: string;
   pubDate?: string;
+  imageUrl?: string;
 }
 
 // ── Provider Interface ─────────────────────────────────────

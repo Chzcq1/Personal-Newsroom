@@ -41,6 +41,7 @@ interface PersonalFeedItem {
   selectionReason: string;
   recencyLabel: string;
   sourceTier: string;
+  imageUrl: string | null;
 }
 
 // ── Scoring helpers ──────────────────────────────────────────
@@ -140,6 +141,7 @@ function scoreAndAnnotate(
     matchedWatchlist,
     recencyLabel,
     sourceTier,
+    imageUrl: article.imageUrl ?? null,
     selectionReason: buildSelectionReason(
       matchedInterests,
       matchedWatchlist,

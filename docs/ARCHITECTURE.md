@@ -20,10 +20,11 @@ Express API Server (port 8080)
   ├── routes/news.ts        POST /api/news/summarize        ← Sprint 5: cache + preprocessor + trend
   ├── routes/telegram.ts    POST /api/telegram/test, /send
   │                         POST /api/telegram/diagnostics  ← Sprint 6: full bot+chat diagnostic report
+  │                         POST /api/telegram/test-message ← Sprint 7: sends actual test message to Telegram
   ├── routes/delivery.ts    POST /api/delivery/morning|evening
   │                         GET  /api/delivery/preview/morning|evening
   ├── routes/costs.ts       GET  /api/admin/costs           ← Sprint 5: cost analytics
-  └── routes/feed.ts        POST /api/feed/personal         ← Sprint 6: true scoring (recency + source + watchlist)
+  └── routes/feed.ts        POST /api/feed/personal         ← Sprint 7: + imageUrl field per article
 ```
 
 ---

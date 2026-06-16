@@ -2,6 +2,78 @@
 
 ---
 
+## [2026-06-16] — Sprint 7: Visual Intelligence & Trust Layer
+
+**What:** Twelve-task sprint transforming INFOX into a Bloomberg/FT-quality media product. Telegram test-send button, smart image layer, article card redesign, trust indicators, compact/detailed density modes, reading progress, delivery preview phone mockup, source visual identity, image content safety, performance optimization (lazy loading), Visual Language Standard, and documentation.
+
+**Why:** The feed was text-heavy and lacked visual identity. AI-generated content needed stronger trust signals. Delivery setup was hard to verify. The preview page was developer-oriented, not user-facing. There was no standard to keep the visual language consistent.
+
+### Task A — Telegram Test Send Button
+- `routes/telegram.ts`: new `POST /api/telegram/test-message` — calls getMe + getChat, formats a branded HTML confirmation message with bot username, chat title, ICT timestamp, and scheduled delivery times; sends to Telegram; returns `{ success, botUsername, chatTitle, messageId }`
+- Helper function `telegramPost()` added alongside `telegramGet()` in the route
+- `pages/settings/delivery.tsx`: "Send Test Message" button with sending spinner, ✓ Delivered result (bot + chat name), actionable error state with diagnostics link
+- `pages/settings/delivery-debug.tsx`: "Send Test Message" button added alongside Run Diagnostics with inline success/fail result
+
+### Task B — Smart Image Layer
+- `services/news/rssService.ts`: parser configured with `customFields.item` for `media:content` and `media:thumbnail`; `extractImageUrl()` helper checks: (1) enclosure with image MIME type, (2) `media:content.$url`, (3) `media:thumbnail.$url`
+- `imageUrl?` field added to `Article` interface in `aiProvider.ts`; flows through RSS → feed pipeline
+- `routes/feed.ts`: `imageUrl` added to `PersonalFeedItem` type and returned in response
+
+### Task C — Article Card Redesign
+- `pages/my-feed.tsx` fully redesigned: Bloomberg/FT dark theme, new `FeedCard` component with source avatar, trust row, description excerpt (2 lines), footer with topic tag + recency badge + selection reason, `ArticleThumbnail` component (80×56px, right-aligned, lazy loaded)
+- Loading skeletons (`SkeletonCard`) for both compact and detailed modes
+- Smooth `transition-colors` on hover (no bounce/spring animation)
+
+### Task D — Trust Indicators
+- `TierBadge` component: amber border badge for Tier A sources only — "Tier A" text
+- `RecencyBadge` component: "Breaking" in amber for ≤2h articles, "Recent" in muted for ≤6h
+- Source avatar displays brand color + initials — instant recognition without text
+- `selectionReason` field shown in detailed mode: "Matched: OpenAI · Watchlist: NVDA · Breaking · Reuters ★"
+
+### Task E — Compact / Detailed View Toggle
+- Density toggle in feed header (two-button group: LayoutList / AlignLeft icons)
+- Compact mode: one-row per article (avatar + title + timestamp + topic tag)
+- Detailed mode: full card with description, image, trust signals, "why selected"
+- Persisted to localStorage key `ai-newsroom:feed-density`
+
+### Task F — Reading Progress
+- `lib/readingProgress.ts` (new): `useReadingProgress(urls)` hook — tracks viewed URLs in `localStorage` key `ai-newsroom:read-articles` (max 500 entries, ring buffer)
+- `FeedCard` uses `IntersectionObserver` (threshold 0.5) — marks article as read when 50% visible, then disconnects
+- Header shows: "X of Y read" in tertiary text — no progress bar, no gamification
+
+### Task G — Delivery Preview Redesign
+- `pages/delivery-preview.tsx` redesigned: `TelegramPhone` component renders a full phone frame (rounded-[36px] outer, rounded-[26px] screen, black notch pill, home indicator bar)
+- Telegram dark chat UI: header with bot avatar + "online" status, date separator, message bubbles (bg-[#1e2b3b], `rounded-2xl rounded-tl-sm`, timestamp bottom-right), decorative input bar
+- Page header updated with subtitle "See exactly what arrives in Telegram"
+
+### Task H — Source Visual Identity
+- `lib/sourceBranding.ts` (new): `getSourceBrand(sourceName)` — brand map for 30+ known sources (FT amber, Bloomberg purple, Reuters orange, AP red, TechCrunch blue, etc.)
+- Partial/case-insensitive matching for source name variations
+- Deterministic fallback palette (7 slate colors, color chosen by `charCodeAt(0) % 7`)
+- `SourceAvatar` component: 28×28px rounded-sm square with initials
+
+### Task I — Image & Content Safety
+- `validateImageUrl()` in `rssService.ts`: rejects data URIs, URLs matching `/pixel|tracking|beacon|1x1|spacer|blank\.gif/i`, invalid URLs
+- `ArticleThumbnail` component: `onError` handler hides image on load failure — layout never breaks
+- Images shown only in detailed mode; compact mode has zero image overhead
+
+### Task J — Performance Optimization
+- All `<img>` elements use `loading="lazy"` — images only fetch when approaching viewport
+- `IntersectionObserver` created once per card, disconnected after first trigger — zero ongoing cost
+- Reading progress uses a `Set` diff to avoid unnecessary re-renders (only updates state when a new URL is added)
+
+### Task K — Visual Language Standard
+- `docs/VISUAL_GUIDELINES.md` (new): 8 sections — Philosophy, Color System, Typography, Spacing, Source Identity System, Card Density Modes, Image System, Trust Indicators, Reading Progress, Motion Rules, Delivery Preview spec, Iconography, Accessibility
+
+### Task L — Documentation
+- `docs/CHANGELOG.md` Sprint 7 entry (this)
+- `docs/ARCHITECTURE.md` updated: Visual Layer, Image System, Reading Progress, Source Branding, delivery preview spec
+
+**Files created:** `lib/sourceBranding.ts`, `lib/readingProgress.ts`, `docs/VISUAL_GUIDELINES.md`
+**Files modified:** `aiProvider.ts`, `rssService.ts`, `routes/telegram.ts`, `routes/feed.ts`, `my-feed.tsx`, `delivery-preview.tsx`, `settings/delivery.tsx`, `settings/delivery-debug.tsx`, `docs/CHANGELOG.md`, `docs/ARCHITECTURE.md`
+
+---
+
 ## [2026-06-16] — Sprint 6: Delivery & True Personalization
 
 **What:** Eleven-task sprint completing the delivery pipeline and making personalization truly data-driven. Telegram diagnostics, professional message formatter, true personal feed scoring, feed explanation engine, Thai localization hardening, dynamic custom topics, source quality registry, daily digest memory, delivery scheduler UI, personality foundation, and documentation.

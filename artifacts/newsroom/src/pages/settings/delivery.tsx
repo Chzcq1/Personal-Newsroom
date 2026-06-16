@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, Send, CheckCircle2, XCircle, Loader2, Eye, EyeOff, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  MessageSquare,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +23,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 type ConnectionStatus = "idle" | "testing" | "connected" | "failed";
+type TestSendStatus = "idle" | "sending" | "sent" | "failed";
 
 function apiUrl(path: string): string {
   return `${import.meta.env.BASE_URL}api${path}`;
@@ -25,6 +36,14 @@ export default function DeliverySettingsPage() {
   const [showToken, setShowToken] = useState(false);
   const [status, setStatus] = useState<ConnectionStatus>("idle");
   const [statusMessage, setStatusMessage] = useState("");
+
+  // Task A — test-send state
+  const [testSendStatus, setTestSendStatus] = useState<TestSendStatus>("idle");
+  const [testSendResult, setTestSendResult] = useState<{
+    botUsername?: string;
+    chatTitle?: string;
+    error?: string;
+  } | null>(null);
 
   useEffect(() => {
     const saved = getTelegramSettings();
@@ -48,6 +67,8 @@ export default function DeliverySettingsPage() {
     setBotToken("");
     setChatId("");
     setStatus("idle");
+    setTestSendStatus("idle");
+    setTestSendResult(null);
     toast({ title: "Settings cleared" });
   }
 
@@ -65,7 +86,7 @@ export default function DeliverySettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ botToken: botToken.trim(), chatId: chatId.trim() }),
       });
-      const data = await res.json() as { success: boolean; message?: string; error?: string };
+      const data = (await res.json()) as { success: boolean; message?: string; error?: string };
       if (data.success) {
         setStatus("connected");
         setStatusMessage(data.message ?? "Connection verified");
@@ -73,9 +94,43 @@ export default function DeliverySettingsPage() {
         setStatus("failed");
         setStatusMessage(data.error ?? "Connection failed");
       }
-    } catch (err) {
+    } catch {
       setStatus("failed");
       setStatusMessage("Network error — check that the API server is running");
+    }
+  }
+
+  // Task A — send an actual test message to Telegram
+  async function handleTestSend() {
+    if (!botToken.trim() || !chatId.trim()) {
+      toast({ title: "Enter both Bot Token and Chat ID first", variant: "destructive" });
+      return;
+    }
+    setTestSendStatus("sending");
+    setTestSendResult(null);
+
+    try {
+      const res = await fetch(apiUrl("/telegram/test-message"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botToken: botToken.trim(), chatId: chatId.trim() }),
+      });
+      const data = (await res.json()) as {
+        success: boolean;
+        botUsername?: string;
+        chatTitle?: string;
+        error?: string;
+      };
+      if (data.success) {
+        setTestSendStatus("sent");
+        setTestSendResult({ botUsername: data.botUsername, chatTitle: data.chatTitle });
+      } else {
+        setTestSendStatus("failed");
+        setTestSendResult({ error: data.error });
+      }
+    } catch {
+      setTestSendStatus("failed");
+      setTestSendResult({ error: "Network error — check that the API server is running" });
     }
   }
 
@@ -94,7 +149,7 @@ export default function DeliverySettingsPage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 py-10 space-y-8">
+      <main className="max-w-2xl mx-auto px-6 py-10 space-y-6">
         {/* Credentials form */}
         <Card className="bg-white/5 border-white/10">
           <CardContent className="p-6 space-y-5">
@@ -152,7 +207,7 @@ export default function DeliverySettingsPage() {
               </p>
             </div>
 
-            {/* Connection status */}
+            {/* Connection test status */}
             {status !== "idle" && (
               <div
                 className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2.5 ${
@@ -171,14 +226,12 @@ export default function DeliverySettingsPage() {
                   <XCircle className="w-4 h-4 flex-shrink-0" />
                 )}
                 <span>
-                  {status === "testing"
-                    ? "Testing connection…"
-                    : statusMessage}
+                  {status === "testing" ? "Testing connection…" : statusMessage}
                 </span>
               </div>
             )}
 
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2 pt-1 flex-wrap">
               <Button
                 onClick={handleTest}
                 disabled={status === "testing" || !botToken || !chatId}
@@ -212,6 +265,67 @@ export default function DeliverySettingsPage() {
           </CardContent>
         </Card>
 
+        {/* ── Task A: Send Test Briefing ───────────────────────── */}
+        <Card className="bg-white/5 border-white/10">
+          <CardContent className="p-6 space-y-4">
+            <div>
+              <h2 className="text-base font-semibold mb-1">Send Test Message</h2>
+              <p className="text-sm text-white/50">
+                Sends a real message to your Telegram chat to confirm delivery is working end-to-end.
+              </p>
+            </div>
+
+            {/* Result display */}
+            {testSendStatus === "sent" && testSendResult && (
+              <div className="flex items-start gap-2.5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="text-emerald-400 font-medium">Delivered successfully</p>
+                  {testSendResult.botUsername && (
+                    <p className="text-emerald-400/70 text-xs mt-0.5">
+                      {testSendResult.botUsername} → {testSendResult.chatTitle}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            {testSendStatus === "failed" && testSendResult?.error && (
+              <div className="flex items-start gap-2.5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="text-red-400 font-medium">Send failed</p>
+                  <p className="text-red-400/70 text-xs mt-0.5">{testSendResult.error}</p>
+                  <Link href="/settings/delivery/debug">
+                    <p className="text-[#2AABEE] text-xs mt-1.5 cursor-pointer hover:underline">
+                      Run diagnostics →
+                    </p>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                onClick={handleTestSend}
+                disabled={testSendStatus === "sending" || !botToken || !chatId}
+                className="bg-[#2AABEE] hover:bg-[#2AABEE]/80 text-white gap-2"
+              >
+                {testSendStatus === "sending" ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <MessageSquare className="w-4 h-4" />
+                )}
+                {testSendStatus === "sending" ? "Sending…" : "Send Test Message"}
+              </Button>
+              <Link href="/settings/delivery/debug">
+                <span className="text-xs text-white/35 hover:text-white/60 cursor-pointer transition-colors">
+                  Full diagnostics →
+                </span>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Scheduled delivery info */}
         <Card className="bg-white/5 border-white/10">
           <CardContent className="p-6 space-y-3">
@@ -231,9 +345,7 @@ export default function DeliverySettingsPage() {
               <p>
                 Add <code className="bg-black/30 px-1 py-0.5 rounded">TELEGRAM_BOT_TOKEN</code> and{" "}
                 <code className="bg-black/30 px-1 py-0.5 rounded">TELEGRAM_CHAT_ID</code> to{" "}
-                <strong>Replit Secrets</strong> to enable automatic delivery. The default timezone is
-                Asia/Bangkok — set <code className="bg-black/30 px-1 py-0.5 rounded">SCHEDULER_TIMEZONE</code> to
-                change it.
+                <strong>Replit Secrets</strong> to enable automatic delivery.
               </p>
             </div>
           </CardContent>

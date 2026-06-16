@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Bug, Bot, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Bug, Bot, MessageSquare, ChevronDown, ChevronUp, Send } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getTelegramSettings } from "@/lib/telegramSettings";
@@ -78,11 +78,50 @@ function RawResponseToggle({ data }: { data: unknown }) {
   );
 }
 
+type TestSendStatus = "idle" | "sending" | "sent" | "failed";
+
 export default function DeliveryDebugPage() {
   const settings = getTelegramSettings();
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<DiagnosticReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Task A — test send state
+  const [testSendStatus, setTestSendStatus] = useState<TestSendStatus>("idle");
+  const [testSendResult, setTestSendResult] = useState<{
+    botUsername?: string;
+    chatTitle?: string;
+    error?: string;
+  } | null>(null);
+
+  async function handleTestSend() {
+    if (!settings?.botToken || !settings?.chatId) return;
+    setTestSendStatus("sending");
+    setTestSendResult(null);
+    try {
+      const res = await fetch(`${BASE}/api/telegram/test-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botToken: settings.botToken, chatId: settings.chatId }),
+      });
+      const data = await res.json() as {
+        success: boolean;
+        botUsername?: string;
+        chatTitle?: string;
+        error?: string;
+      };
+      if (data.success) {
+        setTestSendStatus("sent");
+        setTestSendResult({ botUsername: data.botUsername, chatTitle: data.chatTitle });
+      } else {
+        setTestSendStatus("failed");
+        setTestSendResult({ error: data.error });
+      }
+    } catch (err) {
+      setTestSendStatus("failed");
+      setTestSendResult({ error: String(err) });
+    }
+  }
 
   const runDiagnostics = async () => {
     if (!settings?.botToken) {
@@ -172,17 +211,53 @@ export default function DeliveryDebugPage() {
               </div>
             )}
 
-            <Button
-              onClick={runDiagnostics}
-              disabled={loading || !settings?.botToken}
-              className="w-full bg-[#2AABEE] hover:bg-[#2AABEE]/90 text-white gap-2"
-            >
-              {loading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Running diagnostics…</>
-              ) : (
-                <><Bug className="w-4 h-4" /> Run Diagnostics</>
-              )}
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                onClick={runDiagnostics}
+                disabled={loading || !settings?.botToken}
+                className="flex-1 bg-[#2AABEE] hover:bg-[#2AABEE]/90 text-white gap-2"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Running…</>
+                ) : (
+                  <><Bug className="w-4 h-4" /> Run Diagnostics</>
+                )}
+              </Button>
+              <Button
+                onClick={handleTestSend}
+                disabled={testSendStatus === "sending" || !settings?.botToken}
+                variant="outline"
+                className="border-white/15 text-white hover:bg-white/10 gap-2"
+              >
+                {testSendStatus === "sending" ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                {testSendStatus === "sending" ? "Sending…" : "Send Test Message"}
+              </Button>
+            </div>
+
+            {/* Test send result */}
+            {testSendStatus === "sent" && testSendResult && (
+              <div className="flex items-start gap-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg mt-2">
+                <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-400">
+                  <p className="font-medium">Delivered successfully</p>
+                  {testSendResult.botUsername && (
+                    <p className="text-emerald-400/70 mt-0.5">
+                      {testSendResult.botUsername} → {testSendResult.chatTitle}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            {testSendStatus === "failed" && testSendResult?.error && (
+              <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg mt-2">
+                <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-400">{testSendResult.error}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

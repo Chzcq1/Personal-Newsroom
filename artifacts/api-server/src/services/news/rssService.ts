@@ -26,7 +26,65 @@ const parser = new Parser({
     Accept:
       "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
   },
+  customFields: {
+    item: [
+      ["media:content", "media:content"],
+      ["media:thumbnail", "media:thumbnail"],
+    ],
+  },
 });
+
+// ── Image extraction helpers ──────────────────────────────────
+
+const BLOCKED_IMAGE_PATTERNS = /pixel|tracking|beacon|1x1|spacer|blank\.gif/i;
+
+function validateImageUrl(url: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("data:")) return undefined;
+  if (BLOCKED_IMAGE_PATTERNS.test(url)) return undefined;
+  try {
+    new URL(url);
+    return url;
+  } catch {
+    return undefined;
+  }
+}
+
+function extractImageUrl(item: Record<string, unknown>): string | undefined {
+  // 1. enclosure with image MIME type
+  const enc = item.enclosure as
+    | { url?: string; type?: string }
+    | undefined;
+  if (enc?.url && enc.type?.startsWith("image/")) {
+    const validated = validateImageUrl(enc.url);
+    if (validated) return validated;
+  }
+
+  // 2. media:content
+  const mc = item["media:content"] as
+    | { $?: { url?: string; medium?: string } }
+    | undefined;
+  const mcUrl = mc?.$?.url;
+  if (mcUrl) {
+    const medium = mc?.$?.medium;
+    if (!medium || medium === "image") {
+      const validated = validateImageUrl(mcUrl);
+      if (validated) return validated;
+    }
+  }
+
+  // 3. media:thumbnail
+  const mt = item["media:thumbnail"] as
+    | { $?: { url?: string } }
+    | undefined;
+  const mtUrl = mt?.$?.url;
+  if (mtUrl) {
+    const validated = validateImageUrl(mtUrl);
+    if (validated) return validated;
+  }
+
+  return undefined;
+}
 
 export interface RssArticle extends Article {
   source: string;
@@ -74,6 +132,7 @@ export async function fetchFeed(
         url: item.link ?? item.guid ?? url,
         pubDate: item.pubDate ?? item.isoDate ?? undefined,
         source: sourceName,
+        imageUrl: extractImageUrl(item as unknown as Record<string, unknown>),
       }));
 
       const durationMs = Date.now() - totalStartMs;
