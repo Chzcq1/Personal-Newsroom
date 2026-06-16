@@ -22,6 +22,10 @@
 //     → githubProvider.ts  (if AI_PROVIDER=github)
 //     → openaiProvider.ts  (if AI_PROVIDER=openai)
 //     → geminiProvider.ts  (if AI_PROVIDER=gemini)
+//
+// Sprint 6 additions (Task H):
+//   summarizeDelivery() now accepts optional digestContext
+//   injected by deliveryEngine.ts from digestMemory.ts.
 // ============================================================
 
 import { config } from "../../config/env.js";
@@ -30,6 +34,7 @@ import {
   buildBriefingPrompt,
   buildMorningBriefingPrompt,
   buildEveningBriefingPrompt,
+  type BriefingPersonality,
 } from "./promptBuilder.js";
 import { logger } from "../../lib/logger.js";
 import type { BriefingType } from "../delivery/deliveryEngine.js";
@@ -82,12 +87,14 @@ async function withRetry<T>(
 /**
  * Summarize a list of news articles for a given topic in Thai.
  * Accepts optional trendContext (Sprint 5 Task F) for continuity briefings.
+ * Accepts optional personality (Sprint 6 Task J) for style customisation.
  * This is the only function news routes should ever call for standard briefings.
  */
 export async function summarizeArticles(
   articles: Article[],
   topic: string,
   trendContext?: string,
+  personality?: BriefingPersonality,
 ): Promise<string> {
   if (articles.length === 0) {
     return `ไม่พบบทความที่เกี่ยวข้องกับหัวข้อ "${topic}" ในขณะนี้ กรุณาลองใหม่อีกครั้ง`;
@@ -95,12 +102,22 @@ export async function summarizeArticles(
 
   const provider = await getProvider();
   logger.info(
-    { provider: provider.providerName, topic, articleCount: articles.length, hasTrend: !!trendContext },
+    {
+      provider: provider.providerName,
+      topic,
+      articleCount: articles.length,
+      hasTrend: !!trendContext,
+      personality: personality ?? "default",
+    },
     "Summarizing articles",
   );
 
-  // Use complete() + buildBriefingPrompt so we can pass trendContext
-  const { systemPrompt, userPrompt } = buildBriefingPrompt(articles, topic, trendContext);
+  const { systemPrompt, userPrompt } = buildBriefingPrompt(
+    articles,
+    topic,
+    trendContext,
+    personality,
+  );
   return withRetry(() => provider.complete(systemPrompt, userPrompt), `summarize:${topic}`);
 }
 
@@ -108,11 +125,14 @@ export async function summarizeArticles(
  * Generate a morning or evening delivery briefing in Thai.
  * Uses cross-topic prompts (different from standard topic briefings).
  * Called exclusively by deliveryEngine.ts.
+ *
+ * @param digestContext - Optional: context from digestMemory for story continuity (Task H)
  */
 export async function summarizeDelivery(
   articles: Article[],
   type: BriefingType,
   topicLabels: string[],
+  digestContext?: string,
 ): Promise<string> {
   if (articles.length === 0) {
     throw new Error("No articles provided for delivery briefing");
@@ -121,11 +141,17 @@ export async function summarizeDelivery(
   const provider = await getProvider();
   const { systemPrompt, userPrompt } =
     type === "morning"
-      ? buildMorningBriefingPrompt(articles, topicLabels)
-      : buildEveningBriefingPrompt(articles, topicLabels);
+      ? buildMorningBriefingPrompt(articles, topicLabels, digestContext)
+      : buildEveningBriefingPrompt(articles, topicLabels, digestContext);
 
   logger.info(
-    { provider: provider.providerName, type, articleCount: articles.length, topicLabels },
+    {
+      provider: provider.providerName,
+      type,
+      articleCount: articles.length,
+      topicLabels,
+      hasDigestContext: !!digestContext,
+    },
     "Generating delivery briefing",
   );
 

@@ -30,6 +30,8 @@ interface FeedItem {
   matchedInterests: string[];
   matchedWatchlist: string[];
   selectionReason: string;
+  recencyLabel?: string;
+  sourceTier?: string;
 }
 
 interface FeedResponse {

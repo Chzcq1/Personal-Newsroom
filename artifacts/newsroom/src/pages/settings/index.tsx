@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowLeft, Send, Heart, ChevronRight, Check, X } from "lucide-react";
+import { ArrowLeft, Send, Heart, ChevronRight, Check, X, Clock, Layers, Bug } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { hasTelegramSettings } from "@/lib/telegramSettings";
@@ -76,6 +76,60 @@ export default function SettingsPage() {
                 </div>
                 <p className="text-sm text-white/50">
                   Select topics like Tesla, Nvidia, Bitcoin to personalise your briefings
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Delivery Schedule */}
+        <Link href="/settings/scheduler">
+          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-white mb-0.5">Delivery Schedule</p>
+                <p className="text-sm text-white/50">
+                  Morning 07:00 · Evening 18:00 ICT — view schedule and next delivery
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Topics */}
+        <Link href="/settings/topics">
+          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-slate-500/10 flex items-center justify-center flex-shrink-0">
+                <Layers className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-white mb-0.5">Topics & Sources</p>
+                <p className="text-sm text-white/50">
+                  Manage built-in topics and add custom RSS feeds for specialised briefings
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Telegram Diagnostics */}
+        <Link href="/settings/delivery/debug">
+          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                <Bug className="w-5 h-5 text-white/40" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-white mb-0.5">Telegram Diagnostics</p>
+                <p className="text-sm text-white/50">
+                  Debug your bot token, validate chat access, see detailed error messages
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />

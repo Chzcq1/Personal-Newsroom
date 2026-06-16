@@ -7,6 +7,11 @@
 // Supports morning and evening briefing types.
 // Channel-agnostic: any IDeliveryChannel implementation works.
 //
+// Sprint 6 additions (Task H):
+//   After successful briefing generation, records the briefing
+//   in digestMemory so future briefings can reference what was
+//   already covered ("what changed since morning").
+//
 // Future channels:  LINE  Discord  Email
 // ============================================================
 
@@ -16,6 +21,10 @@ import {
   formatMorningBriefingForTelegram,
   formatEveningBriefingForTelegram,
 } from "./briefingFormatter.js";
+import {
+  recordDigest,
+  formatDigestContextForAI,
+} from "./digestMemory.js";
 import { TOPICS } from "../../config/topics.js";
 import { logger } from "../../lib/logger.js";
 import type { IDeliveryChannel, ChannelDeliveryResult } from "./telegramDelivery.js";
@@ -78,6 +87,9 @@ async function collectCrossTopicArticles(
 /**
  * Generate a morning or evening briefing (no delivery).
  * Returns raw AI text + Telegram-formatted message chunks.
+ *
+ * Sprint 6: Injects digest context from digestMemory (Task H)
+ * and records the result back to digestMemory for future use.
  */
 export async function generateBriefing(
   type: BriefingType,
@@ -126,11 +138,14 @@ export async function generateBriefing(
     };
   }
 
+  // Task H — inject digest context for story continuity
+  const digestContext = formatDigestContextForAI(type) ?? undefined;
+
   let rawText: string;
   const generatedAt = new Date().toISOString();
 
   try {
-    rawText = await summarizeDelivery(articles, type, topicLabels);
+    rawText = await summarizeDelivery(articles, type, topicLabels, digestContext);
   } catch (err) {
     return {
       success: false,
@@ -147,8 +162,11 @@ export async function generateBriefing(
 
   const formattedMessages =
     type === "morning"
-      ? formatMorningBriefingForTelegram(rawText, generatedAt)
-      : formatEveningBriefingForTelegram(rawText, generatedAt);
+      ? formatMorningBriefingForTelegram(rawText, generatedAt, articles.length)
+      : formatEveningBriefingForTelegram(rawText, generatedAt, articles.length);
+
+  // Task H — record this briefing in digest memory for future context
+  recordDigest(type, rawText, topicsUsed, articles.length);
 
   logger.info(
     {
@@ -157,6 +175,7 @@ export async function generateBriefing(
       topicsUsed,
       messageCount: formattedMessages.length,
       generationTimeMs: Date.now() - startMs,
+      usedDigestContext: !!digestContext,
     },
     "Delivery briefing generated",
   );

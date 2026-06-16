@@ -2,6 +2,65 @@
 
 ---
 
+## [2026-06-16] — Sprint 6: Delivery & True Personalization
+
+**What:** Eleven-task sprint completing the delivery pipeline and making personalization truly data-driven. Telegram diagnostics, professional message formatter, true personal feed scoring, feed explanation engine, Thai localization hardening, dynamic custom topics, source quality registry, daily digest memory, delivery scheduler UI, personality foundation, and documentation.
+
+**Why:** The delivery pipeline worked but was opaque when Telegram failed. Feed ranking used only interest keywords — no recency, no source quality. There was no way to add topics beyond the 5 built-in ones. Evening briefings had no memory of the morning's stories.
+
+### Task A — Telegram Diagnostics
+- `routes/telegram.ts`: `POST /api/telegram/diagnostics` — calls `getMe` + `getChat`, returns full structured report with bot info, chat type, and diagnosis messages (✅/❌/💡 per issue)
+- `pages/settings/delivery-debug.tsx` — dedicated diagnostics UI at `/settings/delivery/debug`; shows bot username, chat title/type, raw API responses (collapsible), common fix instructions
+
+### Task B — Professional Telegram Formatter
+- `services/delivery/briefingFormatter.ts` rewritten: section headers get `◆`/`▸` visual indicators, reading-time estimate injected in header (`⏱ N min read`), source count shown, ICT timestamp in footer, all via Telegram HTML mode (`<b>`, `<i>`)
+
+### Task C — True Personal Feed Scoring
+- `routes/feed.ts`: multi-signal scoring: interest keyword match (+20), watchlist match (+50/term), recency bonus (≤2h +40, ≤6h +25, ≤12h +15, ≤24h +8), source quality (Tier A +15, Tier B +8)
+- Score ties broken by pubDate (most recent wins)
+
+### Task D — Feed Explanation Engine
+- `routes/feed.ts`: richer `selectionReason` field — "Matched: OpenAI · Watchlist: NVDA · Breaking · TechCrunch ★"
+- Two new fields returned per article: `recencyLabel` ("Breaking"/"Recent") and `sourceTier` ("A"/"B"/"C")
+- `pages/my-feed.tsx`: `FeedItem` interface extended with `recencyLabel` and `sourceTier`
+
+### Task E — Thai Localization Hardening
+- `services/ai/promptBuilder.ts` SHARED_RULES updated: explicit rule to keep company/product names in English (OpenAI, Nvidia, Tesla, Claude, GPT-4, Bitcoin, etc.), natural Thai analysis (not mechanical translation), ban on filler phrases
+
+### Task F — Dynamic Custom Topics
+- `services/news/customTopicsService.ts` — in-memory CRUD for custom topics; max 20 per server; kebab-case IDs; validates against built-in topic IDs
+- `routes/topics.ts`: `POST /api/topics` (create), `DELETE /api/topics/:id`; `GET /api/topics` returns built-in + custom
+- `pages/settings/topics.tsx` — full topic management UI at `/settings/topics`; lists built-in (locked), create form with RSS URL + keywords, delete for custom
+
+### Task G — Source Quality Registry
+- `services/news/sourceRegistry.ts` — static quality map (Tier A: FT/Bloomberg/Economist/MIT/Reuters/AP; Tier B: TechCrunch/Ars/Verge/CNBC/BBC/Politico; Tier C: all others)
+- `getSourceBonus()` used in `routes/feed.ts` for feed scoring
+- Custom sources registered at runtime when custom topics are created
+
+### Task H — Daily Digest Memory
+- `services/delivery/digestMemory.ts` — ring buffer (max 4 entries, ~2 days); `recordDigest()`, `getTodayMorning()`, `getTodayEvening()`, `getYesterdayEvening()`, `formatDigestContextForAI(type)`
+- `deliveryEngine.ts`: injects digest context into morning/evening prompts; records each successful briefing
+- `summaryService.ts`: `summarizeDelivery()` accepts optional `digestContext` parameter
+- `promptBuilder.ts`: `buildMorningBriefingPrompt()` and `buildEveningBriefingPrompt()` accept optional `digestContext`
+
+### Task I — Delivery Scheduler UI
+- `pages/settings/scheduler.tsx` — shows next delivery countdown (live ICT clock), toggles for morning/evening, "how it works" pipeline, saves prefs to localStorage key `ai-newsroom:scheduler-prefs`
+- Server-side delivery times remain fixed at 07:00/18:00 ICT via env vars; frontend toggle controls user preference display
+
+### Task J — Personality Foundation
+- `services/ai/promptBuilder.ts`: `BriefingPersonality` type (`analyst` | `concise` | `financial` | `neutral` | `aggressive`) with Thai instruction strings per mode
+- `buildBriefingPrompt()` accepts optional `personality` parameter; passed through `summarizeArticles()` in `summaryService.ts`
+- Architecture ready; no UI yet (planned for Sprint 7)
+
+### Task K — Documentation
+- `docs/CHANGELOG.md` Sprint 6 entry (this)
+- `docs/ARCHITECTURE.md` updated: delivery + personalization modules, digest memory, source registry, custom topics, personality
+
+**Files created:** `sourceRegistry.ts`, `customTopicsService.ts`, `digestMemory.ts`, `delivery-debug.tsx`, `scheduler.tsx`, `topics.tsx`
+**Files modified:** `telegram.ts`, `briefingFormatter.ts`, `feed.ts`, `promptBuilder.ts`, `summaryService.ts`, `deliveryEngine.ts`, `newsCollectorService.ts`, `routes/topics.ts`, `App.tsx`, `settings/index.tsx`, `my-feed.tsx`
+
+---
+
 ## [2026-06-15] — Sprint 5: Cost Optimization & Personalization
 
 **What:** Ten-task sprint making the platform scalable and cost-efficient. Global briefing cache, article preprocessor, token budget controller, source diversity scoring, interest priority engine, trend memory, cost analytics dashboard, lightweight fallback generator, personal feed V1, and documentation.

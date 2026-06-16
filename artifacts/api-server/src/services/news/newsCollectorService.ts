@@ -16,6 +16,10 @@
 //   Task E — Interest priority: articles matching user interests receive
 //             a boost, pushing them ahead of irrelevant content.
 //
+// Sprint 6 addition:
+//   Custom topics — if no built-in RSS sources found, check
+//   customTopicsService for user-defined topic sources.
+//
 // Returns CollectionResult with articles AND feed diagnostics.
 // Diagnostics allow the API route to surface specific failure reasons
 // instead of generic error messages.
@@ -28,6 +32,7 @@
 import { TOPIC_RSS_SOURCES } from "../../config/topics.js";
 import { fetchFeed, type RssArticle, type FeedDiagnostic } from "./rssService.js";
 import { scoreArticleByInterests } from "./feedGenerator.js";
+import { getCustomTopicById } from "./customTopicsService.js";
 import { logger } from "../../lib/logger.js";
 
 export type { FeedDiagnostic };
@@ -102,23 +107,36 @@ export interface CollectionResult {
  * Collect, deduplicate, rank, and return the best articles for a topic.
  * Also returns per-feed diagnostics for error surfacing and the debug panel.
  *
- * @param topicId   - One of the topic IDs from TOPICS in config/topics.ts
+ * Supports both built-in topics (from TOPIC_RSS_SOURCES) and custom topics
+ * (from customTopicsService). Custom topics are checked when no built-in
+ * sources exist for the topicId.
+ *
+ * @param topicId   - One of the topic IDs from TOPICS in config/topics.ts,
+ *                    or a custom topic ID created via the Topics API.
  * @param interests - (Optional) User interest keys for boost scoring (Task E)
  */
 export async function collectArticlesForTopic(
   topicId: string,
   interests: string[] = [],
 ): Promise<CollectionResult> {
-  const sources = TOPIC_RSS_SOURCES[topicId];
+  // Resolve sources: built-in first, then custom topics
+  let sources = TOPIC_RSS_SOURCES[topicId];
+
   if (!sources || sources.length === 0) {
-    logger.warn({ topicId }, "No RSS sources configured for topic");
-    return {
-      articles: [],
-      feedDiagnostics: [],
-      totalConfigured: 0,
-      totalCollected: 0,
-      failedFeeds: 0,
-    };
+    const customTopic = getCustomTopicById(topicId);
+    if (customTopic && customTopic.sources.length > 0) {
+      sources = customTopic.sources;
+      logger.info({ topicId, sourceCount: sources.length }, "Using custom topic sources");
+    } else {
+      logger.warn({ topicId }, "No RSS sources configured for topic");
+      return {
+        articles: [],
+        feedDiagnostics: [],
+        totalConfigured: 0,
+        totalCollected: 0,
+        failedFeeds: 0,
+      };
+    }
   }
 
   logger.info({ topicId, sourceCount: sources.length }, "Fetching RSS sources");

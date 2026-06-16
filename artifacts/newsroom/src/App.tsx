@@ -7,6 +7,9 @@ import SavedBriefings from "@/pages/saved-briefings";
 import SettingsPage from "@/pages/settings/index";
 import DeliverySettingsPage from "@/pages/settings/delivery";
 import InterestsPage from "@/pages/settings/interests";
+import DeliveryDebugPage from "@/pages/settings/delivery-debug";
+import SchedulerPage from "@/pages/settings/scheduler";
+import TopicsPage from "@/pages/settings/topics";
 import DeliveryPreviewPage from "@/pages/delivery-preview";
 import AdminCostsPage from "@/pages/admin-costs";
 import MyFeedPage from "@/pages/my-feed";
@@ -22,7 +25,10 @@ function Router() {
       <Route path="/my-feed" component={MyFeedPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/settings/delivery" component={DeliverySettingsPage} />
+      <Route path="/settings/delivery/debug" component={DeliveryDebugPage} />
       <Route path="/settings/interests" component={InterestsPage} />
+      <Route path="/settings/scheduler" component={SchedulerPage} />
+      <Route path="/settings/topics" component={TopicsPage} />
       <Route path="/delivery-preview" component={DeliveryPreviewPage} />
       <Route path="/admin/costs" component={AdminCostsPage} />
       <Route component={NotFound} />
