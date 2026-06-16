@@ -1,0 +1,489 @@
+Read first:
+
+* docs/PROJECT_VISION.md
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/AGENT_RULES.md
+* docs/SYSTEM_STATUS.md
+* docs/PRODUCT_ROADMAP.md
+* docs/DEPLOYMENT_GUIDE.md
+* docs/PERSISTENT_INFRASTRUCTURE.md
+* docs/INTELLIGENCE_ENGINE.md
+* docs/VISUAL_GUIDELINES.md
+* docs/TELEGRAM_FORMATTING.md
+* docs/TOKEN_ECONOMY.md
+
+CRITICAL DIRECTIVE:
+
+This sprint is NOT a feature expansion sprint.
+
+DO NOT create unnecessary systems.
+DO NOT create duplicate dashboards.
+DO NOT create overlapping pages.
+DO NOT create additional preview tools.
+DO NOT create more admin complexity.
+
+This sprint exists to:
+
+SIMPLIFY
+MERGE
+STABILIZE
+SEPARATE
+PREPARE FOR REAL USERS
+
+INFOX must evolve from:
+"experimental AI control panel"
+
+into:
+"calm intelligence product"
+
+Preserve all current functionality.
+
+========================================
+SPRINT 19
+PLATFORM CONSOLIDATION & PRODUCT STABILIZATION
+========================================
+
+Mission:
+
+Reduce fragmentation.
+Reduce UI complexity.
+Reduce system duplication.
+Prepare INFOX for production-grade operation.
+
+This sprint is product-focused,
+NOT feature-focused.
+
+========================================
+CORE OBJECTIVES
+========================================
+
+1. Consolidate overlapping systems
+2. Separate User UI from Admin UI
+3. Reduce feature sprawl
+4. Simplify navigation
+5. Improve visual consistency
+6. Prepare runtime separation
+7. Improve production readiness
+8. Reduce architectural chaos
+
+========================================
+TASK A — CONSOLIDATE TELEGRAM SYSTEMS
+========================================
+
+Current issue:
+
+Telegram-related functionality is fragmented across multiple pages.
+
+Existing overlapping systems include:
+
+* Preview Live
+* Telegram Preview V3
+* Telegram Diagnostics
+* Delivery Preview logic
+* Density preview logic
+
+Create unified experience:
+
+/delivery-studio
+
+Requirements:
+
+Single interface with tabs:
+
+1. Preview
+2. Send Test
+3. Density Modes
+4. Diagnostics
+5. Delivery Schedule
+
+Merge existing functionality.
+Do NOT duplicate logic.
+
+Requirements:
+
+* preserve all existing Telegram capabilities
+* preserve formatting engines
+* preserve density modes
+* preserve diagnostics
+* preserve scheduling
+
+Goal:
+
+One Telegram system.
+One mental model.
+
+========================================
+TASK B — CONSOLIDATE ANALYTICS SYSTEMS
+========================================
+
+Current issue:
+
+Analytics and intelligence dashboards are fragmented.
+
+Merge:
+
+* Delivery Analytics
+* Intelligence Score
+* System Intelligence
+* Source Trust
+* Signal metrics
+* Feed quality metrics
+
+Create:
+
+/intelligence-center
+
+Sections:
+
+* Personal Intelligence
+* Signal Quality
+* Delivery Performance
+* Source Trust
+* Token Economy
+* System Health
+
+Requirements:
+
+* use modular sections instead of many pages
+* preserve all current metrics
+* reduce navigation clutter
+* create consistent UI cards
+
+Goal:
+
+Analytics should feel like:
+one platform
+not many disconnected tools.
+
+========================================
+TASK C — USER / ADMIN SEPARATION
+========================================
+
+Current issue:
+
+Admin tooling is mixed into user-facing experience.
+
+Create clear separation:
+
+/app/*
+/admin/*
+
+Move ALL internal tools into /admin.
+
+Examples:
+
+* degradation controls
+* token governor
+* runtime diagnostics
+* debug pages
+* source adapter health
+* pipeline diagnostics
+* sprint diagnostics
+
+User-facing app should remain calm and minimal.
+
+Requirements:
+
+* role-safe architecture
+* future auth-ready route separation
+* hide internal systems from normal users
+* preserve all functionality
+
+========================================
+TASK D — SETTINGS RESTRUCTURE
+========================================
+
+Current issue:
+
+Settings screen is overloaded and difficult to scan.
+
+Rebuild settings architecture.
+
+New sections only:
+
+1. Delivery
+2. Intelligence
+3. Personalization
+4. Appearance
+5. Account (placeholder only)
+6. Advanced
+
+Requirements:
+
+* reduce visible complexity
+* improve mobile readability
+* improve spacing hierarchy
+* improve typography consistency
+* remove duplicate navigation patterns
+
+Do NOT add new features.
+
+========================================
+TASK E — DARK MODE & ACCESSIBILITY FIXES
+========================================
+
+Critical issue:
+
+Low-contrast navy/black UI elements reduce readability.
+
+Requirements:
+
+* WCAG-aware contrast improvements
+* remove unreadable dark-blue text
+* improve button visibility
+* improve signal badge readability
+* improve mobile touch clarity
+* improve typography hierarchy
+* improve spacing consistency
+
+Focus especially on:
+
+* metadata buttons
+* feedback buttons
+* settings subtitles
+* analytics labels
+* low-emphasis text
+
+Goal:
+
+INFOX should feel premium and readable.
+
+========================================
+TASK F — PAGE REDUCTION & NAVIGATION CLEANUP
+========================================
+
+Current issue:
+
+Too many pages now exist.
+
+Requirements:
+
+Audit all routes.
+
+Identify:
+
+* duplicate pages
+* overlapping pages
+* unnecessary admin screens
+* abandoned experiments
+* redundant preview tools
+
+Reduce total page count where possible.
+
+Goal:
+
+Navigation should become smaller and clearer.
+
+========================================
+TASK G — DOCUMENTATION CONSOLIDATION
+========================================
+
+Current issue:
+
+Markdown documentation exploded into too many files.
+
+Requirements:
+
+Consolidate documentation into core groups:
+
+1. PROJECT_VISION.md
+2. PRODUCT_ROADMAP.md
+3. SYSTEM_ARCHITECTURE.md
+4. INTELLIGENCE_ENGINE.md
+5. DEPLOYMENT.md
+6. BUSINESS_MODEL.md
+
+Archive or merge redundant docs.
+
+Requirements:
+
+* preserve important information
+* reduce duplication
+* improve maintainability
+* create cleaner onboarding for future developers
+
+========================================
+TASK H — RUNTIME SEPARATION PREPARATION
+========================================
+
+Prepare actual production deployment architecture.
+
+Separate conceptual runtime layers:
+
+1. frontend
+2. api
+3. workers
+4. scheduler
+5. cache
+6. persistence
+
+Requirements:
+
+* document dependencies between layers
+* identify Replit-specific coupling
+* prepare migration strategy
+* isolate runtime-sensitive services
+
+Goal:
+
+Prepare INFOX for deployment outside Replit.
+
+Do NOT migrate yet.
+
+========================================
+TASK I — TOKEN EFFICIENCY STABILIZATION
+========================================
+
+Current issue:
+
+System complexity is increasing token usage risk.
+
+Requirements:
+
+Audit all AI pipelines.
+
+Identify:
+
+* duplicate AI calls
+* unnecessary summarization passes
+* repeated formatting generations
+* wasteful routing
+* over-processing
+
+Implement:
+
+* shared cache reuse
+* response reuse
+* AI escalation optimization
+* compression-first delivery
+* cheap-path prioritization
+
+Goal:
+
+Reduce token burn without reducing intelligence quality.
+
+========================================
+TASK J — PRODUCT IDENTITY RESTORATION
+========================================
+
+Current issue:
+
+INFOX is drifting toward an internal AI dashboard.
+
+Restore original product identity.
+
+Requirements:
+
+UI/UX should reinforce:
+
+"Calm Intelligence"
+
+NOT:
+
+"Developer AI Console"
+
+Reduce:
+
+* dashboard overload
+* excessive controls
+* debug-first feeling
+* feature fatigue
+
+Increase:
+
+* clarity
+* calmness
+* readability
+* focus
+* trust
+
+========================================
+TASK K — CLOSED ALPHA READINESS REVIEW
+========================================
+
+Audit whether INFOX is actually usable by real people.
+
+Review:
+
+* onboarding clarity
+* feed readability
+* Telegram usability
+* notification fatigue
+* mobile experience
+* personalization quality
+* signal relevance
+* navigation clarity
+
+Create:
+
+CLOSED_ALPHA_READINESS_REPORT.md
+
+Include:
+
+* critical blockers
+* UX risks
+* infrastructure risks
+* deployment risks
+* monetization readiness
+* recommended stabilization priorities
+
+========================================
+TASK L — CLEAN ARCHITECTURE ENFORCEMENT
+========================================
+
+Prevent future architecture drift.
+
+Create rules:
+
+* no duplicate systems
+* no duplicate dashboards
+* no overlapping previews
+* prefer merge over create
+* modular reuse first
+* user-facing simplicity required
+
+Create:
+
+ARCHITECTURE_GUARDRAILS.md
+
+This file becomes mandatory reading before future sprints.
+
+========================================
+SUCCESS CRITERIA
+========================================
+
+After Sprint 19:
+
+* duplicated systems are consolidated
+* settings complexity is reduced
+* admin tools are separated
+* user experience becomes calmer
+* Telegram systems become unified
+* analytics systems become unified
+* documentation becomes manageable
+* architecture drift is controlled
+* token usage becomes more efficient
+* production preparation improves
+* INFOX feels closer to a real product
+
+DO NOT optimize for:
+more features
+
+Optimize for:
+clarity
+stability
+maintainability
+production readiness
+
+Provide final implementation report:
+
+* pages removed
+* systems consolidated
+* routes changed
+* docs merged
+* token optimizations
+* runtime separation progress
+* UI simplification improvements
+* remaining architectural risks
+* recommended Sprint 20 priorities

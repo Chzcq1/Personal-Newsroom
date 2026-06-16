@@ -1,8 +1,8 @@
 import { Link } from "wouter";
 import {
   ArrowLeft, Send, Heart, ChevronRight, Check, X,
-  Clock, Layers, Bug, Brain, Zap, BarChart3, Share2, Flame,
-  TrendingUp, Eye, Radio,
+  Brain, Zap, Layers, Radio, BarChart3, Shield,
+  User, Palette, Wrench,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,62 @@ import { hasTelegramSettings } from "@/lib/telegramSettings";
 import { getInterests } from "@/lib/interestProfile";
 import { getPersonality, PERSONALITY_OPTIONS } from "@/lib/personalitySettings";
 import { isExecutiveModeEnabled } from "@/lib/executiveMode";
+
+function SettingsRow({
+  href, icon, iconBg, iconColor, title, badge, description, badgeVariant = "default",
+}: {
+  href: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  badge?: React.ReactNode;
+  description: string;
+  badgeVariant?: "default" | "success" | "warning" | "info";
+}) {
+  return (
+    <Link href={href}>
+      <Card className="bg-white/5 border-white/10 hover:bg-white/[0.07] transition-colors cursor-pointer group">
+        <CardContent className="p-4 flex items-center gap-3.5">
+          <div className={`w-9 h-9 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
+            <span className={iconColor}>{icon}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <p className="font-medium text-white text-sm">{title}</p>
+              {badge}
+            </div>
+            <p className="text-xs text-white/45 leading-relaxed">{description}</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-white/25 group-hover:text-white/50 transition-colors flex-shrink-0" />
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] text-white/30 uppercase tracking-widest px-1 pt-5 pb-1 font-medium">
+      {children}
+    </p>
+  );
+}
+
+function Badge({ children, variant = "default" }: { children: React.ReactNode; variant?: "default" | "success" | "warning" | "info" | "muted" }) {
+  const cls = {
+    default: "text-white/40 bg-white/8",
+    success: "text-emerald-400 bg-emerald-400/10",
+    warning: "text-amber-300 bg-amber-500/15 border border-amber-500/20",
+    info: "text-blue-300 bg-blue-500/10",
+    muted: "text-white/25 bg-white/5",
+  }[variant];
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full ${cls}`}>
+      {children}
+    </span>
+  );
+}
 
 export default function SettingsPage() {
   const telegramOk = hasTelegramSettings();
@@ -20,345 +76,158 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0a0a0a]/95 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
+      <header className="sticky top-0 z-50 border-b border-white/8 bg-[#0a0a0a]/95 backdrop-blur-sm">
+        <div className="max-w-xl mx-auto px-5 py-4 flex items-center gap-4">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="text-white/60 hover:text-white gap-2 -ml-2">
+            <Button variant="ghost" size="sm" className="text-white/55 hover:text-white gap-2 -ml-2">
               <ArrowLeft className="w-4 h-4" />
               Back
             </Button>
           </Link>
-          <h1 className="text-lg font-semibold tracking-tight">Settings</h1>
+          <h1 className="text-base font-semibold tracking-tight">Settings</h1>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-10 space-y-2">
+      <main className="max-w-xl mx-auto px-5 py-6 space-y-0.5">
 
-        {/* Section: Delivery */}
-        <p className="text-xs text-white/30 uppercase tracking-wider px-1 pt-2 pb-1">Delivery</p>
+        {/* ── Delivery ──────────────────────────────────────────── */}
+        <SectionLabel>Delivery</SectionLabel>
 
-        {/* Telegram Delivery */}
-        <Link href="/settings/delivery">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#2AABEE]/10 flex items-center justify-center flex-shrink-0">
-                <Send className="w-5 h-5 text-[#2AABEE]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-medium text-white">Telegram Delivery</p>
-                  {telegramOk ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
-                      <Check className="w-3 h-3" /> Configured
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded-full">
-                      <X className="w-3 h-3" /> Not set up
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-white/50">
-                  Receive morning and evening briefings automatically
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        <SettingsRow
+          href="/delivery-studio"
+          icon={<Send className="w-4 h-4" />}
+          iconBg="bg-[#2AABEE]/10"
+          iconColor="text-[#2AABEE]"
+          title="Delivery Studio"
+          description="Telegram setup, previews, test sends, and schedule"
+          badge={
+            telegramOk
+              ? <Badge variant="success"><Check className="w-3 h-3" /> Connected</Badge>
+              : <Badge variant="muted"><X className="w-3 h-3" /> Not set up</Badge>
+          }
+        />
 
-        {/* Delivery Schedule */}
-        <Link href="/settings/scheduler">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-5 h-5 text-amber-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white mb-0.5">Delivery Schedule</p>
-                <p className="text-sm text-white/50">
-                  Custom delivery slots · weekday and weekend filters
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        {/* ── Intelligence ──────────────────────────────────────── */}
+        <SectionLabel>Intelligence</SectionLabel>
 
-        {/* Section: Personalisation */}
-        <p className="text-xs text-white/30 uppercase tracking-wider px-1 pt-4 pb-1">Personalisation</p>
+        <SettingsRow
+          href="/settings/signal-mode"
+          icon={<Radio className="w-4 h-4" />}
+          iconBg="bg-blue-500/10"
+          iconColor="text-blue-400"
+          title="Signal Mode"
+          description="Safe, Balanced, or Raw — speed vs. verification"
+        />
 
-        {/* Interest Profile */}
-        <Link href="/settings/interests">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                <Heart className="w-5 h-5 text-purple-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-medium text-white">Interest Profile</p>
-                  {interests.length > 0 ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded-full">
-                      {interests.length} active
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded-full">
-                      None selected
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-white/50">
-                  Tesla, Nvidia, Bitcoin — topics that matter to you
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        <SettingsRow
+          href="/intelligence-center"
+          icon={<BarChart3 className="w-4 h-4" />}
+          iconBg="bg-violet-500/10"
+          iconColor="text-violet-400"
+          title="Intelligence Center"
+          description="Delivery analytics, source quality, token economy"
+        />
 
-        {/* Briefing Personality */}
-        <Link href="/settings/personality">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                <Brain className="w-5 h-5 text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-medium text-white">Briefing Personality</p>
-                  <span className="inline-flex items-center text-xs text-blue-300 bg-blue-500/10 px-2 py-0.5 rounded-full">
-                    {personalityOption?.name ?? "Analyst"}
-                  </span>
-                </div>
-                <p className="text-sm text-white/50">
-                  {personalityOption?.description ?? "Choose the AI writing tone"}
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        {/* ── Personalisation ───────────────────────────────────── */}
+        <SectionLabel>Personalisation</SectionLabel>
 
-        {/* Preferences / Executive Mode */}
-        <Link href="/settings/preferences">
-          <Card className={`border hover:bg-white/8 transition-colors cursor-pointer group ${execMode ? "bg-amber-500/8 border-amber-500/20" : "bg-white/5 border-white/10"}`}>
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${execMode ? "bg-amber-500/20" : "bg-white/8"}`}>
-                <Zap className={`w-5 h-5 ${execMode ? "text-amber-400" : "text-white/40"}`} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-medium text-white">Preferences</p>
-                  {execMode && (
-                    <span className="inline-flex items-center gap-1 text-xs text-amber-300 bg-amber-500/15 border border-amber-500/25 px-2 py-0.5 rounded-full">
-                      <Check className="w-3 h-3" /> Exec Mode
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-white/50">
-                  Executive Mode — 5-bullet briefings, 90s read time
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        <SettingsRow
+          href="/settings/interests"
+          icon={<Heart className="w-4 h-4" />}
+          iconBg="bg-purple-500/10"
+          iconColor="text-purple-400"
+          title="Interest Profile"
+          description="Tesla, Nvidia, Bitcoin — track what matters to you"
+          badge={interests.length > 0
+            ? <Badge variant="info">{interests.length} active</Badge>
+            : undefined}
+        />
 
-        {/* Section: Content */}
-        <p className="text-xs text-white/30 uppercase tracking-wider px-1 pt-4 pb-1">Content</p>
+        <SettingsRow
+          href="/settings/personality"
+          icon={<Brain className="w-4 h-4" />}
+          iconBg="bg-blue-500/10"
+          iconColor="text-blue-400"
+          title="Briefing Personality"
+          description={personalityOption?.description ?? "Choose the AI writing tone"}
+          badge={<Badge variant="info">{personalityOption?.name ?? "Analyst"}</Badge>}
+        />
 
-        {/* Topics */}
-        <Link href="/settings/topics">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-slate-500/10 flex items-center justify-center flex-shrink-0">
-                <Layers className="w-5 h-5 text-slate-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white mb-0.5">Topics & Sources</p>
-                <p className="text-sm text-white/50">
-                  Manage built-in topics and add custom RSS feeds
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        <SettingsRow
+          href="/settings/preferences"
+          icon={<Zap className="w-4 h-4" />}
+          iconBg={execMode ? "bg-amber-500/15" : "bg-white/8"}
+          iconColor={execMode ? "text-amber-400" : "text-white/40"}
+          title="Preferences"
+          description="Executive Mode — 5-bullet briefings, 90-second reads"
+          badge={execMode
+            ? <Badge variant="warning"><Check className="w-3 h-3" /> Exec Mode</Badge>
+            : undefined}
+        />
 
-        {/* Section: Tools */}
-        <p className="text-xs text-white/30 uppercase tracking-wider px-1 pt-4 pb-1">Tools</p>
+        <SettingsRow
+          href="/settings/topics"
+          icon={<Layers className="w-4 h-4" />}
+          iconBg="bg-slate-500/10"
+          iconColor="text-slate-400"
+          title="Topics & Sources"
+          description="Manage built-in topics and add custom RSS feeds"
+        />
 
-        {/* Delivery Analytics */}
-        <Link href="/admin/analytics">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                <BarChart3 className="w-5 h-5 text-emerald-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white mb-0.5">Delivery Analytics</p>
-                <p className="text-sm text-white/50">
-                  Quality metrics, signal scoring, story evolution
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        {/* ── Appearance ────────────────────────────────────────── */}
+        <SectionLabel>Appearance</SectionLabel>
 
-        {/* Telegram Diagnostics */}
-        <Link href="/settings/delivery/debug">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-                <Bug className="w-5 h-5 text-white/40" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white mb-0.5">Telegram Diagnostics</p>
-                <p className="text-sm text-white/50">
-                  Debug bot token, validate chat access, detailed errors
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        <div className="p-4 bg-white/3 border border-white/6 rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+              <Palette className="w-4 h-4 text-white/20" />
+            </div>
+            <div>
+              <p className="text-sm text-white/40">Appearance settings</p>
+              <p className="text-xs text-white/20 mt-0.5">Coming in a future update</p>
+            </div>
+          </div>
+        </div>
 
-        {/* Preview Live (V2) */}
-        <Link href="/settings/delivery/preview-live">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                <Eye className="w-4 h-4 text-amber-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-medium text-white">Preview Live</p>
-                  <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded font-medium">V2</span>
-                </div>
-                <p className="text-sm text-white/50">
-                  Phone-frame Telegram preview · send test digest
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        {/* ── Account ───────────────────────────────────────────── */}
+        <SectionLabel>Account</SectionLabel>
 
-        {/* Insight Export */}
-        <Link href="/insights/export">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0">
-                <Share2 className="w-4 h-4 text-violet-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white mb-0.5">Insight Export</p>
-                <p className="text-sm text-white/50">
-                  Generate shareable intelligence cards from any briefing
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        <div className="p-4 bg-white/3 border border-white/6 rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+              <User className="w-4 h-4 text-white/20" />
+            </div>
+            <div>
+              <p className="text-sm text-white/40">Account & subscription</p>
+              <p className="text-xs text-white/20 mt-0.5">Coming in a future update</p>
+            </div>
+          </div>
+        </div>
 
-        {/* Intelligence Score */}
-        <Link href="/settings/intelligence-score">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-4 h-4 text-amber-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white mb-0.5">Intelligence Score</p>
-                <p className="text-sm text-white/50">
-                  เวลาที่ประหยัด · สัญญาณที่กรอง · compound rate
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        {/* ── Advanced ──────────────────────────────────────────── */}
+        <SectionLabel>Advanced</SectionLabel>
 
-        {/* Habit Dashboard */}
-        <Link href="/admin/habit">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                <Flame className="w-4 h-4 text-orange-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white mb-0.5">Habit & Engagement</p>
-                <p className="text-sm text-white/50">
-                  Daily streak, weekly summary, intelligence profile
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        <SettingsRow
+          href="/admin/economics"
+          icon={<Shield className="w-4 h-4" />}
+          iconBg="bg-emerald-500/10"
+          iconColor="text-emerald-400"
+          title="Token Economics"
+          description="Cost tracking, usage history, provider breakdown"
+        />
 
-        {/* Signal Mode — Sprint 16 */}
-        <Link href="/settings/signal-mode">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                <Radio className="w-4 h-4 text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-white mb-0.5">Signal Mode</p>
-                <p className="text-sm text-white/50">
-                  Speed vs. verification — Safe, Balanced, or Raw Signal
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        <SettingsRow
+          href="/admin/efficiency"
+          icon={<Wrench className="w-4 h-4" />}
+          iconBg="bg-white/8"
+          iconColor="text-white/40"
+          title="Efficiency Admin"
+          description="AI pipeline tiers, cache stats, degradation controls"
+        />
 
-        {/* Telegram Preview V3 — Sprint 18 */}
-        <Link href="/settings/delivery/preview-v3">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#2AABEE]/10 flex items-center justify-center flex-shrink-0">
-                <Send className="w-4 h-4 text-[#2AABEE]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-medium text-white">Telegram Preview V3</p>
-                  <span className="text-[10px] text-[#2AABEE] bg-[#2AABEE]/10 px-1.5 py-0.5 rounded font-medium">NEW</span>
-                </div>
-                <p className="text-sm text-white/50">
-                  Ultra-scannable format — 3 density modes
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
-
-        {/* Source Trust — Sprint 18 */}
-        <Link href="/admin/source-trust">
-          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                <Eye className="w-4 h-4 text-emerald-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="font-medium text-white">Source Trust Engine</p>
-                  <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded font-medium">NEW</span>
-                </div>
-                <p className="text-sm text-white/50">
-                  Per-source reputation, trust scores, misinfo flags
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
-            </CardContent>
-          </Card>
-        </Link>
+        <div className="pt-6 pb-4 text-center">
+          <p className="text-xs text-white/20">INFOX · Personal AI Newsroom</p>
+        </div>
 
       </main>
     </div>
