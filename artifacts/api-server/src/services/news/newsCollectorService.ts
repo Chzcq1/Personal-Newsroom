@@ -6,60 +6,40 @@
 //   2. Collect per-feed diagnostics (for debug panel)
 //   3. Deduplicate by URL
 //   4. Near-duplicate detection on titles (word-overlap)
-//   5. Score each article: recency + quality + source diversity (Task D)
-//   6. Apply interest boost scoring if interests provided (Task E)
-//   7. Sort by score descending, return top MAX_ARTICLES_FOR_AI
+//   5. Apply precision filter — removes crypto noise + weak matches
+//   6. Rank by signal priority — 7-factor model (Sprint 15)
+//      (replaces simple recency+quality sort)
+//   7. Apply source diversity to final selection
+//   8. Return top MAX_ARTICLES_FOR_AI
 //
-// Sprint 5 additions:
-//   Task D — Source diversity factor: articles from already-used sources
-//             receive a penalty to promote cross-source variety.
-//   Task E — Interest priority: articles matching user interests receive
-//             a boost, pushing them ahead of irrelevant content.
+// Sprint 5: Source diversity factor + interest priority boost
+// Sprint 6: Custom topics support
+// Sprint 15: Precision filter (Task A) + Signal priority (Task B)
 //
-// Sprint 6 addition:
-//   Custom topics — if no built-in RSS sources found, check
-//   customTopicsService for user-defined topic sources.
-//
-// Returns CollectionResult with articles AND feed diagnostics.
-// Diagnostics allow the API route to surface specific failure reasons
-// instead of generic error messages.
-//
-// Logging contract:
-//   INFO  — collection summary (topic, feedCount, total, selected, failedFeeds)
-//   WARN  — individual feed failure (logged in rssService)
+// Returns CollectionResult with articles, feed diagnostics,
+// and per-article priority metadata for frontend signal badges.
 // ============================================================
 
 import { TOPIC_RSS_SOURCES } from "../../config/topics.js";
 import { fetchFeed, type RssArticle, type FeedDiagnostic } from "./rssService.js";
-import { scoreArticleByInterests } from "./feedGenerator.js";
 import { getCustomTopicById } from "./customTopicsService.js";
+import {
+  applyPrecisionFilter,
+  getTopicKeywordsForInterests,
+  type ScoredWithPrecision,
+} from "../intelligence/precisionFilter.js";
+import {
+  rankBySignalPriority,
+  type PrioritizedArticle,
+} from "../intelligence/signalPriorityEngine.js";
 import { logger } from "../../lib/logger.js";
 
 export type { FeedDiagnostic };
 
 const MAX_ARTICLES_FOR_AI = 10;
 
-// ── Scoring ────────────────────────────────────────────
+// ── Source diversity scoring ──────────────────────────────────
 
-function recencyScore(pubDate?: string): number {
-  if (!pubDate) return 10;
-  const ageHours = (Date.now() - new Date(pubDate).getTime()) / 3_600_000;
-  if (ageHours <= 6) return 50;
-  if (ageHours <= 24) return 40;
-  if (ageHours <= 48) return 30;
-  if (ageHours <= 168) return 20; // within one week
-  return 10;
-}
-
-function qualityScore(article: RssArticle): number {
-  if (!article.description) return 0;
-  if (article.description.length > 150) return 30;
-  return 15;
-}
-
-// Task D — Source diversity score
-// Penalise articles from sources that are already well-represented.
-// The penalty is applied during final selection, not during initial scoring.
 function sourceDiversityPenalty(
   source: string | undefined,
   selectedSources: Map<string, number>,
@@ -67,11 +47,12 @@ function sourceDiversityPenalty(
   if (!source) return 0;
   const count = selectedSources.get(source) ?? 0;
   if (count === 0) return 0;
-  if (count === 1) return 15; // second article from same source: -15
-  return 30;                  // third+ article from same source: -30
+  if (count === 1) return 15;
+  return 30;
 }
 
-// Jaccard similarity on word sets — used for near-duplicate detection
+// ── Jaccard similarity for near-duplicate detection ───────────
+
 function titleSimilarity(a: string, b: string): number {
   const words = (s: string) =>
     new Set(
@@ -91,29 +72,36 @@ function titleSimilarity(a: string, b: string): number {
   return intersection / (setA.size + setB.size - intersection);
 }
 
-// ── Types ───────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────
+
+export interface ArticleWithPriority extends RssArticle {
+  priorityLabel?: "critical" | "high" | "medium" | "low";
+  priorityTotal?: number;
+  precisionScore?: number;
+  hitEntities?: string[];
+  isCryptoDowngraded?: boolean;
+}
 
 export interface CollectionResult {
-  articles: RssArticle[];
+  articles: ArticleWithPriority[];
   feedDiagnostics: FeedDiagnostic[];
   totalConfigured: number;
   totalCollected: number;
   failedFeeds: number;
+  suppressedCount: number;   // articles removed by precision filter
+  cryptoDowngradedCount: number; // crypto articles downgraded
 }
 
 // ── Main Export ────────────────────────────────────────────
 
 /**
- * Collect, deduplicate, rank, and return the best articles for a topic.
- * Also returns per-feed diagnostics for error surfacing and the debug panel.
+ * Collect, filter, rank, and return the best articles for a topic.
  *
- * Supports both built-in topics (from TOPIC_RSS_SOURCES) and custom topics
- * (from customTopicsService). Custom topics are checked when no built-in
- * sources exist for the topicId.
+ * Sprint 15 pipeline: precision filter → signal priority ranking
+ * replaces the simple recency+quality sort from earlier sprints.
  *
- * @param topicId   - One of the topic IDs from TOPICS in config/topics.ts,
- *                    or a custom topic ID created via the Topics API.
- * @param interests - (Optional) User interest keys for boost scoring (Task E)
+ * @param topicId   - Built-in or custom topic ID
+ * @param interests - User interest keys for precision scoring
  */
 export async function collectArticlesForTopic(
   topicId: string,
@@ -135,6 +123,8 @@ export async function collectArticlesForTopic(
         totalConfigured: 0,
         totalCollected: 0,
         failedFeeds: 0,
+        suppressedCount: 0,
+        cryptoDowngradedCount: 0,
       };
     }
   }
@@ -171,35 +161,77 @@ export async function collectArticlesForTopic(
     }
   }
 
-  // Base score: recency + quality
-  const scored = allArticles.map((article) => ({
-    article,
-    baseScore: recencyScore(article.pubDate) + qualityScore(article),
-    // Task E — interest boost
-    interestBoost: interests.length > 0 ? scoreArticleByInterests(article, interests) : 0,
-  }));
+  if (allArticles.length === 0) {
+    return {
+      articles: [],
+      feedDiagnostics,
+      totalConfigured: sources.length,
+      totalCollected: 0,
+      failedFeeds,
+      suppressedCount: 0,
+      cryptoDowngradedCount: 0,
+    };
+  }
 
-  // Sort by combined score (base + interest boost) descending
-  scored.sort((a, b) => (b.baseScore + b.interestBoost) - (a.baseScore + a.interestBoost));
+  // ── Step 1: Precision filter ─────────────────────────────────
+  //
+  // Remove crypto noise and weak-match articles.
+  // Always keeps at least 4 articles even if all are suppressed.
 
-  // Near-duplicate suppression + source diversity (Task D)
-  const selected: RssArticle[] = [];
+  const topicKeywords = getTopicKeywordsForInterests(interests);
+  const precisionFiltered: ScoredWithPrecision[] = applyPrecisionFilter(
+    allArticles,
+    interests,
+    topicKeywords,
+    4, // minArticles
+  );
+
+  const suppressedCount = allArticles.length - precisionFiltered.length;
+  const cryptoDowngradedCount = precisionFiltered.filter(
+    (a) => a.precisionScore.isCryptoDowngraded,
+  ).length;
+
+  // ── Step 2: Signal priority ranking ─────────────────────────
+  //
+  // Build precision score map for the priority engine
+  const precisionMap = new Map(
+    precisionFiltered.map((a) => [a.url, a.precisionScore]),
+  );
+
+  const prioritized: PrioritizedArticle[] = rankBySignalPriority(
+    precisionFiltered,
+    precisionMap,
+  );
+
+  // ── Step 3: Near-duplicate suppression + source diversity ────
+
+  const selected: ArticleWithPriority[] = [];
   const selectedSources = new Map<string, number>();
 
-  for (const { article, baseScore, interestBoost } of scored) {
+  for (const article of prioritized) {
     // Near-duplicate check
     const isDuplicate = selected.some(
       (s) => titleSimilarity(s.title, article.title) > 0.65,
     );
     if (isDuplicate) continue;
 
-    // Apply source diversity penalty (Task D)
+    // Source diversity penalty (reduces score but doesn't hard-exclude)
     const penalty = sourceDiversityPenalty(article.source, selectedSources);
-    const finalScore = baseScore + interestBoost - penalty;
+    const adjustedScore = article.priorityScore.total - penalty;
 
-    // Always add interest-boosted articles; apply score threshold for others
-    if (finalScore > 0 || interestBoost > 0) {
-      selected.push(article);
+    // Always keep critical/high articles regardless of diversity penalty
+    const isMustKeep = article.priorityScore.priorityLabel === "critical" ||
+                       article.priorityScore.priorityLabel === "high";
+
+    if (adjustedScore > 0 || isMustKeep) {
+      selected.push({
+        ...article,
+        priorityLabel: article.priorityScore.priorityLabel,
+        priorityTotal: article.priorityScore.total,
+        precisionScore: article.precisionScore?.totalScore,
+        hitEntities: article.precisionScore?.hitEntities,
+        isCryptoDowngraded: article.precisionScore?.isCryptoDowngraded,
+      });
       const src = article.source ?? "__unknown__";
       selectedSources.set(src, (selectedSources.get(src) ?? 0) + 1);
     }
@@ -213,10 +245,13 @@ export async function collectArticlesForTopic(
       sourceCount: sources.length,
       failedFeeds,
       totalCollected: allArticles.length,
+      afterPrecision: precisionFiltered.length,
+      suppressedCount,
+      cryptoDowngradedCount,
       afterRanking: selected.length,
       interestsApplied: interests.length,
     },
-    "Articles collected and ranked",
+    "Articles collected, filtered, and ranked",
   );
 
   return {
@@ -225,5 +260,7 @@ export async function collectArticlesForTopic(
     totalConfigured: sources.length,
     totalCollected: allArticles.length,
     failedFeeds,
+    suppressedCount,
+    cryptoDowngradedCount,
   };
 }

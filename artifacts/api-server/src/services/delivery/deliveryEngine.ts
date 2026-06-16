@@ -17,11 +17,11 @@
 import { collectArticlesForTopic } from "../news/newsCollectorService.js";
 import { summarizeDelivery, summarizeExecutive } from "../ai/summaryService.js";
 import {
-  formatMorningBriefingForTelegram,
-  formatEveningBriefingForTelegram,
-  formatExecutiveBriefingForTelegram,
-  formatIntelligenceBriefingForTelegram,
-} from "./briefingFormatter.js";
+  formatMorningBriefingV2,
+  formatEveningBriefingV2,
+  formatExecutiveBriefingV2,
+  formatIntelligenceBriefingV2,
+} from "./briefingFormatterV2.js";
 import {
   recordDigest,
   formatDigestContextForAI,
@@ -268,8 +268,8 @@ export async function generateBriefing(
 
   const formattedMessages =
     type === "morning"
-      ? formatMorningBriefingForTelegram(rawText, generatedAt, articles.length)
-      : formatEveningBriefingForTelegram(rawText, generatedAt, articles.length);
+      ? formatMorningBriefingV2(rawText, generatedAt, { sourceCount: articles.length })
+      : formatEveningBriefingV2(rawText, generatedAt, { sourceCount: articles.length });
 
   recordDigest(type, rawText, topicsUsed, articles.length);
 
@@ -344,7 +344,7 @@ export async function generateExecutiveBriefing(
     return { success: false, type: "executive", rawText: "", formattedMessages: [], generatedAt, generationTimeMs: Date.now() - startMs, articleCount: articles.length, topicsUsed, error: String(err) };
   }
 
-  const formattedMessages = formatExecutiveBriefingForTelegram(rawText, generatedAt, articles.length);
+  const formattedMessages = formatExecutiveBriefingV2(rawText, generatedAt, { sourceCount: articles.length });
   const generationTimeMs = Date.now() - startMs;
   const inputChars = articles.reduce((s, a) => s + (a.title?.length ?? 0) + (a.description?.length ?? 0), 0);
   recordTokenUsage("executive", inputChars, rawText.length, articles.length, rawArticles.reduce((s, a) => s + (a.description?.length ?? 0), 0));
@@ -386,7 +386,7 @@ export async function generateIntelligenceBriefing(
     return { success: false, type: "intelligence", rawText: "", formattedMessages: [], generatedAt, generationTimeMs: Date.now() - startMs, articleCount: articles.length, topicsUsed, error: String(err) };
   }
 
-  const formattedMessages = formatIntelligenceBriefingForTelegram(rawText, generatedAt, topic?.label ?? topicId, articles.length);
+  const formattedMessages = formatIntelligenceBriefingV2(rawText, generatedAt, topic?.label ?? topicId, { sourceCount: articles.length });
   const generationTimeMs = Date.now() - startMs;
 
   return { success: true, type: "intelligence", rawText, formattedMessages, generatedAt, generationTimeMs, articleCount: articles.length, topicsUsed };

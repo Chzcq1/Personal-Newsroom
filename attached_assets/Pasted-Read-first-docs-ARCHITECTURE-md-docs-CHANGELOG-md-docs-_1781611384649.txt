@@ -1,0 +1,519 @@
+Read first:
+
+- docs/ARCHITECTURE.md
+- docs/CHANGELOG.md
+- docs/AGENT_ARCHITECTURE.md
+- docs/SYSTEM_STATUS.md
+- docs/LOGIN_PREPARATION.md
+- docs/DELIVERY_INFRASTRUCTURE.md
+- docs/EXPERIENCE_INTELLIGENCE.md
+- docs/TOKEN_ECONOMY.md
+- docs/AGENT_RULES.md
+- docs/PERSISTENT_INFRASTRUCTURE.md
+- docs/IDENTITY_FOUNDATION.md
+- docs/CLOSED_ALPHA_PLAN.md
+
+IMPORTANT:
+DO NOT START CODING IMMEDIATELY.
+
+You are now working on a large-scale intelligence platform.
+You MUST audit the system first before implementing Sprint 15.
+
+Preserve ALL current functionality.
+
+==================================================
+SPRINT 15
+PRECISION INTELLIGENCE & ALPHA EXPERIENCE
+==================================================
+
+Mission:
+
+INFOX is evolving from:
+“AI news summarizer”
+
+Into:
+“A personalized intelligence operating system.”
+
+The next stage is NOT feature spam.
+
+The next stage is:
+precision, trust, retention, readability,
+signal quality, and closed-alpha readiness.
+
+Current problems observed:
+
+- BTC/Crypto feed still noisy
+- Feed relevance still inconsistent
+- Telegram messages too dense
+- Dark mode contrast issues
+- Too much text fatigue
+- Visual hierarchy weak in some areas
+- Intelligence still feels “feed-like” instead of “advisor-like”
+- Replit runtime dependency still exists
+- User onboarding experience incomplete
+- Insight Export system exists but lacks automation/intelligence
+
+Goal:
+
+Transform INFOX into a:
+high-signal intelligence companion.
+
+==================================================
+STEP 0 — SYSTEM AUDIT (MANDATORY)
+==================================================
+
+Before implementing Sprint 15:
+
+1. Detect duplicate routes
+2. Detect duplicate workers
+3. Detect stale components
+4. Detect dead services
+5. Detect inconsistent typography
+6. Detect low-contrast UI areas
+7. Detect memory-only systems needing persistence
+8. Detect unstable API contracts
+9. Detect expensive AI call paths
+10. Detect unnecessary token burn
+
+Generate internal diagnostics first.
+
+DO NOT skip this step.
+
+==================================================
+TASK A — FEED PRECISION V2
+==================================================
+
+Current issue:
+
+Interests like:
+BTC, Nvidia, AI
+
+still receive weak or incidental matches.
+
+Implement:
+
+High-precision relevance filtering.
+
+Requirements:
+
+Create:
+services/intelligence/precisionFilter.ts
+
+New logic:
+
+- direct entity match weighting
+- narrative importance weighting
+- source trust weighting
+- cross-source confirmation
+- topic purity scoring
+- weak-match suppression
+- contextual relevance decay
+
+Special handling for crypto:
+
+If:
+crypto article comes from low-trust source
+AND lacks confirmation from major financial/news sources
+
+Then:
+downgrade or remove article.
+
+Goal:
+
+Reduce noisy feed pollution dramatically.
+
+==================================================
+TASK B — SIGNAL-FIRST RANKING
+==================================================
+
+Current issue:
+
+Feed still behaves too much like a chronological RSS reader.
+
+Implement:
+
+Signal-first ranking.
+
+Ranking priority:
+
+1. impact
+2. acceleration
+3. entity importance
+4. narrative persistence
+5. source trust
+6. relevance confidence
+7. recency
+
+NOT:
+simple publish time.
+
+Create:
+signalPriorityEngine.ts
+
+Goal:
+
+INFOX should feel like:
+“the important things surface automatically.”
+
+==================================================
+TASK C — TELEGRAM DELIVERY V2
+==================================================
+
+Current issue:
+
+Telegram digest still appears as large text blocks.
+
+Implement:
+Layered Intelligence Formatting.
+
+Structure:
+
+[BOLD HEADLINE]
+
+◽ One-line executive summary
+
+◽ Key implication
+
+◽ Why this matters
+
+[Read deeper on INFOX]
+
+Requirements:
+
+- Telegram Markdown V2 support
+- spacing optimization
+- scan-first formatting
+- compact mobile readability
+- hyperlink support
+- section hierarchy
+
+Add:
+
+/settings/delivery/preview-live
+
+Requirements:
+
+- real Telegram preview simulation
+- device-style preview card
+- “Send Test Digest” button
+- show exact outgoing message
+
+Goal:
+
+Telegram should feel premium,
+minimal,
+fast to scan.
+
+==================================================
+TASK D — VISUAL INTELLIGENCE LAYER
+==================================================
+
+Current issue:
+
+Everything is text-only.
+
+Implement lightweight visual intelligence.
+
+Requirements:
+
+Add support for:
+
+- article thumbnails
+- source logos
+- signal badges
+- narrative momentum indicators
+- impact indicators
+- confidence indicators
+
+Rules:
+
+- minimal
+- monochrome-first
+- clean newsroom aesthetic
+- avoid social-media feeling
+
+DO NOT:
+turn INFOX into a content feed.
+
+Goal:
+
+Reduce text fatigue while preserving professionalism.
+
+==================================================
+TASK E — DARK MODE ACCESSIBILITY FIX
+==================================================
+
+Audit all pages for low contrast.
+
+Fix:
+
+- navy-on-black text
+- unreadable metadata
+- muted labels
+- invisible cards
+- weak dividers
+
+Use ONLY:
+
+Background:
+- zinc-950
+- black
+- neutral-950
+
+Text:
+- zinc-100
+- zinc-300
+- zinc-400
+
+Accent:
+- amber
+- cyan
+- emerald
+- rose ONLY for critical alerts
+
+Typography target:
+
+Bloomberg Terminal
++ Financial Times
++ Notion
+
+NO childish styling.
+
+==================================================
+TASK F — KNOWLEDGE COMPOUND SYSTEM
+==================================================
+
+DO NOT implement addictive streak systems.
+
+Instead implement:
+
+Knowledge Compound Rate.
+
+Track:
+
+- hours saved
+- signal accuracy
+- relevant alerts delivered
+- noise filtered
+- narratives followed successfully
+- high-value reads
+
+Create:
+/settings/intelligence-score
+
+Show:
+
+“This week INFOX saved you:
+4h 12m of information filtering.”
+
+Goal:
+
+Users should feel:
+better informed,
+not addicted.
+
+==================================================
+TASK G — INSIGHT EXPORT AUTOMATION
+==================================================
+
+Current issue:
+
+Insight Export exists
+but feels manual and disconnected.
+
+Implement:
+
+Automatic Intelligence Card generation.
+
+Generate cards from:
+
+- executive briefings
+- major alerts
+- narrative clusters
+- morning digests
+
+Styles:
+
+- Executive Briefing
+- Market Signal
+- Intelligence Alert
+- Narrative Shift
+
+Requirements:
+
+- export-ready layouts
+- shareable image rendering
+- dark/light variants
+- minimal branding
+- high readability
+
+Goal:
+
+Enable:
+organic sharing,
+LinkedIn virality,
+premium intelligence aesthetic.
+
+==================================================
+TASK H — CLOSED ALPHA GATING
+==================================================
+
+Prepare controlled onboarding.
+
+Create:
+
+/waitlist
+/founder-access
+
+Requirements:
+
+- Proof-of-interest onboarding
+- ask user:
+  - industries followed
+  - interests
+  - information pain points
+  - delivery preference
+
+Generate:
+sample personalized digest BEFORE approval.
+
+Goal:
+
+Filter high-quality alpha testers.
+
+==================================================
+TASK I — AI TOKEN EFFICIENCY PASS
+==================================================
+
+Audit all expensive AI paths.
+
+Implement:
+
+- prompt deduplication
+- context trimming
+- smarter article selection
+- narrative caching
+- entity compression
+- AI fallback hierarchy
+- aggressive preprocessing
+
+Goal:
+
+Reduce token usage WITHOUT reducing intelligence quality.
+
+Target:
+40–60% lower token burn.
+
+==================================================
+TASK J — LONG-TERM INFRASTRUCTURE PREP
+==================================================
+
+Prepare INFOX for migration away from Replit runtime dependency.
+
+Requirements:
+
+Document:
+
+- persistent hosting architecture
+- worker hosting separation
+- scheduler deployment strategy
+- PostgreSQL backup strategy
+- Telegram worker isolation
+- future Redis integration
+- CDN/media strategy
+
+DO NOT migrate yet.
+
+Preparation only.
+
+==================================================
+TASK K — UX CLEANUP PASS
+==================================================
+
+Reduce visual fatigue.
+
+Audit:
+
+- oversized cards
+- excessive metadata
+- long scroll fatigue
+- repetitive UI blocks
+- cluttered settings pages
+
+Implement:
+
+- progressive disclosure
+- cleaner spacing
+- collapsible metadata
+- simplified controls
+- mobile readability improvements
+
+Goal:
+
+INFOX should feel:
+calm,
+fast,
+intelligent.
+
+==================================================
+TASK L — DOCUMENTATION
+==================================================
+
+Update:
+
+- ARCHITECTURE.md
+- CHANGELOG.md
+- DELIVERY_INFRASTRUCTURE.md
+- EXPERIENCE_INTELLIGENCE.md
+- TOKEN_ECONOMY.md
+- AGENT_ARCHITECTURE.md
+
+Create:
+
+- PRECISION_INTELLIGENCE.md
+- SIGNAL_RANKING.md
+- TELEGRAM_FORMATTING.md
+- KNOWLEDGE_COMPOUND.md
+- ALPHA_GATING.md
+
+Document:
+
+- precision filtering logic
+- signal ranking architecture
+- Telegram formatting hierarchy
+- knowledge scoring philosophy
+- onboarding funnel
+- token optimization strategy
+- visual intelligence rules
+
+==================================================
+SUCCESS CRITERIA
+==================================================
+
+After Sprint 15:
+
+- feeds become significantly more precise
+- crypto/BTC noise reduced
+- Telegram digests become readable
+- UI contrast problems eliminated
+- INFOX feels like an intelligence advisor
+- text fatigue reduced
+- visual intelligence exists
+- token costs reduced
+- onboarding becomes premium
+- alpha testing preparation becomes real
+- sharing/virality layer becomes operational
+
+Provide implementation report:
+
+- Files created
+- Files modified
+- Precision architecture decisions
+- Ranking model decisions
+- Telegram formatting changes
+- Visual intelligence system
+- Knowledge compound calculations
+- Token optimization results
+- UX cleanup summary
+- Known limitations
+- Recommended Sprint 16 roadmap

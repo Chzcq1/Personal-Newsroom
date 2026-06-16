@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { useGetTopics, useSummarizeNews } from "@workspace/api-client-react";
-import type { NewsSummary } from "@workspace/api-client-react";
+import type { NewsSummary, Article } from "@workspace/api-client-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -69,6 +69,12 @@ type ExtendedNewsSummary = NewsSummary & {
   debugInfo?: FeedDiagnostic[];
   failsafeMode?: boolean;
   failsafeReason?: string;
+  signalStats?: {
+    suppressedCount: number;
+    cryptoDowngradedCount: number;
+    totalCollected: number;
+    signalRatio: number;
+  };
 };
 
 // ── Health status ────────────────────────────────────────────
@@ -85,23 +91,23 @@ interface HealthData {
 function HealthBadge({ health }: { health: HealthData | null }) {
   if (!health) return null;
   const colors = {
-    healthy: "bg-green-50 text-green-700 border-green-200",
-    degraded: "bg-amber-50 text-amber-700 border-amber-200",
-    offline: "bg-red-50 text-red-600 border-red-200",
+    healthy: "bg-green-500/10 text-green-400 border-green-500/25",
+    degraded: "bg-amber-500/10 text-amber-400 border-amber-500/25",
+    offline: "bg-red-500/10 text-red-400 border-red-500/25",
   };
   const dots = {
-    healthy: "bg-green-500",
-    degraded: "bg-amber-500",
-    offline: "bg-red-500",
+    healthy: "bg-green-400",
+    degraded: "bg-amber-400",
+    offline: "bg-red-400",
   };
   const labels = {
-    healthy: "System Healthy",
-    degraded: "System Degraded",
-    offline: "System Offline",
+    healthy: "Live",
+    degraded: "Degraded",
+    offline: "Offline",
   };
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold ${colors[health.status]}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-medium ${colors[health.status]}`}
       title={`AI: ${health.aiProviderDetail} | RSS: ${health.rssFeedDetail}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${dots[health.status]}`} />
@@ -229,7 +235,7 @@ function FailsafeDisplay({ data }: { data: ExtendedNewsSummary }) {
         </div>
 
         <div className="grid gap-2">
-          {data.sources.map((article, idx) => (
+          {data.sources.map((article: Article, idx: number) => (
             <a
               key={idx}
               href={article.url}
@@ -266,9 +272,9 @@ function FailsafeDisplay({ data }: { data: ExtendedNewsSummary }) {
 function DebugPanel({ data }: { data: ExtendedNewsSummary }) {
   const [open, setOpen] = useState(false);
   const feeds = data.debugInfo ?? [];
-  const failed = feeds.filter((f) => f.status === "failed").length;
+  const failed = feeds.filter((f: FeedDiagnostic) => f.status === "failed").length;
   const articleTextLength = data.sources
-    .map((s) => `${s.title} ${s.description ?? ""}`)
+    .map((s: Article) => `${s.title} ${s.description ?? ""}`)
     .join(" ").length;
   const estimatedTokens = Math.round(articleTextLength / 4);
 
@@ -299,7 +305,7 @@ function DebugPanel({ data }: { data: ExtendedNewsSummary }) {
           </div>
           {/* Feed diagnostics */}
           <div className="divide-y divide-amber-100">
-            {feeds.map((feed, i) => (
+            {feeds.map((feed: FeedDiagnostic, i: number) => (
               <div
                 key={i}
                 className={`px-4 py-2.5 flex items-start gap-3 ${
@@ -353,7 +359,13 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
       topicLabelTh: data.topic.labelTh,
       topicIcon: data.topic.icon,
       summary: data.summary,
-      sources: data.sources,
+      sources: data.sources.map((a: Article) => ({
+        title: a.title,
+        url: a.url,
+        description: a.description ?? null,
+        pubDate: a.pubDate ?? null,
+        source: a.source ?? null,
+      })),
       generatedAt: data.generatedAt,
       provider: data.provider,
       articleCount: data.articleCount,
@@ -382,6 +394,13 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap justify-end">
+            {(data as ExtendedNewsSummary).signalStats?.suppressedCount != null &&
+              (data as ExtendedNewsSummary).signalStats!.suppressedCount > 0 && (
+              <span className="flex items-center gap-1 text-[10px] text-amber-500/80 bg-amber-500/8 border border-amber-500/15 px-2 py-0.5 rounded-full">
+                <Activity className="w-2.5 h-2.5" />
+                {(data as ExtendedNewsSummary).signalStats!.suppressedCount} filtered
+              </span>
+            )}
             <span className="flex items-center gap-1.5">
               <Clock className="w-3 h-3" />
               {(data.generationTimeMs / 1000).toFixed(1)}s
@@ -512,7 +531,7 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
           Source Articles
         </div>
         <div className="grid gap-2">
-          {data.sources.map((article, idx) => (
+          {data.sources.map((article: Article, idx: number) => (
             <a
               key={idx}
               href={article.url}

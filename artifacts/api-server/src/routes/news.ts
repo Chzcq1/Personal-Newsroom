@@ -134,6 +134,8 @@ router.post("/news/summarize", async (req, res) => {
       totalConfigured,
       totalCollected,
       failedFeeds,
+      suppressedCount,
+      cryptoDowngradedCount,
     } = await collectArticlesForTopic(topicId, Array.isArray(interests) ? interests : []);
 
     if (rawArticles.length === 0) {
@@ -244,6 +246,14 @@ router.post("/news/summarize", async (req, res) => {
       preprocessStats,
       trendContextUsed: !!trendContext,
       debugInfo: feedDiagnostics,
+      signalStats: {
+        suppressedCount,
+        cryptoDowngradedCount,
+        totalCollected,
+        signalRatio: totalCollected > 0
+          ? Math.round(((totalCollected - suppressedCount) / totalCollected) * 100) / 100
+          : 1,
+      },
     });
   } catch (err) {
     logger.error({ err, topicId }, "Unexpected error during summarization");

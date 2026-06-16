@@ -13,6 +13,9 @@ import TopicsPage from "@/pages/settings/topics";
 import PersonalityPage from "@/pages/settings/personality";
 import PreferencesPage from "@/pages/settings/preferences";
 import DeliveryPreviewPage from "@/pages/delivery-preview";
+import DeliveryPreviewLivePage from "@/pages/settings/delivery-preview-live";
+import IntelligenceScorePage from "@/pages/settings/intelligence-score";
+import WaitlistPage from "@/pages/waitlist";
 import AdminCostsPage from "@/pages/admin-costs";
 import AdminAnalyticsPage from "@/pages/admin/analytics";
 import AdminDeliveryPage from "@/pages/admin/delivery";
@@ -41,6 +44,9 @@ function Router() {
       <Route path="/settings" component={SettingsPage} />
       <Route path="/settings/delivery" component={DeliverySettingsPage} />
       <Route path="/settings/delivery/debug" component={DeliveryDebugPage} />
+      <Route path="/settings/delivery/preview-live" component={DeliveryPreviewLivePage} />
+      <Route path="/settings/intelligence-score" component={IntelligenceScorePage} />
+      <Route path="/waitlist" component={WaitlistPage} />
       <Route path="/settings/interests" component={InterestsPage} />
       <Route path="/settings/scheduler" component={SchedulerPage} />
       <Route path="/settings/topics" component={TopicsPage} />

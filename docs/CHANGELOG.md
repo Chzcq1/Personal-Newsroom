@@ -2,6 +2,60 @@
 
 ---
 
+## [2026-06-16] — Sprint 15: Precision Intelligence & Alpha Experience
+
+**What:** Ten-task sprint that transforms INFOX from "AI news summarizer" into "high-signal intelligence companion." Key additions: Feed Precision V2 with entity weighting + source trust + crypto downgrade logic (Task A), 7-factor Signal Priority Engine replacing simple recency sort (Task B), full pipeline re-wiring of tasks A+B into newsCollectorService (Task C wire), Telegram V2 formatter with layered scan-first structure + `/settings/delivery/preview-live` page (Task C), Knowledge Compound System tracking hours saved + noise filtered + compound rate at `/settings/intelligence-score` (Task F), Closed Alpha waitlist at `/waitlist` with 4-step onboarding + sample digest preview (Task H), signal quality badge on briefing card header showing noise filtered, HealthBadge dark-mode fix using theme-compatible opacity classes, and three new documentation files.
+
+**Why:** The existing system ranked articles by recency + quality score — making INFOX feel like a RSS reader. Sprint 15 replaces this with a precision layer (crypto noise suppression, entity importance scoring) and a signal-priority ranker (7 factors: impact, acceleration, entity importance, narrative persistence, source trust, relevance confidence, recency). The result: important stories surface automatically, noise is quantified and shown to users, and the product now has an alpha capture flow.
+
+### Task A — Feed Precision V2 (`precisionFilter.ts`)
+- `applyPrecisionFilter(articles, topicId)` — multi-factor noise gate before AI
+- 4 scoring dimensions: entity importance (tier weighting), topic purity, source trust, cross-source bonus
+- Crypto downgrade: suppresses crypto content from crypto-native sources unless confirmed by Tier A/B source
+- `SUPPRESSION_THRESHOLD = 12` — articles below this with no entity hits are removed
+- Always keeps ≥ 4 articles to prevent empty briefings
+- Output includes `isSuppressed`, `suppressionReason`, `isCryptoDowngraded`
+
+### Task B — Signal Priority Engine (`signalPriorityEngine.ts`)
+- `rankBySignalPriority(articles, topicId)` — 7-factor ranking replaces recency sort
+- Factors: impact (30), acceleration (20), entity importance (20), narrative persistence (15), source trust (30), relevance confidence (20), recency (15) — max 150 pts
+- Priority labels: `critical` ≥100, `high` ≥70, `medium` ≥40, `low` <40
+- Critical/high always surfaces before medium/low regardless of age
+
+### Task C — Pipeline Re-wire + Telegram V2
+- `newsCollectorService.ts` fully rewired: precision filter → signal priority ranking
+- `CollectionResult` now includes `suppressedCount`, `cryptoDowngradedCount`
+- `briefingFormatterV2.ts` — 4-layer phone-scan format: headline → 3 scan bullets → extended body → link
+- `deliveryEngine.ts` swapped to V2 formatters
+- `/settings/delivery/preview-live` — phone-frame Telegram preview with send-test button
+
+### Task F — Knowledge Compound System
+- `knowledgeCompound.ts` — tracks hours saved, noise filtered, signal accuracy, compound rate
+- Time savings model: 4 min/filtered article + 6.5 min/briefing session
+- `GET /api/intelligence/compound` — weekly summary + daily breakdown
+- `/settings/intelligence-score` — hero metric: estimated hours saved this week
+
+### Task H — Closed Alpha Gating
+- `/waitlist` — 4-step onboarding: email/name → pain points → sample digest preview → confirmation
+- `POST /api/waitlist/join` with pain point capture (5 options)
+- In-memory storage with 1000-entry ring buffer (DB migration ready)
+
+### Visual Intelligence Layer + Dark Mode Fixes
+- Briefing card header: amber "X filtered" badge when `suppressedCount > 0`
+- `signalStats` object surfaced in `/api/news/summarize` response (`suppressedCount`, `signalRatio`, etc.)
+- `HealthBadge` rewritten: dark-mode-compatible opacity classes, "Live/Degraded/Offline" labels
+- Settings page: added Intelligence Score + Preview Live V2 menu items
+- `Article` type import added to home.tsx; all implicit `any` callback parameters annotated
+- `api-client-react` project reference build fixed (declarations generated via `tsc -b`)
+
+### Documentation
+- `docs/PRECISION_INTELLIGENCE.md` — full architecture doc for precisionFilter + signalPriorityEngine
+- `docs/TELEGRAM_FORMATTING.md` — V1 vs V2 comparison, layer extraction, HTML vs MarkdownV2 rationale
+- `docs/KNOWLEDGE_COMPOUND.md` — time savings model, API contract, compound score math
+- `docs/ALPHA_GATING.md` — waitlist flow, pain point options, API contract, future founder-access
+
+---
+
 ## [2026-06-16] — Sprint 12: Delivery Stability & Real-World Usability
 
 **What:** Twelve-task sprint focused on delivery reliability, operational resilience, and infrastructure readiness. Key additions: "Send Test Briefing" with 4 briefing types (Task A), upgraded Telegram formatting with clean section dividers and narrative grouping (Task B), Article Compression V2 with sentence-level information extraction (Task C), Source Reliability Engine with automatic feed down-ranking (Task E), Delivery Recovery module with heartbeat monitoring + retry queue + digest persistence (Task F), Deployment Readiness documentation for Railway/Render/Fly.io/Docker (Task G), Token Economy layer with narrative deduplication + priority budget allocation (Task H), Delivery Analytics V2 at `/admin/delivery` with token cost tracking (Task I), Persistent Memory Preparation with PostgreSQL/vector memory contracts (Task K), and full documentation suite (Task L).

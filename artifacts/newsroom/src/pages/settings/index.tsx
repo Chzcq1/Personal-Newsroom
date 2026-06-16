@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import {
   ArrowLeft, Send, Heart, ChevronRight, Check, X,
   Clock, Layers, Bug, Brain, Zap, BarChart3, Share2, Flame,
+  TrendingUp, Eye,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -224,17 +225,20 @@ export default function SettingsPage() {
           </Card>
         </Link>
 
-        {/* Delivery Preview */}
-        <Link href="/delivery-preview">
+        {/* Preview Live (V2) */}
+        <Link href="/settings/delivery/preview-live">
           <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
             <CardContent className="p-5 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                <Send className="w-4 h-4 text-amber-400" />
+                <Eye className="w-4 h-4 text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-white mb-0.5">Delivery Preview</p>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="font-medium text-white">Preview Live</p>
+                  <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded font-medium">V2</span>
+                </div>
                 <p className="text-sm text-white/50">
-                  Preview morning and evening briefings in Telegram format
+                  Phone-frame Telegram preview · send test digest
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
@@ -253,6 +257,24 @@ export default function SettingsPage() {
                 <p className="font-medium text-white mb-0.5">Insight Export</p>
                 <p className="text-sm text-white/50">
                   Generate shareable intelligence cards from any briefing
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Intelligence Score */}
+        <Link href="/settings/intelligence-score">
+          <Card className="bg-white/5 border-white/10 hover:bg-white/8 transition-colors cursor-pointer group">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-white mb-0.5">Intelligence Score</p>
+                <p className="text-sm text-white/50">
+                  เวลาที่ประหยัด · สัญญาณที่กรอง · compound rate
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors flex-shrink-0" />

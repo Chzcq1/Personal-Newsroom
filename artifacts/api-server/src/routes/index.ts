@@ -19,6 +19,8 @@ import habitRouter from "./habit.js";
 import multimodalRouter from "./multimodal.js";
 import identityRouter from "./identity.js";
 import economicsRouter from "./economics.js";
+import knowledgeCompoundRouter from "./knowledgeCompound.js";
+import waitlistRouter from "./waitlist.js";
 
 const router: IRouter = Router();
 
@@ -42,5 +44,7 @@ router.use(habitRouter);
 router.use(multimodalRouter);
 router.use(identityRouter);
 router.use(economicsRouter);
+router.use(knowledgeCompoundRouter);
+router.use(waitlistRouter);
 
 export default router;
