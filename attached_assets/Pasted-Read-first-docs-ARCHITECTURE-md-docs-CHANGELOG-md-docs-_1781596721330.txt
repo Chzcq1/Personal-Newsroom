@@ -1,0 +1,355 @@
+Read first:
+
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/PROACTIVE_INTELLIGENCE.md
+* docs/INTELLIGENCE_MEMORY.md
+* docs/AGENT_ARCHITECTURE.md
+* docs/SYSTEM_STATUS.md
+* docs/AGENT_RULES.md
+* docs/VISUAL_GUIDELINES.md
+
+Preserve all existing functionality.
+
+========================================
+SPRINT 12
+DELIVERY STABILITY & REAL-WORLD USABILITY
+
+Mission:
+
+INFOX must evolve from a powerful prototype into a reliable daily intelligence product.
+
+Current state:
+
+* intelligence systems are strong
+* personalization exists
+* proactive detection exists
+* Telegram integration works partially
+* infrastructure remains fragile
+* digest visualization is text-heavy
+* token usage can spike
+* deployment persistence is weak
+
+Goal:
+
+Improve:
+
+* delivery reliability
+* digest usability
+* operational resilience
+* visual intelligence
+* infrastructure readiness
+
+========================================
+TASK A — TELEGRAM DELIVERY PREVIEW
+
+Current problem:
+
+Users can configure Telegram delivery but cannot preview the actual digest format.
+
+Implement:
+
+“Send Test Briefing”
+
+inside:
+/settings/delivery/debug
+
+Requirements:
+
+* generate real briefing preview
+* send actual formatted Telegram digest
+* include:
+    headline
+    sections
+    signal badges
+    timestamps
+    narrative momentum
+    reading time
+
+Allow:
+
+* Morning Digest preview
+* Evening Digest preview
+* Executive Briefing preview
+* Intelligence Briefing preview
+
+Goal:
+
+Users must clearly understand:
+“what INFOX will actually send.”
+
+========================================
+TASK B — TELEGRAM MESSAGE QUALITY
+
+Improve Telegram formatting.
+
+Current issue:
+messages are still visually dense.
+
+Upgrade formatting:
+
+* clean spacing
+* section dividers
+* compact hierarchy
+* visual readability
+* narrative grouping
+
+Avoid:
+emoji spam
+ASCII noise
+markdown clutter
+
+Support:
+
+* Telegram-safe formatting
+* mobile readability
+
+========================================
+TASK C — ARTICLE COMPRESSION LAYER V2
+
+Current problem:
+
+Large articles overload token budget.
+
+Implement smarter preprocessing.
+
+Requirements:
+
+* extract only high-information paragraphs
+* remove repeated boilerplate
+* prioritize:
+    numbers
+    statements
+    executive quotes
+    developments
+    consequences
+
+Create:
+articleCompressionV2.ts
+
+Goal:
+
+Reduce token usage while improving briefing quality.
+
+========================================
+TASK D — VISUAL NEWS SUPPORT
+
+Current issue:
+
+All briefings are text-only.
+
+Implement lightweight visual support.
+
+Requirements:
+
+* article thumbnail extraction
+* source preview images
+* fallback placeholders
+* image-safe rendering
+
+Display:
+
+* thumbnail beside narrative clusters
+* hero image for major stories
+* compact image cards in My Feed
+
+Do NOT create:
+social-media-style UI.
+
+Maintain:
+clean newspaper aesthetic.
+
+========================================
+TASK E — SOURCE RELIABILITY ENGINE
+
+Current issue:
+
+Some feeds overload the system or produce low-quality content.
+
+Implement:
+
+source reliability scoring.
+
+Track:
+
+* feed stability
+* article quality
+* parse success
+* duplication frequency
+* signal quality
+
+Automatically:
+down-rank unreliable feeds.
+
+========================================
+TASK F — DELIVERY RESILIENCE
+
+Current issue:
+
+INFOX depends entirely on active Replit sessions.
+
+Prepare resilient delivery architecture.
+
+Requirements:
+
+* heartbeat monitoring
+* failed delivery recovery
+* delivery retry queue
+* digest persistence before send
+* missed-delivery replay support
+
+Create:
+deliveryRecovery.ts
+
+Goal:
+
+Prepare for future always-on infrastructure.
+
+========================================
+TASK G — DEPLOYMENT READINESS LAYER
+
+Prepare migration architecture for:
+
+* Railway
+* Render
+* Fly.io
+* VPS
+* Docker deployment
+
+Create:
+DEPLOYMENT_READINESS.md
+
+Document:
+
+* environment variables
+* persistent services
+* scheduler migration
+* cron architecture
+* queue strategy
+* future Redis usage
+
+Do NOT migrate yet.
+
+Architecture preparation only.
+
+========================================
+TASK H — TOKEN ECONOMY OPTIMIZATION
+
+Current issue:
+
+High-interest feeds consume excessive AI quota.
+
+Implement:
+
+token economy layer.
+
+Requirements:
+
+* dynamic article budgeting
+* narrative deduplication before AI
+* priority-first context allocation
+* adaptive token limits
+
+Goal:
+
+high-value stories consume more resources,
+low-value stories consume less.
+
+========================================
+TASK I — DELIVERY ANALYTICS V2
+
+Expand analytics dashboard.
+
+Track:
+
+* digest open approximations
+* delivery success rate
+* retry counts
+* average token cost per digest
+* narrative density
+* signal efficiency
+
+Accessible in:
+/admin/delivery
+
+========================================
+TASK J — USER EXPERIENCE REFINEMENT
+
+Improve reading comfort.
+
+Requirements:
+
+* typography refinement
+* spacing improvements
+* content density balancing
+* narrative card cleanup
+* reduce cognitive overload
+
+Maintain:
+premium newspaper aesthetic.
+
+========================================
+TASK K — PERSISTENT MEMORY PREPARATION
+
+Prepare architecture interfaces for:
+
+* PostgreSQL persistence
+* vector memory
+* long-term user memory
+* server-side personalization
+* delivery history persistence
+
+Still no full auth system yet.
+
+Preparation only.
+
+========================================
+TASK L — DOCUMENTATION
+
+Update:
+
+ARCHITECTURE.md
+CHANGELOG.md
+PROACTIVE_INTELLIGENCE.md
+INTELLIGENCE_MEMORY.md
+
+Create:
+
+DELIVERY_INFRASTRUCTURE.md
+TOKEN_ECONOMY.md
+DEPLOYMENT_READINESS.md
+
+Document:
+
+* resilience strategy
+* deployment roadmap
+* token optimization
+* delivery recovery
+* future persistent infra
+
+========================================
+SUCCESS CRITERIA
+
+After sprint completion:
+
+* Telegram previews work reliably
+* digest readability improves significantly
+* token usage decreases
+* large articles process safely
+* visual storytelling exists
+* feed quality improves
+* deployment roadmap is prepared
+* delivery resilience exists
+* infrastructure is ready for migration
+
+Provide implementation report:
+
+Files created
+Files modified
+Delivery resilience architecture
+Token optimization decisions
+Compression pipeline logic
+Visual rendering decisions
+Deployment preparation strategy
+Known limitations
+Recommended next sprint

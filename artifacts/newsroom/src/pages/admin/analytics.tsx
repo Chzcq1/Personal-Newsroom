@@ -152,6 +152,12 @@ export default function AnalyticsPage() {
             <h1 className="text-lg font-semibold tracking-tight">Delivery Analytics</h1>
             <p className="text-xs text-white/40">Quality metrics and intelligence signals</p>
           </div>
+          <Link href="/admin/delivery">
+            <Button variant="ghost" size="sm" className="text-white/40 hover:text-white gap-1.5 text-xs">
+              <BarChart3 className="w-3.5 h-3.5" />
+              V2
+            </Button>
+          </Link>
           <Button
             onClick={() => { void refetch(); }}
             variant="ghost"

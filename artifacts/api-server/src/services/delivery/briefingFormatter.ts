@@ -1,21 +1,24 @@
 // ============================================================
-// BRIEFING FORMATTER — Sprint 6 Task B
+// BRIEFING FORMATTER — Sprint 12 Task B
 //
 // Converts raw AI briefing text into professional Telegram-ready
 // HTML messages. Clean, compact, mobile-readable.
 //
-// Telegram HTML mode supports: <b>, <i>, <u>, <s>, <code>, <a>
-// All special HTML chars in content must be escaped.
+// Telegram HTML: <b>, <i>, <u>, <s>, <code>, <a>
 //
-// Improvements in Sprint 6:
-//   - Professional section headers with visual indicators
-//   - Reading time estimate
-//   - Source count in header
-//   - Cleaner spacing for mobile
-//   - Divider footer with timestamp
+// Sprint 12 improvements:
+//   - Clean dividers between sections (no ASCII noise)
+//   - Compact hierarchy with clear visual weight
+//   - Narrative grouping support
+//   - Signal badges inline
+//   - Reading time calibrated for Thai text
+//   - Mobile-first spacing
+//   - 4 briefing type formatters (morning/evening/executive/intelligence)
 // ============================================================
 
 const MAX_TELEGRAM_MSG_LEN = 4096;
+
+// ── Section header detection ──────────────────────────────────
 
 const SECTION_HEADERS = [
   "HEADLINE",
@@ -30,9 +33,14 @@ const SECTION_HEADERS = [
   "WHAT HAPPENED TODAY",
   "WHAT CHANGED",
   "WHAT MATTERS TOMORROW",
+  "สรุปสำคัญ",
+  "พัฒนาการสำคัญ",
+  "ผลกระทบ",
+  "สิ่งที่ต้องจับตา",
+  "บทสรุป",
 ];
 
-const SECTION_ICONS: Record<string, string> = {
+const SECTION_MARKER: Record<string, string> = {
   "HEADLINE": "◆",
   "MORNING BRIEFING": "◆",
   "EVENING RECAP": "◆",
@@ -40,12 +48,19 @@ const SECTION_ICONS: Record<string, string> = {
   "KEY DEVELOPMENTS": "▸",
   "TOP DEVELOPMENTS": "▸",
   "IMPACT ANALYSIS": "▸",
-  "WHAT TO WATCH NEXT": "▸",
-  "WHAT TO WATCH TODAY": "▸",
+  "WHAT TO WATCH NEXT": "◎",
+  "WHAT TO WATCH TODAY": "◎",
   "WHAT HAPPENED TODAY": "▸",
   "WHAT CHANGED": "▸",
-  "WHAT MATTERS TOMORROW": "▸",
+  "WHAT MATTERS TOMORROW": "◎",
+  "สรุปสำคัญ": "◆",
+  "พัฒนาการสำคัญ": "▸",
+  "ผลกระทบ": "▸",
+  "สิ่งที่ต้องจับตา": "◎",
+  "บทสรุป": "◆",
 };
+
+// ── Utilities ─────────────────────────────────────────────────
 
 function escapeHtml(text: string): string {
   return text
@@ -55,68 +70,102 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Estimate reading time in minutes for Thai text.
- * Thai reading speed ≈ 400 chars/min (200 words × ~2 chars/word avg).
+ * Reading time calibrated for Thai mixed-language text.
+ * ~440 characters/minute accounts for English proper nouns embedded in Thai.
  */
 function estimateReadingTime(text: string): string {
   const charCount = text.replace(/\s+/g, "").length;
-  const minutes = Math.max(1, Math.round(charCount / 400));
-  return `${minutes} min`;
+  const minutes = Math.max(1, Math.round(charCount / 440));
+  return `${minutes} นาที`;
 }
 
-/**
- * Convert raw AI output into Telegram HTML-formatted text.
- * Section headers become bold with visual indicators.
- */
+// ── Core formatter ────────────────────────────────────────────
+
+export interface BriefingFormatOptions {
+  sourceCount?: number;
+  signalBadge?: string;
+  narrativeCount?: number;
+  momentum?: string;
+}
+
 function applyTelegramFormatting(
   rawText: string,
   header: string,
   subtitle: string,
-  sourceCount?: number,
+  options: BriefingFormatOptions = {},
 ): string {
+  const { sourceCount, signalBadge, narrativeCount, momentum } = options;
   const readingTime = estimateReadingTime(rawText);
   const lines = rawText.split("\n");
   const out: string[] = [];
 
+  // Header block — clean, no emoji
   out.push(`<b>${escapeHtml(header)}</b>`);
   out.push(`<i>${escapeHtml(subtitle)}</i>`);
 
-  const metaParts: string[] = [`⏱ ${readingTime} read`];
+  // Meta line
+  const metaParts: string[] = [readingTime];
   if (sourceCount && sourceCount > 0) {
-    metaParts.push(`${sourceCount} sources`);
+    metaParts.push(`${sourceCount} แหล่ง`);
+  }
+  if (narrativeCount && narrativeCount > 1) {
+    metaParts.push(`${narrativeCount} เรื่อง`);
+  }
+  if (signalBadge) {
+    metaParts.push(signalBadge);
   }
   out.push(`<i>${metaParts.join("  ·  ")}</i>`);
   out.push("");
 
-  for (const line of lines) {
-    const trimmed = line.trim();
+  // Content — section-aware formatting
+  let inSection = false;
+  let prevWasEmpty = true;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+
     if (!trimmed) {
-      out.push("");
+      if (!prevWasEmpty) {
+        out.push("");
+        prevWasEmpty = true;
+      }
       continue;
     }
+
+    prevWasEmpty = false;
+
     if (SECTION_HEADERS.includes(trimmed)) {
-      const icon = SECTION_ICONS[trimmed] ?? "▸";
-      out.push(`\n<b>${icon} ${escapeHtml(trimmed)}</b>`);
+      const marker = SECTION_MARKER[trimmed] ?? "▸";
+      if (inSection) {
+        out.push("");
+        out.push(`<i>────────────────</i>`);
+      }
+      out.push(`\n<b>${marker} ${escapeHtml(trimmed)}</b>`);
+      inSection = true;
     } else {
       out.push(escapeHtml(trimmed));
     }
   }
 
+  // Footer
   const timestamp = new Date().toLocaleTimeString("th-TH", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Asia/Bangkok",
   });
-  out.push(`\n<i>─── สร้างเมื่อ ${timestamp} ICT ───</i>`);
+  out.push("");
+
+  if (momentum) {
+    out.push(`<i>● ${escapeHtml(momentum)}</i>`);
+  }
+
+  out.push(`<i>─── INFOX · ${timestamp} ICT ───</i>`);
 
   return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-/**
- * Split a long message into chunks ≤ 4096 chars.
- * Tries to split at double-newline paragraph breaks first,
- * then at single newlines, ensuring no chunk exceeds the limit.
- */
+// ── Message splitting ─────────────────────────────────────────
+
 function splitMessages(text: string): string[] {
   if (text.length <= MAX_TELEGRAM_MSG_LEN) return [text];
 
@@ -126,12 +175,9 @@ function splitMessages(text: string): string[] {
 
   while (remaining.length > MAX_TELEGRAM_MSG_LEN) {
     let splitAt = remaining.lastIndexOf("\n\n", MAX_TELEGRAM_MSG_LEN - 20);
-    if (splitAt <= 0) {
-      splitAt = remaining.lastIndexOf("\n", MAX_TELEGRAM_MSG_LEN - 20);
-    }
-    if (splitAt <= 0) {
-      splitAt = MAX_TELEGRAM_MSG_LEN - 20;
-    }
+    if (splitAt <= 0) splitAt = remaining.lastIndexOf("\n", MAX_TELEGRAM_MSG_LEN - 20);
+    if (splitAt <= 0) splitAt = MAX_TELEGRAM_MSG_LEN - 20;
+
     messages.push(remaining.slice(0, splitAt).trim());
     remaining = `<i>(ต่อ ${chunkNum})</i>\n\n` + remaining.slice(splitAt).trim();
     chunkNum++;
@@ -141,7 +187,7 @@ function splitMessages(text: string): string[] {
   return messages;
 }
 
-// ── Public formatters ────────────────────────────────────────
+// ── Public formatters ─────────────────────────────────────────
 
 export function formatBriefingForTelegram(
   rawBriefing: string,
@@ -158,9 +204,12 @@ export function formatBriefingForTelegram(
     minute: "2-digit",
     timeZone: "Asia/Bangkok",
   });
-  const header = `📰 Intelligence Briefing — ${topicLabel}`;
-  const subtitle = `${topicLabelTh} · ${date}`;
-  const formatted = applyTelegramFormatting(rawBriefing, header, subtitle, sourceCount);
+  const formatted = applyTelegramFormatting(
+    rawBriefing,
+    `Intelligence Briefing — ${topicLabel}`,
+    `${topicLabelTh} · ${date}`,
+    { sourceCount },
+  );
   return splitMessages(formatted);
 }
 
@@ -168,6 +217,7 @@ export function formatMorningBriefingForTelegram(
   rawBriefing: string,
   generatedAt: string,
   sourceCount?: number,
+  options: BriefingFormatOptions = {},
 ): string[] {
   const date = new Date(generatedAt).toLocaleDateString("th-TH", {
     weekday: "long",
@@ -176,9 +226,12 @@ export function formatMorningBriefingForTelegram(
     year: "numeric",
     timeZone: "Asia/Bangkok",
   });
-  const header = `🌅 Morning Intelligence Briefing`;
-  const subtitle = `${date}`;
-  const formatted = applyTelegramFormatting(rawBriefing, header, subtitle, sourceCount);
+  const formatted = applyTelegramFormatting(
+    rawBriefing,
+    `Morning Intelligence Briefing`,
+    date,
+    { sourceCount, ...options },
+  );
   return splitMessages(formatted);
 }
 
@@ -186,6 +239,7 @@ export function formatEveningBriefingForTelegram(
   rawBriefing: string,
   generatedAt: string,
   sourceCount?: number,
+  options: BriefingFormatOptions = {},
 ): string[] {
   const date = new Date(generatedAt).toLocaleDateString("th-TH", {
     weekday: "long",
@@ -194,8 +248,54 @@ export function formatEveningBriefingForTelegram(
     year: "numeric",
     timeZone: "Asia/Bangkok",
   });
-  const header = `🌆 Evening Intelligence Recap`;
-  const subtitle = `${date}`;
-  const formatted = applyTelegramFormatting(rawBriefing, header, subtitle, sourceCount);
+  const formatted = applyTelegramFormatting(
+    rawBriefing,
+    `Evening Intelligence Recap`,
+    date,
+    { sourceCount, ...options },
+  );
+  return splitMessages(formatted);
+}
+
+export function formatExecutiveBriefingForTelegram(
+  rawBriefing: string,
+  generatedAt: string,
+  sourceCount?: number,
+): string[] {
+  const date = new Date(generatedAt).toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Bangkok",
+  });
+  const formatted = applyTelegramFormatting(
+    rawBriefing,
+    `Executive Briefing`,
+    `สรุปผู้บริหาร · ${date}`,
+    { sourceCount, signalBadge: "EXECUTIVE" },
+  );
+  return splitMessages(formatted);
+}
+
+export function formatIntelligenceBriefingForTelegram(
+  rawBriefing: string,
+  generatedAt: string,
+  topicLabel: string,
+  sourceCount?: number,
+): string[] {
+  const date = new Date(generatedAt).toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Bangkok",
+  });
+  const formatted = applyTelegramFormatting(
+    rawBriefing,
+    `Intelligence Briefing — ${topicLabel}`,
+    date,
+    { sourceCount, signalBadge: "INTELLIGENCE" },
+  );
   return splitMessages(formatted);
 }

@@ -516,3 +516,79 @@ Each feed card in detailed mode shows a hover-revealed feedback bar:
 - `✗ Irrelevant` → -0.25 penalty
 - No social mechanics; no public counters; one feedback per article
 
+---
+
+## Sprint 12 — Delivery Stability & Real-World Usability
+
+### New Backend Services
+
+| Service | File | Purpose |
+|---|---|---|
+| Article Compression V2 | `articleCompressionV2.ts` | Sentence-level extraction, 40–60% compression |
+| Source Reliability Engine | `sourceReliability.ts` | Per-source scoring, 3-tier rating, signal penalties |
+| Delivery Recovery | `deliveryRecovery.ts` | Heartbeat monitoring, digest persistence, retry queue |
+| Token Economy | `tokenEconomy.ts` | Narrative deduplication, priority budgets, cost tracking |
+| Persistent Memory Prep | `persistentMemoryPrep.ts` | In-memory stores with Drizzle-ready interfaces |
+
+### Delivery Engine V2 (`deliveryEngine.ts`)
+
+The engine now runs a full pipeline before every briefing send:
+
+```
+fetchArticles()
+  → compressArticleBatch()          ← V2 sentence-level compression
+  → deduplicateNarratives()         ← Token economy deduplication
+  → allocatePriorityBudget()        ← Signal-tier char budgets
+  → applySourceReliabilityPenalty() ← Source reliability scoring
+  → summarize()                     ← AI generation
+  → persistDigestBeforeSend()       ← Recovery persistence
+  → channel.send()                  ← Telegram delivery
+  → recordHeartbeat()               ← Health monitoring
+```
+
+### Delivery Recovery Pattern
+
+```
+digest stored (pending)
+  ↓ send success → status = "delivered"
+  ↓ send failure → status = "failed" → retry queue (max 3 attempts)
+```
+
+Retry delays: 1 min → 5 min → 15 min. Missed-window detection at 07:00 / 18:00 ICT.
+
+### Token Economy Budgets
+
+| Mode | Total Budget | Critical | High | Medium | Low |
+|---|---|---|---|---|---|
+| Default | 18,000 chars | 800 | 600 | 350 | 150 |
+| Executive | 8,000 chars | 800 | 600 | 350 | — |
+| Intelligence | 22,000 chars | 1,000 | 700 | 400 | 200 |
+
+Low-tier articles excluded unless `includeLowTier` flag is set or below minimum article count.
+
+### Persistent Memory Contracts
+
+`persistentMemoryPrep.ts` defines schema interfaces (`UserProfile`, `DeliveryHistoryEntry`, `UserMemoryEntry`, `StoredDigest`, `VectorMemoryEntry`) and an `InMemoryStore<T>` backing class. All stores (`userProfileStore`, `deliveryHistoryStore`, `userMemoryStore`, `digestStore`) expose the same interface as a future Drizzle ORM query — migration requires only swapping the implementation.
+
+### New Routes (Sprint 12)
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/delivery/preview/send` | POST | Generate and send real briefing to Telegram |
+| `/api/delivery/recovery` | GET | Recovery snapshot (health, retry queue, missed windows) |
+| `/api/admin/delivery` | GET | Analytics V2 with token stats + recovery snapshot |
+
+### New Pages (Sprint 12)
+
+| Page | Route | Description |
+|---|---|---|
+| Delivery Analytics V2 | `/admin/delivery` | Token cost tracking, recovery health, signal efficiency |
+
+### Briefing Formatter V2 (`briefingFormatter.ts`)
+
+Clean Bloomberg/FT-style formatting for 4 briefing types:
+- Section dividers: `────────────────` (no emoji spam)
+- Compact markers: `◆` (headline) `▸` (point) `◎` (signal)
+- Reading time calibrated for Thai text (~440 chars/min)
+- Footer: `─── INFOX · {time} ICT ───`
+

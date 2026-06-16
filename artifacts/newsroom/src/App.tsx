@@ -15,6 +15,7 @@ import PreferencesPage from "@/pages/settings/preferences";
 import DeliveryPreviewPage from "@/pages/delivery-preview";
 import AdminCostsPage from "@/pages/admin-costs";
 import AdminAnalyticsPage from "@/pages/admin/analytics";
+import AdminDeliveryPage from "@/pages/admin/delivery";
 import FeedQualityPage from "@/pages/admin/feed-quality";
 import MyFeedPage from "@/pages/my-feed";
 import RelevanceDebugPage from "@/pages/debug/relevance";
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/delivery-preview" component={DeliveryPreviewPage} />
       <Route path="/admin/costs" component={AdminCostsPage} />
       <Route path="/admin/analytics" component={AdminAnalyticsPage} />
+      <Route path="/admin/delivery" component={AdminDeliveryPage} />
       <Route path="/admin/feed-quality" component={FeedQualityPage} />
       <Route path="/debug/relevance" component={RelevanceDebugPage} />
       <Route path="/debug/entities" component={EntitiesDebugPage} />

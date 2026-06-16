@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Bug, Bot, MessageSquare, ChevronDown, ChevronUp, Send } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Bug, Bot, MessageSquare, ChevronDown, ChevronUp, Send, Sunrise, Sunset, Briefcase, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getTelegramSettings } from "@/lib/telegramSettings";
@@ -86,13 +86,75 @@ export default function DeliveryDebugPage() {
   const [report, setReport] = useState<DiagnosticReport | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Task A — test send state
+  // Simple test message state
   const [testSendStatus, setTestSendStatus] = useState<TestSendStatus>("idle");
   const [testSendResult, setTestSendResult] = useState<{
     botUsername?: string;
     chatTitle?: string;
     error?: string;
   } | null>(null);
+
+  // Send Test Briefing state (Task A)
+  type BriefingType = "morning" | "evening" | "executive" | "intelligence";
+  const [briefingStatus, setBriefingStatus] = useState<Record<BriefingType, TestSendStatus>>({
+    morning: "idle", evening: "idle", executive: "idle", intelligence: "idle",
+  });
+  const [briefingResult, setBriefingResult] = useState<Record<BriefingType, {
+    articleCount?: number;
+    topicsUsed?: string[];
+    messageCount?: number;
+    generationTimeMs?: number;
+    compressionStats?: { reductionPercent: number };
+    error?: string;
+  }>>({
+    morning: {}, evening: {}, executive: {}, intelligence: {},
+  });
+
+  async function handleSendBriefing(type: BriefingType) {
+    if (!settings?.botToken || !settings?.chatId) return;
+    setBriefingStatus((s) => ({ ...s, [type]: "sending" }));
+    setBriefingResult((r) => ({ ...r, [type]: {} }));
+    try {
+      const res = await fetch(`${BASE}/api/delivery/preview/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          botToken: settings.botToken,
+          chatId: settings.chatId,
+          briefingType: type,
+          topicId: "ai",
+        }),
+      });
+      const data = await res.json() as {
+        success: boolean;
+        articleCount?: number;
+        topicsUsed?: string[];
+        messageCount?: number;
+        generationTimeMs?: number;
+        compressionStats?: { reductionPercent: number };
+        error?: string;
+      };
+      if (data.success) {
+        setBriefingStatus((s) => ({ ...s, [type]: "sent" }));
+        setBriefingResult((r) => ({
+          ...r,
+          [type]: {
+            articleCount: data.articleCount,
+            topicsUsed: data.topicsUsed,
+            messageCount: data.messageCount,
+            generationTimeMs: data.generationTimeMs,
+            compressionStats: data.compressionStats,
+          },
+        }));
+      } else {
+        setBriefingStatus((s) => ({ ...s, [type]: "failed" }));
+        setBriefingResult((r) => ({ ...r, [type]: { error: data.error } }));
+      }
+    } catch (err) {
+      setBriefingStatus((s) => ({ ...s, [type]: "failed" }));
+      setBriefingResult((r) => ({ ...r, [type]: { error: String(err) } }));
+    }
+  }
 
   async function handleTestSend() {
     if (!settings?.botToken || !settings?.chatId) return;
@@ -258,6 +320,91 @@ export default function DeliveryDebugPage() {
                 <p className="text-xs text-red-400">{testSendResult.error}</p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* ── Send Test Briefing (Task A) ────────────────────────── */}
+        <Card className="bg-white/5 border-white/10">
+          <CardContent className="p-5 space-y-4">
+            <div>
+              <p className="font-medium text-sm mb-1">Send Test Briefing</p>
+              <p className="text-xs text-white/40">
+                Generates a real briefing and sends it to Telegram so you see exactly what INFOX delivers.
+              </p>
+            </div>
+
+            {!settings?.botToken && (
+              <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-300">
+                  Configure Telegram credentials first.{" "}
+                  <Link href="/settings/delivery">
+                    <span className="underline cursor-pointer">Go to delivery settings →</span>
+                  </Link>
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2.5">
+              {(["morning", "evening", "executive", "intelligence"] as const).map((type) => {
+                const status = briefingStatus[type];
+                const result = briefingResult[type];
+                const icons = {
+                  morning: Sunrise,
+                  evening: Sunset,
+                  executive: Briefcase,
+                  intelligence: Zap,
+                };
+                const labels = {
+                  morning: "Morning Digest",
+                  evening: "Evening Recap",
+                  executive: "Executive Briefing",
+                  intelligence: "Intelligence Briefing",
+                };
+                const Icon = icons[type];
+
+                return (
+                  <div key={type} className="space-y-1.5">
+                    <Button
+                      onClick={() => handleSendBriefing(type)}
+                      disabled={status === "sending" || !settings?.botToken}
+                      variant="outline"
+                      className={`w-full border-white/15 text-white hover:bg-white/10 gap-2 justify-start ${
+                        status === "sent" ? "border-emerald-500/30 text-emerald-400" :
+                        status === "failed" ? "border-red-500/30 text-red-400" : ""
+                      }`}
+                    >
+                      {status === "sending" ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" />
+                      ) : status === "sent" ? (
+                        <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      ) : status === "failed" ? (
+                        <XCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      ) : (
+                        <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      )}
+                      <span className="text-xs truncate">{labels[type]}</span>
+                    </Button>
+                    {status === "sent" && result.articleCount !== undefined && (
+                      <p className="text-[10px] text-emerald-400/70 px-1">
+                        {result.articleCount} articles · {result.messageCount} msg
+                        {result.compressionStats?.reductionPercent
+                          ? ` · ${result.compressionStats.reductionPercent}% compressed`
+                          : ""}
+                      </p>
+                    )}
+                    {status === "failed" && result.error && (
+                      <p className="text-[10px] text-red-400/70 px-1 truncate">{result.error}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="text-[10px] text-white/25">
+              Briefing generation takes 15–40 seconds depending on AI provider speed.
+              Executive briefing uses a tighter token budget.
+            </p>
           </CardContent>
         </Card>
 

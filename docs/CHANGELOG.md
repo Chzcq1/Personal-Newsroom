@@ -2,6 +2,109 @@
 
 ---
 
+## [2026-06-16] — Sprint 12: Delivery Stability & Real-World Usability
+
+**What:** Twelve-task sprint focused on delivery reliability, operational resilience, and infrastructure readiness. Key additions: "Send Test Briefing" with 4 briefing types (Task A), upgraded Telegram formatting with clean section dividers and narrative grouping (Task B), Article Compression V2 with sentence-level information extraction (Task C), Source Reliability Engine with automatic feed down-ranking (Task E), Delivery Recovery module with heartbeat monitoring + retry queue + digest persistence (Task F), Deployment Readiness documentation for Railway/Render/Fly.io/Docker (Task G), Token Economy layer with narrative deduplication + priority budget allocation (Task H), Delivery Analytics V2 at `/admin/delivery` with token cost tracking (Task I), Persistent Memory Preparation with PostgreSQL/vector memory contracts (Task K), and full documentation suite (Task L).
+
+**Why:** INFOX's intelligence was strong but delivery was fragile. Sprint 12 moves from prototype to product: digests are now persisted before sending, failures are queued for retry, token usage is tracked and optimized, and the deployment roadmap is documented for migration to always-on infrastructure.
+
+### Task A — Telegram Delivery Preview
+- `POST /api/delivery/preview/send` — generate real briefing and send to Telegram
+- Supports all 4 types: `morning` | `evening` | `executive` | `intelligence`
+- "Send Test Briefing" card in `/settings/delivery/debug` with 4 buttons
+- Each button shows article count, message count, and compression stats on success
+- Inline status indicators (idle → sending → sent/failed) per briefing type
+
+### Task B — Telegram Message Quality
+- Rewrote `briefingFormatter.ts` — clean section dividers (`────────────────`)
+- No emoji spam, no ASCII art — compact professional markers only (◆ ▸ ◎)
+- Reading time calibrated for Thai text (~440 chars/min vs generic 200wpm)
+- Meta line includes: reading time · source count · narrative count · signal badge
+- 4 formatters: `formatMorningBriefingForTelegram`, `formatEveningBriefingForTelegram`, `formatExecutiveBriefingForTelegram`, `formatIntelligenceBriefingForTelegram`
+- Narrative momentum field passed through to footer
+- Footer: `─── INFOX · {time} ICT ───`
+
+### Task C — Article Compression V2 (`articleCompressionV2.ts`)
+- Sentence-level extraction replacing V1 flat truncation
+- 5-signal sentence scoring: numbers (+30), quotes (+25), actions (+20), consequences (+15), entities (+10)
+- Per-article budget: 600 chars (down from 1000 in V1)
+- Total budget: 18,000 chars (down from 24,000 → ~25% token reduction)
+- Boilerplate removal: HTML, tracking links, legal text, navigation, social sharing
+- `compressArticleBatch()` — batch compression with total budget enforcement
+- Typical result: 40–60% compression with higher content density than V1
+
+### Task E — Source Reliability Engine (`sourceReliability.ts`)
+- Per-source event log: `fetch_success` / `fetch_failure` / `parse_error` / `duplicate` / `quality_good` / `quality_poor`
+- Composite reliability score (0–100): parse success (50%) + low duplication (25%) + quality (25%)
+- Tiers: `reliable` (≥70, no penalty) · `unstable` (45–69, −8) · `poor` (<45, −20)
+- Penalties applied to signal scores in delivery engine
+- `recordFeedFetchResult()` and `recordArticleQuality()` called from delivery pipeline
+
+### Task F — Delivery Recovery (`deliveryRecovery.ts`)
+- Heartbeat monitoring: `recordHeartbeat()` called each delivery cycle
+- Digest persistence: every digest stored before send (`persistDigestBeforeSend()`)
+- Status transitions: `pending` → `delivered` / `failed`
+- Retry queue: 3-attempt max, delays 1m → 5m → 15m
+- Missed window detection: detects 07:00 / 18:00 ICT windows not delivered
+- `GET /api/delivery/recovery` — full recovery snapshot
+- `getRecoverySnapshot()` returns `overallHealthy` flag for dashboard
+
+### Task G — Deployment Readiness (`docs/DEPLOYMENT_READINESS.md`)
+- Migration targets: Railway, Render, Fly.io, VPS, Docker
+- Full environment variable documentation
+- Persistent service migration table (8 in-memory services → PostgreSQL targets)
+- Scheduler migration: platform cron → BullMQ patterns documented
+- Dockerfile examples for api-server and newsroom frontend
+- Future Redis usage guide (BullMQ, caching, rate limiting, sessions)
+- Recommended migration order: Railway → PostgreSQL → Clerk Auth → Redis → pgvector
+
+### Task H — Token Economy (`tokenEconomy.ts`)
+- `deduplicateNarratives()` — removes same-story articles before AI call
+- `allocatePriorityBudget()` — signal-tier char budgets (critical: 800, high: 600, medium: 350, low: 150)
+- `recordTokenUsage()` — tracks input/output chars, estimated tokens, estimated cost
+- `getTokenStats()` — aggregate token usage for analytics dashboard
+- 3 budget configs: DEFAULT (18k chars), EXECUTIVE (8k), INTELLIGENCE (22k)
+- Low-tier articles excluded unless below minimum article count
+
+### Task I — Delivery Analytics V2 (`/admin/delivery`)
+- New page with infrastructure health status, token economy metrics, signal efficiency
+- `GET /api/admin/delivery` — expanded analytics snapshot including tokenStats + recoverySnapshot
+- `getAnalyticsSnapshot()` now includes: signalEfficiency, narrativeDensity, retryRate
+- `deliveryMetrics.ts` expanded with retry count tracking and token input chars
+- Link from existing `/admin/analytics` → `/admin/delivery`
+
+### Task K — Persistent Memory Preparation (`persistentMemoryPrep.ts`)
+- Schema interfaces: `UserProfile`, `DeliveryHistoryEntry`, `UserMemoryEntry`, `StoredDigest`, `VectorMemoryEntry`
+- `InMemoryStore<T>` — in-memory fallback with same interface as future Drizzle ORM queries
+- `buildPersonalizationContext()` — assembles user context from all stores
+- `getMigrationReadiness()` — structured report with blockers + recommendations
+- `userProfileStore`, `deliveryHistoryStore`, `userMemoryStore`, `digestStore` — ready to swap for Drizzle
+
+### Task L — Documentation
+- `docs/DEPLOYMENT_READINESS.md` — deployment architecture (new)
+- `docs/DELIVERY_INFRASTRUCTURE.md` — delivery pipeline + recovery docs (new)
+- `docs/TOKEN_ECONOMY.md` — compression + budget + cost model docs (new)
+- `docs/ARCHITECTURE.md` — updated with Sprint 12 services
+- `docs/CHANGELOG.md` — this entry
+
+### Architecture Decisions
+
+1. **Sentence-level compression over truncation:** V2 extracts highest-density sentences rather than cutting at N characters. Sends "better content" to AI, not just "less content".
+2. **Persist-before-send pattern:** Digest is stored in memory before channel.send(). If send fails, the content is preserved for retry. No re-generation needed.
+3. **Retry queue is passive for now:** Items are queued but the retry worker is not yet active. The queue pattern is established; activating the worker is a single addition.
+4. **Token economy without embeddings:** Priority budgets are derived from rule-based signal scores, not semantic embeddings. This avoids additional API calls while still prioritizing high-value content.
+5. **In-memory persistence contracts:** All new stores use `InMemoryStore<T>` which mirrors the future Drizzle ORM interface. Migrating to PostgreSQL requires only swapping the backing implementation.
+
+### Known Limitations
+
+- Retry worker is not yet active — queued retries require manual replay
+- Source reliability resets on server restart (in-memory)
+- Token cost estimates use OpenAI pricing as reference; GitHub Models is free but has rate limits
+- `getMigrationReadiness()` always reports `readyForMigration: false` until auth is added
+- Executive and Intelligence briefing types in delivery engine not connected to scheduler (manual/preview only)
+
+---
+
 ## [2026-06-16] — Sprint 11: Proactive Intelligence Engine
 
 **What:** Twelve-task sprint adding trend acceleration engine (5-class momentum scoring, 6h velocity windows), early signal detector (3 detection modes, cross-source emergence / unusual repetition / ecosystem linkage), narrative relationship engine (entity Jaccard + union-find ecosystems), entity influence system (5-component score, tier classification), user intelligence profile (synthesises all behavioral signals), intelligence briefing mode (`/api/intelligence/briefing`), narrative health monitor (`/admin/narratives`), feed evolution visualization (`/debug/feed-evolution`), agent orchestration layer v1 (3 new agent roles, `ProactiveTrigger` queue), and full documentation.
