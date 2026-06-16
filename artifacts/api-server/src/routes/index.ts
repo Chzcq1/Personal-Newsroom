@@ -13,6 +13,8 @@ import debugRouter from "./debug.js";
 import feedQualityRouter from "./feedQuality.js";
 import adaptiveRouter from "./adaptive.js";
 import narrativesRouter from "./narratives.js";
+import proactiveIntelligenceRouter from "./proactiveIntelligence.js";
+import adminNarrativesRouter from "./adminNarratives.js";
 
 const router: IRouter = Router();
 
@@ -30,5 +32,7 @@ router.use(debugRouter);
 router.use(feedQualityRouter);
 router.use(adaptiveRouter);
 router.use(narrativesRouter);
+router.use(proactiveIntelligenceRouter);
+router.use(adminNarrativesRouter);
 
 export default router;

@@ -2,6 +2,60 @@
 
 ---
 
+## [2026-06-16] — Sprint 11: Proactive Intelligence Engine
+
+**What:** Twelve-task sprint adding trend acceleration engine (5-class momentum scoring, 6h velocity windows), early signal detector (3 detection modes, cross-source emergence / unusual repetition / ecosystem linkage), narrative relationship engine (entity Jaccard + union-find ecosystems), entity influence system (5-component score, tier classification), user intelligence profile (synthesises all behavioral signals), intelligence briefing mode (`/api/intelligence/briefing`), narrative health monitor (`/admin/narratives`), feed evolution visualization (`/debug/feed-evolution`), agent orchestration layer v1 (3 new agent roles, `ProactiveTrigger` queue), and full documentation.
+
+**Why:** The feed knew what was relevant to the user but not what was _emerging_. Sprint 11 closes this gap: INFOX now detects accelerating narratives, weak signals before they go mainstream, ecosystem linkages across story threads, and entity influence shifts — surfacing what matters earliest rather than waiting for the user to ask.
+
+### Task A — Trend Acceleration Engine (`trendAcceleration.ts`)
+- 6-hour sliding window velocity calculation with prior-window comparison
+- Classifications: `emerging` · `accelerating` · `peak` · `declining` · `dormant`
+- Momentum score 0–100: velocity (0–60) + acceleration (0–25) + source spread (0–10) + entity richness (0–5)
+- `buildTrendSummary()` produces full sorted snapshot for all active narratives + entities
+
+### Task B — Early Signal Detector (`earlySignalDetector.ts`)
+- Mode 1: `cross_source_emergence` — same theme from ≥ 3 distinct sources in < 3h
+- Mode 2: `unusual_repetition` — entity 5× above rolling 24h baseline in 1h
+- Mode 3: `ecosystem_linkage` — new entity alongside ≥ 2 established graph entities
+- Signals carry confidence (0–1), 24h TTL, article samples, `isEarlySignal` flag for feed badge
+
+### Task D — Narrative Relationship Engine (`narrativeRelationshipEngine.ts`)
+- Edge types: `entity_overlap` · `temporal_comovement` · `entity_chain` · `causal_inference`
+- Ecosystem detection via union-find on edges with strength ≥ 0.25
+- 6h graph cache to avoid recompute on every request
+
+### Task F — Intelligence Briefing Mode (`/api/intelligence/briefing`)
+- Strategic synthesis: major developments, accelerating narratives, signals, rising entities, influencers, ecosystems, system momentum
+
+### Task G — Narrative Health Monitor
+- Backend: `/api/admin/narratives` + `/stats` + `/:id/health`
+- Frontend: `/admin/narratives` — momentum bars, lifecycle metrics, per-narrative health
+
+### Task H — Entity Influence System (`entityInfluence.ts`)
+- Components: breadth (0–35) + depth (0–25) + velocity (0–20) + spread (0–15) + centrality (0–5)
+- Tiers: `dominant (75+)` · `major (50+)` · `moderate (25+)` · `minor (<25)`
+- Influence direction: `expanding` · `stable` · `contracting`
+
+### Task I — User Intelligence Profile (`userIntelligenceProfile.ts`)
+- Synthesises: adaptive engine edges + entity adaptation boosts + entity memory + interest graph
+- Outputs: primary/secondary interests, entity focus areas, blind spots, reading pattern, trend preference, profile strength (0–100)
+
+### Task J — Feed Evolution Visualization
+- Frontend: `/debug/feed-evolution` — live intelligence picture with system momentum, ecosystem snapshot, signal panel
+
+### Task K — Agent Orchestration Layer v1 (`multiAgentPrep.ts`)
+- Three new agent roles: `proactive` · `early_signal` · `ecosystem`
+- `ProactiveTrigger` interface with 5 trigger types and priority bands
+- `evaluateProactiveTrigger()` — LLM-free activation gate
+- `buildSharedMemory()` — Sprint 11 context for agent distribution
+
+### Task L — Documentation
+- `docs/PROACTIVE_INTELLIGENCE.md` — complete Sprint 11 architecture reference
+- Updated `CHANGELOG.md`, `ARCHITECTURE.md`, `INTELLIGENCE_MEMORY.md`
+
+---
+
 ## [2026-06-16] — Sprint 10: Adaptive Intelligence & Memory System
 
 **What:** Twelve-task sprint adding adaptive interest engine (learns from behavior), entity extraction pipeline (alias-normalized entities), persistent narrative memory (14-day thread tracking), semantic clustering upgrade (entity overlap + paraphrase matching), feed adaptation engine (real-time re-ranking), relevance feedback UI (thumbs up/down/star/irrelevant), narrative timeline view, entity relationship map debug page, long-term memory foundation interfaces, feed quality autocorrection, agent orchestration memory contracts, and documentation.

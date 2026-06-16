@@ -1,0 +1,324 @@
+Read first:
+
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/AGENT_ARCHITECTURE.md
+* docs/INTELLIGENCE_MEMORY.md
+* docs/VISUAL_GUIDELINES.md
+* docs/SYSTEM_STATUS.md
+* docs/AGENT_RULES.md
+
+Preserve all current functionality.
+
+========================================
+SPRINT 11
+PROACTIVE INTELLIGENCE ENGINE
+
+Mission:
+
+INFOX must evolve from reactive information processing into proactive intelligence detection.
+
+Current state:
+
+The system can:
+
+* classify relevance
+* learn interests
+* cluster narratives
+* adapt feeds
+* remember entities
+
+Next evolution:
+
+The system should begin detecting:
+
+* emerging trends
+* accelerating narratives
+* unusual activity
+* ecosystem shifts
+* early signal patterns
+
+Goal:
+
+INFOX should increasingly feel like:
+
+“a system that notices important developments before users do.”
+
+========================================
+TASK A — TREND ACCELERATION ENGINE
+
+Detect narrative acceleration.
+
+Examples:
+
+* sudden spike in Bitcoin ETF coverage
+* increasing Nvidia infrastructure mentions
+* rapid OpenAI ecosystem expansion
+
+Requirements:
+
+* create trendAcceleration.ts
+* compare narrative velocity over time
+* detect acceleration/deceleration
+* track momentum scores
+* expose trend direction
+
+Classifications:
+
+Emerging
+Accelerating
+Peak
+Declining
+Dormant
+
+========================================
+TASK B — EARLY SIGNAL DETECTION
+
+Create weak-signal detection.
+
+Goal:
+
+detect small but rapidly recurring themes before they become mainstream.
+
+Examples:
+
+* repeated mentions of a startup
+* new regulation appearing across multiple sources
+* supplier-chain anomaly signals
+
+Requirements:
+
+* detect cross-source emergence
+* detect unusual repetition
+* detect sudden ecosystem linkage
+
+Display:
+
+“Early Signal” badge.
+
+========================================
+TASK C — NARRATIVE MOMENTUM SCORING
+
+Upgrade narrative scoring.
+
+Current:
+static relevance/signal scoring
+
+Add:
+
+* momentum
+* acceleration
+* persistence
+* cross-source spread
+* entity density
+
+Narratives should now carry:
+
+importance + momentum
+
+========================================
+TASK D — CROSS-NARRATIVE CONNECTIONS
+
+Detect relationships between narratives.
+
+Examples:
+
+AI infrastructure boom
+↔ Nvidia demand
+↔ TSMC supply chain
+↔ energy consumption
+↔ data center expansion
+
+Requirements:
+
+* build narrativeRelationshipEngine.ts
+* support narrative graphing
+* support indirect ecosystem relationships
+
+Goal:
+
+INFOX begins understanding systems, not isolated articles.
+
+========================================
+TASK E — PERSONAL SIGNAL PRIORITIZATION
+
+Users should receive signals weighted by:
+
+* personal interests
+* behavioral relevance
+* historical engagement
+* narrative continuity
+* urgency
+
+Goal:
+
+alerts become highly personal and useful.
+
+========================================
+TASK F — INTELLIGENCE DIGEST MODE
+
+Create new digest type:
+
+“Intelligence Briefing”
+
+Different from news summary.
+
+Structure:
+
+* major developments
+* why momentum matters
+* emerging risks/opportunities
+* ecosystem implications
+* what changed since yesterday
+
+Tone:
+
+high-signal
+executive
+analytical
+
+========================================
+TASK G — NARRATIVE HEALTH MONITOR
+
+Track narrative lifecycle health.
+
+Metrics:
+
+* momentum
+* engagement
+* persistence
+* spread
+* saturation
+* decay
+
+Accessible in:
+
+/admin/narratives
+
+Goal:
+
+Understand which narratives dominate the system.
+
+========================================
+TASK H — ENTITY INFLUENCE SYSTEM
+
+Track entity influence expansion.
+
+Examples:
+
+Nvidia influences:
+
+* semiconductors
+* AI infra
+* cloud providers
+* energy demand
+* sovereign AI strategies
+
+Create:
+
+entity influence scoring.
+
+Goal:
+
+measure ecosystem impact.
+
+========================================
+TASK I — USER INTELLIGENCE PROFILE
+
+Create evolving intelligence profile.
+
+Examples:
+
+User primarily follows:
+
+* AI infrastructure
+* macroeconomics
+* institutional crypto adoption
+
+Secondary interests:
+
+* geopolitics
+* semiconductor supply chains
+
+This profile should evolve dynamically.
+
+========================================
+TASK J — FEED EVOLUTION VISUALIZATION
+
+Create timeline visualizations.
+
+Users should understand:
+
+* why their feed changed
+* what narratives gained importance
+* which interests evolved
+* what new trends appeared
+
+Accessible in:
+
+/debug/feed-evolution
+
+========================================
+TASK K — AGENT ORCHESTRATION LAYER V1
+
+Begin internal orchestration layer.
+
+Requirements:
+
+* agent routing interfaces
+* narrative assignment logic
+* shared memory access
+* activation thresholds
+* orchestration contracts
+
+Still no public multi-agent UI.
+
+Architecture only.
+
+========================================
+TASK L — DOCUMENTATION
+
+Update:
+
+ARCHITECTURE.md
+CHANGELOG.md
+AGENT_ARCHITECTURE.md
+INTELLIGENCE_MEMORY.md
+
+Create:
+
+PROACTIVE_INTELLIGENCE.md
+
+Document:
+
+trend acceleration
+early signal detection
+momentum scoring
+cross-narrative intelligence
+influence systems
+future orchestration roadmap
+
+========================================
+SUCCESS CRITERIA
+
+After sprint completion:
+
+* INFOX detects emerging trends
+* narratives carry momentum context
+* early signals become visible
+* cross-narrative relationships exist
+* users receive smarter alerts
+* intelligence briefings feel more strategic
+* feed evolution becomes explainable
+* orchestration foundation is ready
+
+Provide implementation report:
+
+Files created
+Files modified
+Trend detection logic
+Momentum scoring system
+Narrative relationship architecture
+Future orchestration readiness
+Known limitations
+Recommended next sprint

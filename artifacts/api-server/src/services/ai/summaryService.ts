@@ -53,6 +53,10 @@ function getProvider() {
     });
     providerPromise.then((p) => {
       logger.info({ provider: p.providerName }, "AI provider initialized");
+    }).catch((err) => {
+      logger.warn({ err: String(err) }, "AI provider unavailable — fallback mode active");
+      // Reset so next call retries (in case env vars are added later)
+      providerPromise = null;
     });
   }
   return providerPromise;
