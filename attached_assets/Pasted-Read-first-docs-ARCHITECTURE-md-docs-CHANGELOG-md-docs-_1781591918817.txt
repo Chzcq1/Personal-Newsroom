@@ -1,0 +1,362 @@
+Read first:
+
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/AGENT_ARCHITECTURE.md
+* docs/VISUAL_GUIDELINES.md
+* docs/SYSTEM_STATUS.md
+* docs/AGENT_RULES.md
+
+Preserve all current functionality.
+
+========================================
+SPRINT 10
+ADAPTIVE INTELLIGENCE & MEMORY SYSTEM
+
+Mission:
+
+INFOX must begin adapting dynamically to user behavior and evolving narratives.
+
+Current state:
+
+The system now understands contextual relevance.
+
+Next evolution:
+
+The system must begin learning:
+
+* what matters over time
+* what users repeatedly value
+* which narratives persist
+* which entities evolve together
+
+Goal:
+
+INFOX should begin feeling:
+
+alive
+adaptive
+context-aware
+continuously learning
+
+NOT static.
+
+========================================
+TASK A — DYNAMIC INTEREST EXPANSION
+
+Current limitation:
+
+Interest graph is hardcoded.
+
+Upgrade:
+
+Dynamic relationship learning.
+
+Examples:
+
+User repeatedly reads:
+
+* MicroStrategy
+* Coinbase
+* Bitcoin ETF
+
+System gradually expands:
+BTC → institutional Bitcoin infrastructure
+
+Requirements:
+
+* create adaptiveInterestEngine.ts
+* derive relationships from:
+    reading behavior
+    saved briefings
+    recurring entities
+    narrative overlap
+* support confidence scoring
+* support decay over time
+* local-only for now
+
+Goal:
+
+User interests evolve automatically.
+
+========================================
+TASK B — ENTITY EXTRACTION PIPELINE
+
+Current limitation:
+
+Narrative clustering relies heavily on title similarity.
+
+Implement real entity extraction.
+
+Extract:
+
+* companies
+* people
+* governments
+* products
+* cryptocurrencies
+* macro institutions
+
+Examples:
+
+“Federal Reserve”
+“Fed”
+“Jerome Powell”
+
+→ same entity family
+
+Requirements:
+
+* create entityExtractor.ts
+* normalize aliases
+* support canonical entities
+* expose extracted entities in debug mode
+
+========================================
+TASK C — NARRATIVE MEMORY SYSTEM
+
+Current limitation:
+
+Narratives are session-level.
+
+Upgrade to:
+
+Persistent narrative memory.
+
+Track:
+
+* recurring narratives
+* trend acceleration
+* narrative lifespan
+* sentiment direction
+* related entities
+
+Examples:
+
+“Nvidia AI infrastructure expansion”
+“Bitcoin ETF institutional adoption”
+
+Narratives should evolve across days.
+
+========================================
+TASK D — SEMANTIC CLUSTERING UPGRADE
+
+Current clustering:
+
+Jaccard title similarity.
+
+Upgrade:
+
+semantic narrative similarity.
+
+Requirements:
+
+* support paraphrase matching
+* support entity overlap
+* support topic continuity
+* support narrative evolution
+
+Examples:
+
+“Fed raises rates”
+“Federal Reserve hikes interest rates”
+
+→ same narrative cluster
+
+========================================
+TASK E — FEED ADAPTATION ENGINE
+
+Current issue:
+
+Feed ranking is still relatively static.
+
+Implement adaptive ranking.
+
+Signals:
+
+* repeated engagement
+* completion rate
+* save frequency
+* ignored stories
+* entity preference drift
+
+Goal:
+
+Feed should gradually become:
+
+more precise
+more personal
+less noisy
+
+========================================
+TASK F — RELEVANCE FEEDBACK LOOP
+
+Create explicit relevance feedback system.
+
+Allow users to mark:
+
+* more like this
+* less like this
+* irrelevant
+* high value
+
+Requirements:
+
+* lightweight UI
+* no social mechanics
+* feed signals back into adaptive engine
+
+========================================
+TASK G — NARRATIVE TIMELINE VIEW
+
+Create narrative timeline UI.
+
+Users should see:
+
+Narrative
+↓
+Major developments
+↓
+Latest update
+↓
+Source evolution
+
+Examples:
+
+Bitcoin ETF
+
+* Monday: inflows rise
+* Tuesday: BlackRock filing
+* Wednesday: SEC commentary
+
+Goal:
+
+INFOX becomes easier to understand over time.
+
+========================================
+TASK H — ENTITY RELATIONSHIP MAP
+
+Create visual relationship inspector.
+
+Example:
+
+Nvidia
+↔ TSMC
+↔ AI infrastructure
+↔ hyperscalers
+↔ semiconductor supply chain
+
+Accessible in:
+
+/debug/entities
+
+Purpose:
+
+understand how the intelligence layer connects concepts.
+
+========================================
+TASK I — LONG-TERM MEMORY FOUNDATION
+
+Prepare architecture for future persistence.
+
+Current:
+in-memory + localStorage
+
+Prepare interfaces for:
+
+* PostgreSQL
+* vector memory
+* cross-session entity memory
+* multi-device context
+
+No full DB migration yet.
+
+Architecture only.
+
+========================================
+TASK J — FEED QUALITY AUTOCORRECTION
+
+Implement automatic feed cleanup.
+
+If users repeatedly ignore:
+
+* weak narratives
+* low-signal entities
+* incidental mentions
+
+System should automatically:
+
+reduce ranking weight.
+
+Goal:
+
+Feed improves itself over time.
+
+========================================
+TASK K — AGENT ORCHESTRATION PREPARATION
+
+Prepare orchestrator interfaces for:
+
+Bull Agent
+Bear Agent
+Macro Agent
+Policy Agent
+Technology Agent
+
+Requirements:
+
+* shared narrative memory
+* shared entity graph
+* shared relevance context
+* agent activation conditions
+
+No visible UI yet.
+
+Architecture only.
+
+========================================
+TASK L — DOCUMENTATION
+
+Update:
+
+ARCHITECTURE.md
+CHANGELOG.md
+AGENT_ARCHITECTURE.md
+
+Create:
+
+INTELLIGENCE_MEMORY.md
+
+Document:
+
+adaptive learning
+entity extraction
+narrative memory
+adaptive ranking
+feedback loops
+future persistence layer
+
+========================================
+SUCCESS CRITERIA
+
+After sprint completion:
+
+* INFOX begins adapting to user behavior
+* entity understanding improves significantly
+* narratives persist across days
+* feed quality improves automatically
+* semantic clustering outperforms title matching
+* users can shape recommendations
+* adaptive interest learning works
+* architecture is ready for persistent memory
+
+Provide implementation report:
+
+Files created
+Files modified
+Adaptive learning decisions
+Narrative memory design
+Entity extraction logic
+Future persistence readiness
+Known limitations
+Recommended next sprint

@@ -28,6 +28,11 @@ import {
   Layers,
   GitBranch,
   TrendingUp,
+  ThumbsUp,
+  ThumbsDown,
+  Star,
+  X,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInterests } from "@/lib/interestProfile";
@@ -397,6 +402,91 @@ function FeedCard({
           <ExternalLink className="w-3 h-3" />
         </a>
       </div>
+
+      {/* Sprint 10 Task F — Relevance feedback */}
+      <FeedbackBar item={item} interests={interests} />
+    </div>
+  );
+}
+
+// ── Relevance Feedback Bar (Sprint 10 Task F) ─────────────────
+
+function FeedbackBar({ item, interests }: { item: FeedItem; interests: string[] }) {
+  const [sent, setSent] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  async function sendFeedback(type: "more_like_this" | "less_like_this" | "irrelevant" | "high_value") {
+    if (sending || sent) return;
+    setSending(true);
+    try {
+      await fetch(`${BASE}/api/adaptive/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          articleUrl: item.url,
+          articleTitle: item.title,
+          type,
+          entities: item.graphMatchedEntities,
+          topicId: item.topicId,
+          narrativeId: item.narrativeClusterId,
+        }),
+      });
+      setSent(type);
+    } catch { /* silent */ } finally {
+      setSending(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="mt-2 text-[10px] text-white/30 italic">
+        {sent === "high_value" && "★ Marked high value — boosting similar content"}
+        {sent === "more_like_this" && "✓ More like this — noted"}
+        {sent === "less_like_this" && "↓ Less like this — reducing similar content"}
+        {sent === "irrelevant" && "✗ Marked irrelevant — won't show similar"}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2.5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <span className="text-[9px] text-white/20 mr-1">Rate:</span>
+      <button
+        onClick={() => sendFeedback("high_value")}
+        disabled={sending}
+        title="High value — show more like this"
+        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] text-amber-400/60 hover:text-amber-400 hover:bg-amber-400/10 transition-colors disabled:opacity-40"
+      >
+        <Star className="w-2.5 h-2.5" />
+        <span>High value</span>
+      </button>
+      <button
+        onClick={() => sendFeedback("more_like_this")}
+        disabled={sending}
+        title="More like this"
+        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] text-emerald-400/60 hover:text-emerald-400 hover:bg-emerald-400/10 transition-colors disabled:opacity-40"
+      >
+        <ThumbsUp className="w-2.5 h-2.5" />
+        <span>More</span>
+      </button>
+      <button
+        onClick={() => sendFeedback("less_like_this")}
+        disabled={sending}
+        title="Less like this"
+        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors disabled:opacity-40"
+      >
+        <ThumbsDown className="w-2.5 h-2.5" />
+        <span>Less</span>
+      </button>
+      <button
+        onClick={() => sendFeedback("irrelevant")}
+        disabled={sending}
+        title="Irrelevant — never show similar"
+        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] text-red-400/50 hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-40"
+      >
+        <X className="w-2.5 h-2.5" />
+        <span>Irrelevant</span>
+      </button>
     </div>
   );
 }

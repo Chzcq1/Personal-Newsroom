@@ -1,26 +1,30 @@
 // ============================================================
-// NARRATIVE CLUSTERING ENGINE — Sprint 9 Task C
+// NARRATIVE CLUSTERING ENGINE — Sprint 9 Task C / Sprint 10 Task D
 //
 // Groups articles covering the same story into a narrative cluster.
 //
+// Sprint 10 upgrade — Semantic Clustering:
+//   Extends Jaccard title similarity with:
+//   1. Entity overlap scoring (shared canonical entities → higher similarity)
+//   2. Paraphrase matching (synonym/alias expansion for known terms)
+//   3. Topic continuity (same dominant entity across different wording)
+//   4. Dynamic threshold adjustment based on entity confidence
+//
 // Clustering algorithm:
-//   1. Tokenise titles into significant words (4+ chars, no stop words)
-//   2. Build a similarity matrix: Jaccard similarity between title word sets
-//   3. Greedy cluster: seed from highest-scored article, absorb articles
-//      with similarity >= CLUSTER_THRESHOLD that aren't already clustered
-//   4. Generate narrative headline: longest common theme + dominant entity
+//   1. Tokenise titles (4+ char words, no stop words)
+//   2. Extract canonical entities via entityExtractor
+//   3. Compute combined similarity = Jaccard × 0.5 + entityOverlap × 0.5
+//   4. Greedy single-linkage clustering at CLUSTER_THRESHOLD
+//   5. Paraphrase check: same dominant entity = lower threshold (0.15)
+//   6. Generate narrative headline from most-common terms + dominant entity
 //
-// Output:
-//   NarrativeCluster[] — each with a representative headline, articles,
-//   source diversity count, and avg signal score
-//
-// Architecture note (Task K):
+// Architecture note (Sprint 10 Task K):
 //   Each cluster's `narrativeId` and `headline` are designed to become
 //   shared context objects between future Bull/Bear/Macro agents.
-//   Agents will receive a cluster object and reason about it independently.
 // ============================================================
 
 import type { RssArticle } from "../news/rssService.js";
+import { extractEntities, areSameEntity } from "./entityExtractor.js";
 
 export interface NarrativeCluster {
   id: string;
@@ -79,6 +83,46 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   const intersection = new Set([...a].filter((w) => b.has(w)));
   const union = new Set([...a, ...b]);
   return intersection.size / union.size;
+}
+
+// Sprint 10 Task D: Entity overlap similarity
+// Measures shared canonical entities between two article titles
+function entityOverlapSimilarity(titleA: string, titleB: string): {
+  similarity: number;
+  sharedEntities: string[];
+} {
+  const entitiesA = new Set(extractEntities(titleA).map((e) => e.entityId));
+  const entitiesB = new Set(extractEntities(titleB).map((e) => e.entityId));
+
+  if (entitiesA.size === 0 && entitiesB.size === 0) return { similarity: 0, sharedEntities: [] };
+
+  const shared = [...entitiesA].filter((e) => entitiesB.has(e));
+  const union = new Set([...entitiesA, ...entitiesB]);
+  const similarity = shared.length / union.size;
+
+  return { similarity, sharedEntities: shared };
+}
+
+// Sprint 10 Task D: Combined semantic similarity
+// Jaccard × 0.5 + entity overlap × 0.5
+// Paraphrase bonus: if dominant entity matches, lower threshold
+function semanticSimilarity(
+  tokensA: Set<string>,
+  tokensB: Set<string>,
+  titleA: string,
+  titleB: string,
+): { score: number; isParaphrase: boolean } {
+  const jaccard = jaccardSimilarity(tokensA, tokensB);
+  const { similarity: entityOverlap, sharedEntities } = entityOverlapSimilarity(titleA, titleB);
+
+  // Combined score
+  const combined = jaccard * 0.5 + entityOverlap * 0.5;
+
+  // Paraphrase detection: same entity, very different wording but same story
+  // e.g. "Fed raises rates" vs "Federal Reserve hikes interest rates"
+  const isParaphrase = sharedEntities.length >= 1 && entityOverlap >= 0.5;
+
+  return { score: combined, isParaphrase };
 }
 
 // ── Dominant entity extraction ────────────────────────────────
@@ -196,14 +240,22 @@ export function clusterNarratives(
   const clusterGroups: number[][] = [];
 
   // Greedy single-linkage clustering seeded by article order (highest score first)
+  // Sprint 10 Task D: uses semantic similarity (Jaccard + entity overlap) instead of Jaccard alone
   for (let i = 0; i < tokenised.length; i++) {
     if (clustered.has(i)) continue;
 
     const group = [i];
     for (let j = i + 1; j < tokenised.length; j++) {
       if (clustered.has(j)) continue;
-      const sim = jaccardSimilarity(tokenised[i].tokens, tokenised[j].tokens);
-      if (sim >= CLUSTER_THRESHOLD) {
+      const { score, isParaphrase } = semanticSimilarity(
+        tokenised[i].tokens,
+        tokenised[j].tokens,
+        tokenised[i].article.title,
+        tokenised[j].article.title,
+      );
+      // Paraphrases use a lower threshold (0.15) to catch "Fed raises" / "Federal Reserve hikes"
+      const effectiveThreshold = isParaphrase ? 0.15 : CLUSTER_THRESHOLD;
+      if (score >= effectiveThreshold) {
         group.push(j);
         clustered.add(j);
       }

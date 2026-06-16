@@ -426,3 +426,93 @@ Architecture-only module defining contracts for future specialist agents:
 | Relevance Inspector | `/debug/relevance` | Graph nodes, entity memory, live test |
 | Feed Quality | `/admin/feed-quality` | Quality metrics, trend, request log |
 
+---
+
+## Sprint 10 — Adaptive Intelligence & Memory System
+
+### New Backend Services (`services/intelligence/`)
+
+```
+adaptiveInterestEngine.ts
+  recordEngagement(entities, type, text?)  → learn pairwise entity edges
+  getLearnedEdges(entityId)                → edges from entity (sorted by confidence)
+  getAdaptiveWeight(from, to)              → static + learned weight (capped 1.0)
+  getExpansionClusters()                   → auto-detected concept clusters
+  getAdaptiveSummary()                     → debug snapshot
+  — confidence decay: 0.05/day, prune < 0.02; max 300 edges, 500 history
+
+entityExtractor.ts
+  extractEntities(text)                    → ExtractedEntity[] with canonical IDs
+  extractCorpusEntities(articles)          → cross-article entity frequency map
+  areSameEntity(text1, text2)             → shared canonical entity check
+  getCanonicalEntityId(mention)           → alias → canonical ID
+  — 100+ alias mappings; two-pass: dict match (0.8 conf) + proper noun (0.5 conf)
+
+narrativeMemory.ts
+  recordNarrativeCluster(cluster, signal)  → persist cluster as narrative thread
+  getActiveNarratives(limit)               → sorted by maturity + score
+  getNarrativeById(id)                     → specific thread
+  getNarrativeTimeline(id)                 → ordered developments list
+  getNarrativesForEntity(entityId)         → threads containing entity
+  getPersistentNarratives()               → all including resolved (admin)
+  getNarrativeMemoryStats()               → aggregate snapshot
+  — TTL: 14 days; max 150 threads; maturity: emerging→active→peaking→declining→resolved
+
+feedAdaptationEngine.ts
+  recordFeedback(FeedbackRecord)           → explicit user feedback
+  recordEngagementSignal(url, type, ents) → implicit open/save/skip signal
+  getAdaptiveBoost(entityId)               → 0.3–2.0 multiplier
+  applyAdaptiveRanking(items, signal)      → re-ranked feed items
+  getAutocorrectionSuggestions()          → entities to suppress/reduce
+  getAdaptationState()                     → debug snapshot
+  — boost/penalty per engagement type; decay 0.02/day; autocorrect at ≥3 ignores
+
+longTermMemory.ts (architecture only)
+  getMigrationStatus()                     → current storage phase
+  isPostgresAvailable()                    → checks DATABASE_URL
+  — Defines PostgreSQL schemas for all intelligence stores
+  — Phase 1: in-memory (current) → Phase 2: PostgreSQL → Phase 3: vector
+```
+
+### Semantic Clustering Upgrade (`narrativeCluster.ts` — Sprint 10 Task D)
+
+```
+combinedSimilarity = Jaccard × 0.5 + entityOverlap × 0.5
+paraphraseThreshold = 0.15 (vs 0.25 default) when entityOverlap ≥ 0.5
+```
+
+Entity overlap uses canonical entity IDs from `entityExtractor.ts`. Catches:
+- "Fed raises rates" + "Federal Reserve hikes interest rates" → same cluster
+- "Nvidia H200" + "Jensen Huang GPU announcement" → same cluster
+
+### New Routes (Sprint 10)
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/adaptive/feedback` | POST | Explicit relevance feedback |
+| `/api/adaptive/engagement` | POST | Implicit engagement signal |
+| `/api/adaptive/state` | GET | Full adaptation state |
+| `/api/adaptive/autocorrect` | GET | Quality autocorrection hints |
+| `/api/adaptive/summary` | GET | Learned expansions + clusters |
+| `/api/narratives` | GET | Active narrative threads |
+| `/api/narratives/:id` | GET | Specific narrative + timeline |
+| `/api/narratives/:id/timeline` | GET | Ordered developments |
+| `/api/narratives/entity/:id` | GET | Narratives for entity |
+| `/api/narratives/stats` | GET | Memory stats |
+
+### New Pages (Sprint 10)
+
+| Page | Route | Description |
+|---|---|---|
+| Narrative Intelligence | `/narratives` | Persistent threads, timeline view |
+| Entity Relationship Map | `/debug/entities` | Entity memory, learned edges, clusters |
+
+### Relevance Feedback UI (Sprint 10 Task F)
+
+Each feed card in detailed mode shows a hover-revealed feedback bar:
+- `★ High value` → +0.20 boost per matched entity
+- `✓ More like this` → +0.18 boost
+- `↓ Less like this` → -0.20 penalty  
+- `✗ Irrelevant` → -0.25 penalty
+- No social mechanics; no public counters; one feedback per article
+

@@ -8,3 +8,4 @@
 - [Sprint 7 Visual Layer](sprint7-visual.md) — Bloomberg/FT aesthetic; sourceBranding.ts brand map; readingProgress.ts hook; DENSITY_KEY=ai-newsroom:feed-density; telegramPost() helper in telegram.ts routes
 - [Sprint 8 Intelligence Layer](sprint8-intelligence.md) — signal scoring, story evolution, alert engine, delivery metrics, executive mode; all new services are in-memory ring buffers
 - [Sprint 9 Contextual Intelligence](sprint9-intelligence.md) — interest graph (47 nodes, 2-hop BFS), 4-tier relevance classifier, narrative clustering (Jaccard), entity memory, taste learning (localStorage), multiAgentPrep contracts
+- [Sprint 10 Adaptive Intelligence](sprint10-intelligence.md) — adaptive interest engine, entity extractor (100+ aliases), narrative memory (14-day threads), semantic clustering (Jaccard + entity overlap), feedback UI, /narratives + /debug/entities pages, longTermMemory schemas, SharedAgentMemory contracts

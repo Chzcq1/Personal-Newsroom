@@ -18,6 +18,8 @@ import AdminAnalyticsPage from "@/pages/admin/analytics";
 import FeedQualityPage from "@/pages/admin/feed-quality";
 import MyFeedPage from "@/pages/my-feed";
 import RelevanceDebugPage from "@/pages/debug/relevance";
+import EntitiesDebugPage from "@/pages/debug/entities";
+import NarrativesPage from "@/pages/narratives";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -41,6 +43,8 @@ function Router() {
       <Route path="/admin/analytics" component={AdminAnalyticsPage} />
       <Route path="/admin/feed-quality" component={FeedQualityPage} />
       <Route path="/debug/relevance" component={RelevanceDebugPage} />
+      <Route path="/debug/entities" component={EntitiesDebugPage} />
+      <Route path="/narratives" component={NarrativesPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -11,6 +11,8 @@ import analyticsRouter from "./analytics.js";
 import preferencesRouter from "./preferences.js";
 import debugRouter from "./debug.js";
 import feedQualityRouter from "./feedQuality.js";
+import adaptiveRouter from "./adaptive.js";
+import narrativesRouter from "./narratives.js";
 
 const router: IRouter = Router();
 
@@ -26,5 +28,7 @@ router.use(analyticsRouter);
 router.use(preferencesRouter);
 router.use(debugRouter);
 router.use(feedQualityRouter);
+router.use(adaptiveRouter);
+router.use(narrativesRouter);
 
 export default router;

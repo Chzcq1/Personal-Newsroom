@@ -276,4 +276,78 @@ The `cluster.agentContext.canBeSharedBetweenAgents` flag marks clusters that are
 
 ---
 
-*Last updated: Sprint 9 — June 2026*
+## Sprint 10 Update — Shared Memory Architecture
+
+### What Changed
+
+Sprint 10 introduces three persistent context layers all agents share:
+
+1. **`NarrativeThread`** (`narrativeMemory.ts`) — persistent story arcs with maturity state (emerging → active → peaking → declining → resolved)
+2. **`EntityMemoryEntry`** (`entityMemory.ts`) — cross-session entity tracking with trend direction
+3. **`AdaptationState`** (`feedAdaptationEngine.ts`) — user preference weights per entity
+
+### New Agent Contracts (`multiAgentPrep.ts`)
+
+```typescript
+SharedAgentMemory = {
+  activeNarratives: NarrativeThread[]        // up to 20 active narrative threads
+  risingEntities: EntityMemoryEntry[]         // top trending entities
+  adaptationBoosts: Record<string, number>   // entity → user preference weight
+  expandedInterests: string[]                 // current session expansion
+  generatedAt: string
+}
+
+AgentAnalysisRequestV2 = {
+  ...AgentAnalysisRequest        // cluster, role, userInterests (Sprint 9)
+  sharedMemory: SharedAgentMemory     // NEW: persistent context
+  narrativeThread: NarrativeThread | null  // NEW: persistent thread for cluster
+}
+
+OrchestratorState = {
+  activeAgents: AgentRole[]
+  pendingClusters: string[]          // cluster IDs waiting for analysis
+  completedAnalyses: Map<string, AgentAnalysisResult[]>
+  sharedMemory: SharedAgentMemory | null
+  status: "idle" | "collecting" | "analyzing" | "synthesizing"
+  lastRunAt: string | null
+}
+```
+
+### Narrative Maturity Gate
+
+`isAgentActivationReady(role, cluster, thread)` — blocks agents when:
+- `thread.maturity === "resolved"` → story is over, skip
+- `thread.maturity === "declining"` → story fading, not worth agent cost
+- Falls back to original Sprint 9 topic-specific rules for active/peaking/emerging
+
+### Current Architecture (Sprint 10)
+
+```
+RSS → collect → classify → entity extraction → cluster (semantic similarity)
+                                                       ↓
+                                              narrativeMemory.recordCluster()
+                                                       ↓
+                                         NarrativeThread (14-day TTL)
+                                                       ↓
+                                        SharedAgentMemory snapshot
+                                  (narratives + entities + adaptations)
+                                                       ↓
+                      [Bull] [Bear] [Macro] [Tech] [Policy]   ← Sprint 11
+                                                       ↓
+                                           merge + synthesize
+                                                       ↓
+                              user receives multi-perspective brief
+```
+
+### Sprint 11 Activation Plan
+
+1. Call `getActiveNarratives()` → get narrative context
+2. Call `getRisingEntities()` + `getAdaptationState()` → build `SharedAgentMemory`
+3. For each high-quality cluster: `isAgentActivationReady()` → dispatch agents
+4. Agents call `summaryService` with `AGENT_SYSTEM_PROMPTS[role]` + `SharedAgentMemory` injected
+5. Merge results into unified multi-perspective briefing
+6. Update narrative memory with agent analysis as a development event
+
+---
+
+*Last updated: Sprint 10 — June 2026*

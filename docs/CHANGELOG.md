@@ -2,6 +2,91 @@
 
 ---
 
+## [2026-06-16] — Sprint 10: Adaptive Intelligence & Memory System
+
+**What:** Twelve-task sprint adding adaptive interest engine (learns from behavior), entity extraction pipeline (alias-normalized entities), persistent narrative memory (14-day thread tracking), semantic clustering upgrade (entity overlap + paraphrase matching), feed adaptation engine (real-time re-ranking), relevance feedback UI (thumbs up/down/star/irrelevant), narrative timeline view, entity relationship map debug page, long-term memory foundation interfaces, feed quality autocorrection, agent orchestration memory contracts, and documentation.
+
+**Why:** The product knew what users said they cared about (Sprint 9 interest graph) but not what they actually engaged with. This sprint closes the loop: engagement and explicit feedback now reshape the feed in real time. Narrative threads persist across sessions so recurring stories surface as tracked arcs rather than isolated articles. Entities are canonically normalized so "Fed" and "Federal Reserve" cluster together. The adaptive engine builds a private preference graph that makes the feed progressively smarter with use, with no social mechanics or external tracking.
+
+### Task A — Adaptive Interest Engine (`adaptiveInterestEngine.ts`)
+- Learns pairwise entity relationship edges from `open`, `save`, `complete_read`, `skip`, `feedback_positive`, `feedback_negative` signals
+- Confidence per edge: +0.06 (open) → +0.20 (high_value feedback); -0.20–0.25 for negative signals
+- Confidence decay: 0.05/day; prune below 0.02 effective confidence; max 300 edges, 500 engagement history (ring buffers)
+- Auto-detects "expansion clusters" — concept groups inferred from repeated co-occurrence in reading (e.g., "Institutional Bitcoin Infrastructure")
+- `getAdaptiveSummary()` — full debug snapshot of learned state
+
+### Task B — Entity Extraction Pipeline (`entityExtractor.ts`)
+- 100+ alias mappings: "Fed" / "FOMC" / "Jerome Powell" → `FederalReserve`; "NVDA" → `Nvidia`; "ChatGPT" → `OpenAI`
+- Two-pass extraction: alias dict (confidence 0.8) + capitalized proper noun detection (0.5)
+- Entity types: `company | person | government | product | cryptocurrency | institution | index | event | concept`
+- `areSameEntity(title1, title2)` — used by clustering to detect paraphrase coverage
+- `extractCorpusEntities(articles)` — frequency map across article set
+
+### Task C — Persistent Narrative Memory (`narrativeMemory.ts`)
+- Matches incoming clusters to existing threads via Jaccard title similarity (≥0.30) or dominant entity match (within 72h)
+- 14-day TTL, max 150 threads; maturity lifecycle: emerging → active → peaking → declining → resolved
+- Tracks: canonical headline, theme, related entities, up to 20 developments, mentions/24h, trend acceleration, sentiment direction, peak signal, milestones
+- `GET /api/narratives` — active threads; `GET /api/narratives/:id` — thread detail + timeline
+- Feed route now records every cluster into narrative memory via `recordNarrativeCluster()`
+
+### Task D — Semantic Clustering Upgrade (`narrativeCluster.ts`)
+- Combined similarity: `Jaccard × 0.5 + entityOverlap × 0.5` (was Jaccard only)
+- Entity overlap uses canonical entity IDs from `entityExtractor.ts`
+- Paraphrase threshold: 0.15 (vs 0.25 default) when `entityOverlap ≥ 0.5`
+- Catches: "Fed raises rates" / "Federal Reserve hikes interest rates" → same cluster
+
+### Task E — Feed Adaptation Engine (`feedAdaptationEngine.ts`)
+- `applyAdaptiveRanking(items, signal)` — re-ranks feed by `relevanceScore × maxBoostAcrossEntities`
+- `AdaptationSignal` from client body merged into feed request for session-aware ranking
+- Boost multiplier range: 0.3 (suppressed) → 2.0 (highly preferred); decay 0.02/day
+- Feed route at step 7b applies adaptive ranking after clustering
+
+### Task F — Relevance Feedback UI (`my-feed.tsx`)
+- `FeedbackBar` component on every detailed feed card; visible on hover
+- Four buttons: ★ High value (+0.20), ✓ More like this (+0.18), ↓ Less like this (-0.20), ✗ Irrelevant (-0.25)
+- One feedback per article; inline confirmation message; no social mechanics or counters
+- `POST /api/adaptive/feedback` — feedback routed to adaptation engine
+
+### Task G — Narrative Timeline View (`pages/narratives.tsx` + `routes/narratives.ts`)
+- New page at `/narratives` — all active narrative threads
+- Stats bar: counts by maturity + avg lifespan; filter tabs: all / peaking / active / emerging
+- Narrative card: maturity badge, sentiment, 24h mentions, peak signal, related entities
+- Detail view: 3-column stats, development timeline, entity chips, milestone markers
+- `GET /api/narratives`, `GET /api/narratives/:id`, `GET /api/narratives/:id/timeline`
+
+### Task H — Entity Relationship Map (`pages/debug/entities.tsx`)
+- New debug page at `/debug/entities` — three tabs
+- **Entity Memory**: all tracked entities with mention counts, trend direction, recent developments
+- **Learned Edges**: adaptive engine's relationship graph with confidence bars
+- **Expansion Clusters**: auto-detected concept groups with entity chips
+- Search filter on entity memory tab; `GET /api/adaptive/state`
+
+### Task I — Long-Term Memory Foundation (`longTermMemory.ts`)
+- Defines `entity_memory`, `narrative_threads`, `narrative_developments`, `entity_adaptations`, `user_feedback`, `briefing_embeddings` PostgreSQL schemas
+- `CrossSessionContext` interface — serializes all long-term memory into a portable session bundle
+- `getMigrationStatus()` — reports current storage phase; `isPostgresAvailable()` — checks DATABASE_URL
+- Phase roadmap: 1 (in-memory) → 2 (PostgreSQL) → 3 (pgvector) → 4 (multi-device)
+
+### Task J — Feed Quality Autocorrection (`feedAdaptationEngine.ts`)
+- `getAutocorrectionSuggestions()` — entities with `ignores ≥ 3` and `engagements = 0` flagged
+- Suggestion types: `suppress` (70% reduction), `reduce` (40% reduction), `monitor` (flag for review)
+- `GET /api/adaptive/autocorrect` — returns ranked correction suggestions
+
+### Task K — Agent Orchestration Preparation (`multiAgentPrep.ts`)
+- Added `SharedAgentMemory` interface — snapshot of all long-term memory for agent context distribution
+- Added `AgentAnalysisRequestV2` — extends Sprint 9 request with `sharedMemory` + `narrativeThread`
+- Added `OrchestratorState` — lifecycle tracking: idle → collecting → analyzing → synthesizing
+- `isAgentActivationReady(role, cluster, thread)` — maturity gate blocks agents on `resolved`/`declining` narratives
+- Imports `NarrativeThread` and `EntityMemoryEntry` types into agent contracts
+
+### Task L — Documentation Updates
+- `docs/INTELLIGENCE_MEMORY.md` (new): full Sprint 10 system reference — adaptive engine, entity extraction, narrative memory, semantic clustering, feedback system, long-term memory, UI views, agent contracts
+- `docs/ARCHITECTURE.md`: Sprint 10 section — all new services, routes, pages, and semantic clustering math
+- `docs/AGENT_ARCHITECTURE.md`: Sprint 10 section — shared memory contracts, maturity gate, Sprint 11 activation plan
+- `docs/CHANGELOG.md`: this entry
+
+---
+
 ## [2026-06-16] — Sprint 8: Habit Loop & Intelligence Companion
 
 **What:** Twelve-task sprint adding flexible delivery scheduling, smart digest compression, story evolution engine, priority alerts, personality UI, reading memory filter, executive mode, signal/noise scoring, delivery metrics dashboard, visual refinement, future agent architecture docs, and documentation updates.

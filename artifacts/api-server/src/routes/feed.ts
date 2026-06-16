@@ -49,6 +49,13 @@ import { scoreSignal } from "../services/intelligence/signalScoring.js";
 import {
   recordFeedQuality,
 } from "../services/analytics/feedQualityMetrics.js";
+import {
+  applyAdaptiveRanking,
+  type AdaptationSignal,
+} from "../services/intelligence/feedAdaptationEngine.js";
+import {
+  recordNarrativeCluster,
+} from "../services/intelligence/narrativeMemory.js";
 import { logger } from "../lib/logger.js";
 import type { RssArticle } from "../services/news/rssService.js";
 
@@ -321,8 +328,30 @@ router.post("/feed/personal", async (req, res) => {
 
     const { clusters, singletons, clusteringRate } = clusterNarratives(articlesForClustering);
 
+    // Sprint 10: Record clusters into persistent narrative memory
+    const avgClusterSignal = filtered.length > 0
+      ? Math.round(filtered.reduce((s, c) => s + c.signal.total, 0) / filtered.length)
+      : 0;
+    for (const cluster of clusters) {
+      recordNarrativeCluster(cluster, avgClusterSignal);
+    }
+
+    // ── 7b. Apply adaptive ranking (Sprint 10 Task E) ────────
+    // Apply adaptation signal from client if provided
+    const adaptiveFiltered = req.body.adaptationSignal
+      ? applyAdaptiveRanking(
+          filtered.map((c) => ({
+            ...c,
+            relevanceScore: c.boostedScore,
+            graphMatchedEntities: c.relevance.matchedEntities,
+            matchedInterests: c.relevance.directMatches,
+          })),
+          req.body.adaptationSignal as AdaptationSignal,
+        )
+      : filtered;
+
     // ── 8. Build enriched feed items (Task I) ─────────────────
-    const items: PersonalFeedItem[] = filtered.map(({ article, relevance, signal, matchedWatchlist, boostedScore }) => {
+    const items: PersonalFeedItem[] = adaptiveFiltered.map(({ article, relevance, signal, matchedWatchlist, boostedScore }) => {
       const sourceTier = getSourceTier(article.source);
       const cluster = findClusterForArticle(article.url, clusters);
       const multiSourceConfirmed = cluster ? cluster.isMultiSource : false;
