@@ -27,6 +27,9 @@ import efficiencyAdminRouter from "./efficiencyAdmin.js";
 import sprint18AdminRouter from "./sprint18Admin.js";
 import eventTrackingRouter from "./eventTracking.js";
 import adminAnalyticsRouter from "./adminAnalytics.js";
+import interestRouter from "./interestRoutes.js";
+import watchlistRouter from "./watchlistRoutes.js";
+import discoverRouter from "./discoverRoutes.js";
 
 const router: IRouter = Router();
 
@@ -58,5 +61,8 @@ router.use(efficiencyAdminRouter);
 router.use(sprint18AdminRouter);
 router.use(eventTrackingRouter);
 router.use(adminAnalyticsRouter);
+router.use(interestRouter);
+router.use(watchlistRouter);
+router.use(discoverRouter);
 
 export default router;

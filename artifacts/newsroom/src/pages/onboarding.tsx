@@ -1,21 +1,29 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, Cpu, Send, Globe, ChevronRight, Star } from "lucide-react";
+import { CheckCircle, Cpu, Send, Globe, ChevronRight, Star, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getOrCreateProfile } from "@/lib/userIdentity";
 
+const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+
 const TOPIC_PRESETS = [
+  { id: "ai", label: "AI & Machine Learning", icon: "🤖" },
   { id: "technology", label: "Technology", icon: "💻" },
-  { id: "artificial-intelligence", label: "AI & Machine Learning", icon: "🤖" },
   { id: "crypto", label: "Crypto & Web3", icon: "₿" },
+  { id: "stocks", label: "Stock Market", icon: "📈" },
   { id: "business", label: "Business & Finance", icon: "📊" },
-  { id: "global-politics", label: "Global Politics", icon: "🌍" },
+  { id: "startups", label: "Startups & VC", icon: "🚀" },
+  { id: "energy", label: "Energy & Climate", icon: "🌱" },
+  { id: "politics", label: "Politics", icon: "🏛️" },
+  { id: "geopolitics", label: "Geopolitics", icon: "🌍" },
   { id: "science", label: "Science & Research", icon: "🔬" },
-  { id: "climate", label: "Climate & Energy", icon: "🌱" },
-  { id: "startups", label: "Startups & Venture", icon: "🚀" },
+  { id: "gaming", label: "Gaming", icon: "🎮" },
+  { id: "sports", label: "Sports", icon: "⚽" },
 ];
+
+const MIN_INTERESTS = 3;
 
 const STEPS = [
   {
@@ -26,7 +34,7 @@ const STEPS = [
   {
     id: "topics",
     title: "What do you follow?",
-    subtitle: "Pick the topics that matter to you. We'll build your briefing around these.",
+    subtitle: "Pick at least 3 topics. The feed personalises around these.",
   },
   {
     id: "delivery",
@@ -73,26 +81,41 @@ function TopicsStep({
   selected: string[];
   onToggle: (id: string) => void;
 }) {
+  const remaining = Math.max(0, MIN_INTERESTS - selected.length);
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {TOPIC_PRESETS.map((topic) => {
-        const isSelected = selected.includes(topic.id);
-        return (
-          <button
-            key={topic.id}
-            onClick={() => onToggle(topic.id)}
-            className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-              isSelected
-                ? "border-violet-500 bg-violet-50 dark:bg-violet-950"
-                : "border-border hover:border-muted-foreground"
-            }`}
-          >
-            <span className="text-xl">{topic.icon}</span>
-            <span className="text-sm font-medium leading-tight">{topic.label}</span>
-            {isSelected && <CheckCircle className="h-4 w-4 text-violet-500 ml-auto shrink-0" />}
-          </button>
-        );
-      })}
+    <div className="space-y-4">
+      {remaining > 0 && (
+        <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-lg">
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          <span>Select {remaining} more topic{remaining !== 1 ? "s" : ""} to continue</span>
+        </div>
+      )}
+      {remaining === 0 && (
+        <div className="flex items-center gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-3 py-2 rounded-lg">
+          <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+          <span>Great — {selected.length} topics selected. Add more or continue.</span>
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2.5">
+        {TOPIC_PRESETS.map((topic) => {
+          const isSelected = selected.includes(topic.id);
+          return (
+            <button
+              key={topic.id}
+              onClick={() => onToggle(topic.id)}
+              className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                isSelected
+                  ? "border-violet-500 bg-violet-500/10 dark:bg-violet-950/50"
+                  : "border-border hover:border-muted-foreground"
+              }`}
+            >
+              <span className="text-xl shrink-0">{topic.icon}</span>
+              <span className="text-sm font-medium leading-tight flex-1">{topic.label}</span>
+              {isSelected && <CheckCircle className="h-4 w-4 text-violet-500 shrink-0" />}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -161,7 +184,7 @@ function FoundingStep() {
 export default function OnboardingPage() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
-  const [selectedTopics, setSelectedTopics] = useState<string[]>(["technology", "artificial-intelligence"]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>(["ai", "technology"]);
 
   const currentStep = STEPS[step];
   const isLast = step === STEPS.length - 1;
@@ -181,9 +204,9 @@ export default function OnboardingPage() {
   }
 
   async function completeOnboarding() {
+    const identity = getOrCreateProfile();
     try {
-      const identity = getOrCreateProfile();
-      await fetch(`/api/identity/${identity.profileId}/onboarding`, {
+      await fetch(`${BASE}/api/identity/${identity.profileId}/onboarding`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ foundingMember: true }),
@@ -191,11 +214,27 @@ export default function OnboardingPage() {
     } catch {
       // Non-critical — continue regardless
     }
+    // Save selected topics as interests
+    if (selectedTopics.length >= MIN_INTERESTS) {
+      const labels = selectedTopics.map((id) => {
+        const preset = TOPIC_PRESETS.find((t) => t.id === id);
+        return preset?.label ?? id;
+      });
+      try {
+        await fetch(`${BASE}/api/interests`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profileId: identity.profileId, labels }),
+        });
+      } catch {
+        // Non-critical
+      }
+    }
     navigate("/");
   }
 
   const canProceed =
-    currentStep.id !== "topics" || selectedTopics.length > 0;
+    currentStep.id !== "topics" || selectedTopics.length >= MIN_INTERESTS;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">

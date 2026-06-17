@@ -6,16 +6,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 // Core user pages
 import Home from "@/pages/home";
 import SavedBriefings from "@/pages/saved-briefings";
-import MyFeedPage from "@/pages/my-feed";
-import NarrativesPage from "@/pages/narratives";
-import WaitlistPage from "@/pages/waitlist";
 import OnboardingPage from "@/pages/onboarding";
-import InsightExportPage from "@/pages/insights/export";
 import NotFound from "@/pages/not-found";
+
+// Sprint 22 — Personalization
+import DiscoverPage from "@/pages/discover";
+import WatchlistPage from "@/pages/watchlist";
+import ProfilePage from "@/pages/profile";
 
 // Settings
 import SettingsPage from "@/pages/settings/index";
-import InterestsPage from "@/pages/settings/interests";
 import TopicsPage from "@/pages/settings/topics";
 import PersonalityPage from "@/pages/settings/personality";
 import PreferencesPage from "@/pages/settings/preferences";
@@ -32,10 +32,7 @@ import EconomicsPage from "@/pages/admin/economics";
 import AdminNarrativesPage from "@/pages/admin/narratives";
 import EfficiencyAdminPage from "@/pages/admin/efficiency";
 import DebugCenterPage from "@/pages/admin/debug";
-import SystemDashboardPage from "@/pages/admin/system";
-import HealthPage from "@/pages/admin/health";
 import CommandCenterPage from "@/pages/admin/command-center";
-import UsersAdminPage from "@/pages/admin/users";
 
 // Auth placeholders
 import LoginPage from "@/pages/auth/login";
@@ -45,39 +42,60 @@ const queryClient = new QueryClient();
 function Router() {
   return (
     <Switch>
-      {/* ── User routes ─────────────────────────────────────── */}
+      {/* ── Core user routes (6, within budget) ─────────────── */}
       <Route path="/" component={Home} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/saved" component={SavedBriefings} />
-      <Route path="/my-feed" component={MyFeedPage} />
-      <Route path="/narratives" component={NarrativesPage} />
-      <Route path="/waitlist" component={WaitlistPage} />
-      <Route path="/insights/export" component={InsightExportPage} />
+      <Route path="/discover" component={DiscoverPage} />
+      <Route path="/watchlist" component={WatchlistPage} />
+      <Route path="/profile" component={ProfilePage} />
 
-      {/* ── Settings ────────────────────────────────────────── */}
+      {/* ── Settings (5 pages, within ≤7 budget) ─────────────── */}
       <Route path="/settings" component={SettingsPage} />
-      <Route path="/settings/interests" component={InterestsPage} />
       <Route path="/settings/topics" component={TopicsPage} />
       <Route path="/settings/personality" component={PersonalityPage} />
       <Route path="/settings/preferences" component={PreferencesPage} />
       <Route path="/settings/signal-mode" component={SignalModePage} />
 
-      {/* ── Hub pages ───────────────────────────────────────── */}
+      {/* ── Hub pages (2) ───────────────────────────────────── */}
       <Route path="/delivery-studio" component={DeliveryStudioPage} />
       <Route path="/intelligence-center" component={IntelligenceCenterPage} />
 
-      {/* ── Admin ───────────────────────────────────────────── */}
+      {/* ── Admin (5, within budget) ────────────────────────── */}
       <Route path="/admin/command-center" component={CommandCenterPage} />
-      <Route path="/admin/users" component={UsersAdminPage} />
       <Route path="/admin/economics" component={EconomicsPage} />
       <Route path="/admin/narratives" component={AdminNarrativesPage} />
       <Route path="/admin/efficiency" component={EfficiencyAdminPage} />
       <Route path="/admin/debug" component={DebugCenterPage} />
-      <Route path="/admin/system" component={SystemDashboardPage} />
-      <Route path="/admin/health" component={HealthPage} />
 
-      {/* ── Auth (Sprint 21) ────────────────────────────────── */}
+      {/* ── Auth ────────────────────────────────────────────── */}
       <Route path="/auth/login" component={LoginPage} />
+
+      {/* ── Retired routes → redirects (Sprint 22) ──────────── */}
+      <Route path="/my-feed">
+        {() => <Redirect to="/" />}
+      </Route>
+      <Route path="/narratives">
+        {() => <Redirect to="/intelligence-center" />}
+      </Route>
+      <Route path="/insights/export">
+        {() => <Redirect to="/profile" />}
+      </Route>
+      <Route path="/waitlist">
+        {() => <Redirect to="/onboarding" />}
+      </Route>
+      <Route path="/settings/interests">
+        {() => <Redirect to="/profile" />}
+      </Route>
+      <Route path="/admin/system">
+        {() => <Redirect to="/admin/command-center" />}
+      </Route>
+      <Route path="/admin/health">
+        {() => <Redirect to="/admin/command-center" />}
+      </Route>
+      <Route path="/admin/users">
+        {() => <Redirect to="/admin/command-center" />}
+      </Route>
 
       {/* ── Legacy URL redirects (permanent) ────────────────── */}
       <Route path="/settings/delivery">

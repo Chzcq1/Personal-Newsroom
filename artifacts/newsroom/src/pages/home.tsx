@@ -11,7 +11,6 @@ import {
   ExternalLink,
   Loader2,
   RefreshCw,
-  Newspaper,
   Bookmark,
   BookmarkCheck,
   Cpu,
@@ -26,6 +25,10 @@ import {
   AlertTriangle,
   Activity,
   Settings,
+  ThumbsUp,
+  ThumbsDown,
+  Plus,
+  Newspaper,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -35,6 +38,10 @@ import {
   getSavedCount,
 } from "@/lib/briefingStorage";
 import { setLastViewedTopic, getLastViewedTopic } from "@/lib/preferences";
+import { getOrCreateProfile } from "@/lib/userIdentity";
+import { BottomNav } from "@/components/BottomNav";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 // ── Icon mapping ─────────────────────────────────────────────
 
@@ -347,6 +354,8 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
   const s = parseBriefing(data.summary);
   const hasSections = s.headline || s.executiveSummary || s.keyDevelopments.length > 0;
   const [saved, setSaved] = useState(false);
+  const [feedback, setFeedback] = useState<"like" | "dislike" | null>(null);
+  const [followed, setFollowed] = useState(false);
 
   useEffect(() => {
     setSaved(isBriefingSaved(data.topic.id, data.generatedAt));
@@ -371,6 +380,28 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
       articleCount: data.articleCount,
     });
     setSaved(true);
+  };
+
+  const sendFeedback = async (action: "like" | "dislike" | "follow") => {
+    try {
+      const profileId = getOrCreateProfile().profileId;
+      await fetch(`${API_BASE}/api/interests/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profileId,
+          topicLabel: data.topic.label,
+          action,
+          topicId: data.topic.id,
+          articleUrl: data.sources[0]?.url ?? "",
+          articleTitle: data.topic.label,
+        }),
+      });
+      if (action === "like" || action === "dislike") setFeedback(action);
+      if (action === "follow") setFollowed(true);
+    } catch {
+      // silently ignore
+    }
   };
 
   return (
@@ -519,6 +550,57 @@ function BriefingDisplay({ data }: { data: ExtendedNewsSummary }) {
         </CardFooter>
       </Card>
 
+      {/* Feedback actions */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => feedback !== "like" && sendFeedback("like")}
+          disabled={feedback === "like"}
+          className={[
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors",
+            feedback === "like"
+              ? "border-green-500/40 bg-green-500/10 text-green-400 cursor-default"
+              : "border-border/60 text-muted-foreground hover:border-green-500/40 hover:text-green-400 hover:bg-green-500/5",
+          ].join(" ")}
+        >
+          <ThumbsUp className="w-3.5 h-3.5" />
+          {feedback === "like" ? "Interested" : "Interested"}
+        </button>
+
+        <button
+          onClick={() => feedback !== "dislike" && sendFeedback("dislike")}
+          disabled={feedback === "dislike"}
+          className={[
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors",
+            feedback === "dislike"
+              ? "border-red-500/40 bg-red-500/10 text-red-400 cursor-default"
+              : "border-border/60 text-muted-foreground hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/5",
+          ].join(" ")}
+        >
+          <ThumbsDown className="w-3.5 h-3.5" />
+          Not for me
+        </button>
+
+        <button
+          onClick={() => !followed && sendFeedback("follow")}
+          disabled={followed}
+          className={[
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors",
+            followed
+              ? "border-primary/40 bg-primary/10 text-primary cursor-default"
+              : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5",
+          ].join(" ")}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          {followed ? "Following" : "Follow Topic"}
+        </button>
+
+        {feedback && (
+          <span className="text-[11px] text-muted-foreground/60 ml-auto">
+            Feed will adapt to your choices
+          </span>
+        )}
+      </div>
+
       {/* Dev debug panel */}
       {import.meta.env.DEV && (
         <DebugPanel data={data} />
@@ -637,12 +719,6 @@ export default function Home() {
             {health && <HealthBadge health={health} />}
           </div>
           <div className="flex items-center gap-1">
-            <Link to="/my-feed">
-              <Button variant="ghost" size="sm" className="gap-2 text-xs">
-                <Newspaper className="w-3.5 h-3.5" />
-                My Feed
-              </Button>
-            </Link>
             <Link to="/saved">
               <Button variant="ghost" size="sm" className="gap-2 text-xs">
                 <Bookmark className="w-3.5 h-3.5" />
@@ -663,7 +739,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 pt-12 pb-20 space-y-12">
+      <main className="max-w-4xl mx-auto px-6 pt-12 pb-28 space-y-12">
         {/* Topic selector */}
         <section className="space-y-6">
           <div className="space-y-3">
@@ -771,6 +847,7 @@ export default function Home() {
           )}
         </AnimatePresence>
       </main>
+      <BottomNav />
     </div>
   );
 }

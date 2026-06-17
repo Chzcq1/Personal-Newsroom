@@ -1,0 +1,465 @@
+READ FIRST — MANDATORY
+
+Before making ANY code changes, read and follow:
+
+- AGENT_ARCHITECTURE.md
+- AGENT_RULES.md
+- PROJECT_VISION.md
+- SYSTEM_STATUS.md
+- MASTER_INDEX.md
+- CONSOLIDATION_AUDIT.md
+
+Preserve all existing functionality.
+
+Do not create duplicate systems.
+
+Do not create unnecessary dashboards.
+
+Do not create excessive new .md files.
+
+Focus on PRODUCT VALUE.
+
+==================================================
+SPRINT 22
+PERSONALIZED FEED FOUNDATION
+(TIKTOK + INVESTING MODEL)
+==================================================
+
+MISSION
+
+INFOX is NOT a dashboard product.
+
+INFOX is NOT an admin analytics product.
+
+INFOX is becoming:
+
+"A personalized intelligence feed."
+
+Every user should see different news.
+
+The system must learn user interests and continuously improve relevance.
+
+This sprint focuses ONLY on:
+
+- personalization
+- feed intelligence
+- interest learning
+- user experience
+
+NOT:
+
+- payment
+- subscriptions
+- billing
+- authentication
+- more admin tools
+
+==================================================
+CRITICAL RULES
+==================================================
+
+DO NOT:
+
+- create new admin dashboards
+- create new analytics pages
+- create new monitoring pages
+- create duplicate settings pages
+- create duplicate delivery pages
+- create duplicate intelligence pages
+- create additional documentation unless required
+
+DO:
+
+- improve feed relevance
+- improve personalization
+- improve onboarding
+- improve user experience
+
+==================================================
+PRODUCT VISION
+==================================================
+
+Target product:
+
+TikTok + Investing + AI Intelligence
+
+Flow:
+
+User opens app
+
+↓
+
+Selects interests
+
+↓
+
+System learns preferences
+
+↓
+
+System ranks news
+
+↓
+
+Feed improves continuously
+
+Goal:
+
+Every user receives a unique feed.
+
+==================================================
+TASK A
+INTEREST ONBOARDING
+==================================================
+
+Create:
+
+/onboarding/interests
+
+Requirements:
+
+Users must select interests before entering the feed.
+
+Available topics:
+
+- AI
+- Technology
+- Crypto
+- Stocks
+- Business
+- Startups
+- Energy
+- Politics
+- Geopolitics
+- Science
+- Gaming
+- Sports
+- Custom Topics
+
+Rules:
+
+- minimum 3 selections
+- save profile
+- editable later
+- mobile friendly
+- support future expansion
+
+Goal:
+
+Start personalization immediately.
+
+==================================================
+TASK B
+INTEREST PROFILE ENGINE
+==================================================
+
+Create:
+
+services/interestProfile.ts
+
+Store:
+
+- topic
+- weight
+- engagement_score
+- last_interaction
+- follow_status
+
+Example:
+
+AI = 95
+Crypto = 80
+Politics = 10
+
+Requirements:
+
+Weights update automatically.
+
+System learns from behavior.
+
+==================================================
+TASK C
+FEEDBACK LEARNING LOOP
+==================================================
+
+Add actions to feed cards:
+
+👍 Interested
+
+👎 Not Interested
+
+⭐ Save
+
+➕ Follow Topic
+
+Every action updates:
+
+interest profile
+topic weights
+engagement scores
+
+Goal:
+
+Users train the algorithm naturally.
+
+==================================================
+TASK D
+FEED RANKING V1
+==================================================
+
+Create:
+
+services/feedRanking.ts
+
+Ranking Formula:
+
+Interest Match = 40%
+
+Source Trust = 20%
+
+Signal Priority = 20%
+
+Recency = 20%
+
+Output:
+
+personalized_score
+
+Requirements:
+
+Two users with different interests must receive different ranking orders.
+
+==================================================
+TASK E
+DISCOVER PAGE
+==================================================
+
+Create:
+
+/discover
+
+Users can search:
+
+- topics
+- companies
+- stocks
+- crypto
+- people
+- technologies
+
+Requirements:
+
+Search
+
+Follow Topic
+
+Follow Entity
+
+Add to Watchlist
+
+Goal:
+
+Expand interests beyond onboarding.
+
+==================================================
+TASK F
+WATCHLIST FOUNDATION
+==================================================
+
+Create:
+
+/watchlist
+
+Users can add:
+
+- BTC
+- ETH
+- NVDA
+- TSLA
+- AAPL
+
+and custom entities.
+
+Requirements:
+
+Watchlist items receive ranking boost.
+
+Watchlist influences feed ordering.
+
+==================================================
+TASK G
+PROFILE PAGE
+==================================================
+
+Create:
+
+/profile
+
+Display:
+
+- interests
+- followed topics
+- watchlist
+- saved articles
+- onboarding status
+- future subscription placeholder
+
+Authentication not required yet.
+
+Anonymous profile acceptable.
+
+==================================================
+TASK H
+FEED QUALITY METRICS
+==================================================
+
+Create internal metrics only.
+
+NO NEW PAGE.
+
+Track:
+
+- interest_match_rate
+- save_rate
+- follow_rate
+- not_interested_rate
+- topic_distribution
+
+Expose through API only.
+
+No UI required.
+
+==================================================
+TASK I
+NAVIGATION CLEANUP
+==================================================
+
+Audit navigation.
+
+User-facing navigation should contain ONLY:
+
+- Feed
+- Discover
+- Watchlist
+- Notifications
+- Profile
+
+Move all operational tools behind:
+
+/admin
+
+Requirements:
+
+User should never see:
+
+- Efficiency Control
+- Runtime Tools
+- Token Control
+- Internal Ops
+
+unless admin.
+
+==================================================
+TASK J
+FIX EXISTING ISSUES FIRST
+==================================================
+
+Before building new features:
+
+Fix all visible runtime errors.
+
+Specifically verify:
+
+- Economics page
+- Intelligence Center
+- Token Economy
+- Any broken route
+- Any API returning errors
+
+Goal:
+
+Zero visible crashes.
+
+==================================================
+SUCCESS CRITERIA
+==================================================
+
+Sprint 22 is complete ONLY IF:
+
+✓ Interest onboarding exists
+
+✓ Minimum 3 interests required
+
+✓ Interest profile stored
+
+✓ Like / Dislike system works
+
+✓ Follow Topic works
+
+✓ Watchlist works
+
+✓ Discover page works
+
+✓ Profile page works
+
+✓ Personalized feed ranking operational
+
+✓ Navigation simplified
+
+✓ No duplicate systems
+
+✓ No new admin dashboards
+
+✓ No visible runtime errors
+
+==================================================
+DELIVERABLE REPORT
+==================================================
+
+Return:
+
+1. Files Created
+
+2. Files Modified
+
+3. APIs Created
+
+4. Navigation Changes
+
+5. Feed Ranking Architecture
+
+6. Interest Profile Design
+
+7. Runtime Errors Fixed
+
+8. Remaining Blockers
+
+9. Production Readiness Score
+
+10. Verification URLs
+
+==================================================
+IMPORTANT COO INSTRUCTION
+==================================================
+
+This sprint is NOT about adding more tools.
+
+This sprint is about building the core product.
+
+The core product is:
+
+"Personalized Intelligence Feed"
+
+NOT dashboards.
+
+NOT analytics.
+
+NOT admin panels.
+
+Focus on what the user sees every day.
+
+Build the feed.
+Build the learning loop.
+Build personalization.
+
+Everything else comes later.
