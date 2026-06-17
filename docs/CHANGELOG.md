@@ -2,6 +2,38 @@
 
 ---
 
+## [2026-06-17] — Sprint 19: Platform Consolidation & Product Stabilization
+
+**What:** Structural sprint — no new features. 33 routes collapsed to 15 primary routes. Six fragmented Telegram pages merged into `/delivery-studio` (5 tabs: Config, Preview, Send, Diagnostics, Schedule). Seven analytics/admin pages merged into `/intelligence-center` (5 sections: Intelligence, Delivery, Sources, Token Economy, System). Three debug pages merged into `/admin/debug` (3 tabs: Relevance, Entities, Feed Evolution). Settings page restructured into 6 clean sections. 29 redundant sprint-specific docs archived to `docs/archive/`. Two governance documents written: `CLOSED_ALPHA_READINESS_REPORT.md` (alpha readiness score 4/10) and `ARCHITECTURE_GUARDRAILS.md` (10 rules, route budget ≤ 20, doc budget ≤ 10). React hooks-in-map violation in ScheduleTab fixed by extracting `SlotCard` as a proper component. Missing `label` arg to `addSlot()` corrected.
+
+**Why:** By Sprint 18 the product had accumulated 33 routes, 25+ sprint-specific docs, and six separate Telegram configuration pages. Users had no coherent navigation path. This sprint removes the debt before closed alpha without touching the intelligence pipeline.
+
+### Route Map (33 → 15)
+**Merged away:**
+- `/delivery-preview`, `/settings/delivery`, `/settings/delivery/debug`, `/settings/delivery/preview-live`, `/settings/delivery/preview-v3`, `/settings/scheduler` → `/delivery-studio`
+- `/admin/analytics`, `/admin/delivery`, `/admin/feed-quality`, `/admin/system-intelligence`, `/admin/source-trust`, `/settings/intelligence-score`, `/admin/habit` → `/intelligence-center`
+- `/admin/costs` → `/admin/economics`
+- `/debug/relevance`, `/debug/entities`, `/debug/feed-evolution` → `/admin/debug`
+
+**Kept (15 primary routes):**
+`/` · `/onboarding` · `/saved` · `/my-feed` · `/narratives` · `/waitlist` · `/settings` · `/settings/*` (interests/topics/personality/preferences/signal-mode) · `/delivery-studio` · `/intelligence-center` · `/admin/economics` · `/admin/narratives` · `/admin/efficiency` · `/admin/debug` · `/insights/export`
+
+### New Pages
+- `delivery-studio.tsx` — unified Telegram hub with Config/Preview/Send/Diagnostics/Schedule tabs
+- `intelligence-center.tsx` — unified ops dashboard with 5 sections
+- `admin/debug.tsx` — consolidated debug hub with 3 tabs
+
+### Docs
+- `docs/CLOSED_ALPHA_READINESS_REPORT.md` — 4/10 readiness score, blockers, UX risks
+- `docs/ARCHITECTURE_GUARDRAILS.md` — 10 architecture rules for future sprints
+- `docs/archive/` — 29 redundant sprint docs moved here
+
+### Bug Fixes
+- `delivery-studio.tsx` ScheduleTab: `useState`/`useEffect` called inside `.map()` — extracted `SlotCard` component
+- `addSlot()` call missing required `label` argument — corrected
+
+---
+
 ## [2026-06-16] — Sprint 15: Precision Intelligence & Alpha Experience
 
 **What:** Ten-task sprint that transforms INFOX from "AI news summarizer" into "high-signal intelligence companion." Key additions: Feed Precision V2 with entity weighting + source trust + crypto downgrade logic (Task A), 7-factor Signal Priority Engine replacing simple recency sort (Task B), full pipeline re-wiring of tasks A+B into newsCollectorService (Task C wire), Telegram V2 formatter with layered scan-first structure + `/settings/delivery/preview-live` page (Task C), Knowledge Compound System tracking hours saved + noise filtered + compound rate at `/settings/intelligence-score` (Task F), Closed Alpha waitlist at `/waitlist` with 4-step onboarding + sample digest preview (Task H), signal quality badge on briefing card header showing noise filtered, HealthBadge dark-mode fix using theme-compatible opacity classes, and three new documentation files.

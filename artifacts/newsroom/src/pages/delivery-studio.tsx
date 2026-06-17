@@ -526,6 +526,70 @@ const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTE_OPTIONS = [0, 15, 30, 45];
 const DAYS_OPTIONS: ScheduleSlot["daysFilter"][] = ["all", "weekdays", "weekends"];
 
+function SlotCard({
+  slot,
+  onToggle,
+  onRemove,
+  onDaysChange,
+}: {
+  slot: ScheduleSlot;
+  onToggle: () => void;
+  onRemove: () => void;
+  onDaysChange: (f: ScheduleSlot["daysFilter"]) => void;
+}) {
+  const [next, setNext] = useState(() => getNextDeliveryForSlot(slot));
+  useEffect(() => {
+    setNext(getNextDeliveryForSlot(slot));
+    const id = setInterval(() => setNext(getNextDeliveryForSlot(slot)), 60_000);
+    return () => clearInterval(id);
+  }, [slot]);
+
+  const isDefault = slot.id === "morning-default" || slot.id === "evening-default";
+
+  return (
+    <Card className={`border ${slot.enabled ? "bg-white/5 border-white/10" : "bg-white/3 border-white/6"}`}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${slot.enabled ? "bg-amber-500/15" : "bg-white/5"}`}>
+            <Clock className={`w-4 h-4 ${slot.enabled ? "text-amber-400" : "text-white/25"}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className={`font-mono text-sm font-semibold ${slot.enabled ? "text-white" : "text-white/30"}`}>
+                {formatSlotTime(slot)}
+              </span>
+              <span className="text-xs text-white/30">ICT</span>
+              {isDefault && <span className="text-[10px] text-white/20 bg-white/5 px-1.5 py-0.5 rounded">default</span>}
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className={`text-xs ${slot.enabled ? "text-white/50" : "text-white/20"}`}>{slot.label}</span>
+              {slot.enabled && next && <span className="text-[10px] text-emerald-400">Next: {next}</span>}
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <select value={slot.daysFilter} onChange={(e) => onDaysChange(e.target.value as ScheduleSlot["daysFilter"])}
+              className="text-xs bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white/60 outline-none">
+              {DAYS_OPTIONS.map((d) => (
+                <option key={d} value={d} className="bg-[#0a0a0a]">{getDaysFilterLabel(d)}</option>
+              ))}
+            </select>
+            <button onClick={onToggle} className="p-1.5 rounded-lg hover:bg-white/8 transition-colors">
+              {slot.enabled
+                ? <ToggleRight className="w-5 h-5 text-emerald-400" />
+                : <ToggleLeft className="w-5 h-5 text-white/30" />}
+            </button>
+            {!isDefault && (
+              <button onClick={onRemove} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors">
+                <Trash2 className="w-4 h-4 text-white/30 hover:text-red-400" />
+              </button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ScheduleTab() {
   const { toast } = useToast();
   const [settings, setSettings] = useState<ScheduleSettings>(() => loadScheduleSettings());
@@ -538,7 +602,8 @@ function ScheduleTab() {
   }
 
   function handleAddSlot() {
-    const updated = addSlot(settings, addHour, addMinute);
+    const label = `${String(addHour).padStart(2, "0")}:${String(addMinute).padStart(2, "0")} Briefing`;
+    const updated = addSlot(settings, addHour, addMinute, label);
     save(updated);
     toast({ title: "Slot added" });
   }
@@ -551,66 +616,15 @@ function ScheduleTab() {
       </div>
 
       <div className="space-y-3">
-        {settings.slots.map((slot) => {
-          const [next, setNext] = useState(() => getNextDeliveryForSlot(slot));
-          useEffect(() => {
-            setNext(getNextDeliveryForSlot(slot));
-            const id = setInterval(() => setNext(getNextDeliveryForSlot(slot)), 60_000);
-            return () => clearInterval(id);
-          }, [slot]);
-
-          return (
-            <Card key={slot.id} className={`border ${slot.enabled ? "bg-white/5 border-white/10" : "bg-white/3 border-white/6"}`}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${slot.enabled ? "bg-amber-500/15" : "bg-white/5"}`}>
-                    <Clock className={`w-4 h-4 ${slot.enabled ? "text-amber-400" : "text-white/25"}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`font-mono text-sm font-semibold ${slot.enabled ? "text-white" : "text-white/30"}`}>
-                        {formatSlotTime(slot)}
-                      </span>
-                      <span className="text-xs text-white/30">ICT</span>
-                      {slot.id === "morning-default" || slot.id === "evening-default" ? (
-                        <span className="text-[10px] text-white/20 bg-white/5 px-1.5 py-0.5 rounded">default</span>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-xs ${slot.enabled ? "text-white/50" : "text-white/20"}`}>{slot.label}</span>
-                      {slot.enabled && next && (
-                        <span className="text-[10px] text-emerald-400">Next: {next}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <select
-                      value={slot.daysFilter}
-                      onChange={(e) => save(updateSlotDaysFilter(settings, slot.id, e.target.value as ScheduleSlot["daysFilter"]))}
-                      className="text-xs bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white/60 outline-none"
-                    >
-                      {DAYS_OPTIONS.map((d) => (
-                        <option key={d} value={d} className="bg-[#0a0a0a]">{getDaysFilterLabel(d)}</option>
-                      ))}
-                    </select>
-                    <button onClick={() => save(toggleSlot(settings, slot.id))}
-                      className="p-1.5 rounded-lg hover:bg-white/8 transition-colors">
-                      {slot.enabled
-                        ? <ToggleRight className="w-5 h-5 text-emerald-400" />
-                        : <ToggleLeft className="w-5 h-5 text-white/30" />}
-                    </button>
-                    {slot.id !== "morning-default" && slot.id !== "evening-default" && (
-                      <button onClick={() => save(removeSlot(settings, slot.id))}
-                        className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors">
-                        <Trash2 className="w-4 h-4 text-white/30 hover:text-red-400" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {settings.slots.map((slot) => (
+          <SlotCard
+            key={slot.id}
+            slot={slot}
+            onToggle={() => save(toggleSlot(settings, slot.id))}
+            onRemove={() => save(removeSlot(settings, slot.id))}
+            onDaysChange={(f) => save(updateSlotDaysFilter(settings, slot.id, f))}
+          />
+        ))}
       </div>
 
       <Card className="bg-white/5 border-white/10">
