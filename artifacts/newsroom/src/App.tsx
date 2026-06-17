@@ -1,9 +1,9 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-// Core
+// Core user pages
 import Home from "@/pages/home";
 import SavedBriefings from "@/pages/saved-briefings";
 import MyFeedPage from "@/pages/my-feed";
@@ -21,31 +21,29 @@ import PersonalityPage from "@/pages/settings/personality";
 import PreferencesPage from "@/pages/settings/preferences";
 import SignalModePage from "@/pages/settings/signal-mode";
 
-// Sprint 19: Consolidated pages
+// Delivery Studio
 import DeliveryStudioPage from "@/pages/delivery-studio";
+
+// Intelligence Center (user-facing insights)
 import IntelligenceCenterPage from "@/pages/intelligence-center";
 
-// Admin (kept as-is)
+// Admin pages
 import EconomicsPage from "@/pages/admin/economics";
 import AdminNarrativesPage from "@/pages/admin/narratives";
 import EfficiencyAdminPage from "@/pages/admin/efficiency";
 import DebugCenterPage from "@/pages/admin/debug";
+import SystemDashboardPage from "@/pages/admin/system";
+import HealthPage from "@/pages/admin/health";
 
-// Legacy redirects — keep old URLs alive so bookmarks don't break
-import DeliverySettingsPage from "@/pages/settings/delivery";
-import DeliveryDebugPage from "@/pages/settings/delivery-debug";
-import SchedulerPage from "@/pages/settings/scheduler";
-import AdminAnalyticsPage from "@/pages/admin/analytics";
-import AdminDeliveryPage from "@/pages/admin/delivery";
-import SystemIntelligencePage from "@/pages/admin/system-intelligence";
-import SourceTrustPage from "@/pages/admin/source-trust";
+// Auth placeholders
+import LoginPage from "@/pages/auth/login";
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
     <Switch>
-      {/* ── Core user routes ─────────────────────────────────── */}
+      {/* ── User routes ─────────────────────────────────────── */}
       <Route path="/" component={Home} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/saved" component={SavedBriefings} />
@@ -54,7 +52,7 @@ function Router() {
       <Route path="/waitlist" component={WaitlistPage} />
       <Route path="/insights/export" component={InsightExportPage} />
 
-      {/* ── Settings ─────────────────────────────────────────── */}
+      {/* ── Settings ────────────────────────────────────────── */}
       <Route path="/settings" component={SettingsPage} />
       <Route path="/settings/interests" component={InterestsPage} />
       <Route path="/settings/topics" component={TopicsPage} />
@@ -62,24 +60,64 @@ function Router() {
       <Route path="/settings/preferences" component={PreferencesPage} />
       <Route path="/settings/signal-mode" component={SignalModePage} />
 
-      {/* ── Sprint 19: Consolidated hubs ─────────────────────── */}
+      {/* ── Hub pages ───────────────────────────────────────── */}
       <Route path="/delivery-studio" component={DeliveryStudioPage} />
       <Route path="/intelligence-center" component={IntelligenceCenterPage} />
 
-      {/* ── Admin ─────────────────────────────────────────────── */}
+      {/* ── Admin ───────────────────────────────────────────── */}
+      <Route path="/admin/system" component={SystemDashboardPage} />
+      <Route path="/admin/health" component={HealthPage} />
       <Route path="/admin/economics" component={EconomicsPage} />
       <Route path="/admin/narratives" component={AdminNarrativesPage} />
       <Route path="/admin/efficiency" component={EfficiencyAdminPage} />
       <Route path="/admin/debug" component={DebugCenterPage} />
 
-      {/* ── Legacy URLs (keep for backward compat) ───────────── */}
-      <Route path="/settings/delivery" component={DeliverySettingsPage} />
-      <Route path="/settings/delivery/debug" component={DeliveryDebugPage} />
-      <Route path="/settings/scheduler" component={SchedulerPage} />
-      <Route path="/admin/analytics" component={AdminAnalyticsPage} />
-      <Route path="/admin/delivery" component={AdminDeliveryPage} />
-      <Route path="/admin/system-intelligence" component={SystemIntelligencePage} />
-      <Route path="/admin/source-trust" component={SourceTrustPage} />
+      {/* ── Auth (Sprint 21) ────────────────────────────────── */}
+      <Route path="/auth/login" component={LoginPage} />
+
+      {/* ── Legacy URL redirects (permanent) ────────────────── */}
+      <Route path="/settings/delivery">
+        {() => <Redirect to="/delivery-studio" />}
+      </Route>
+      <Route path="/settings/delivery/debug">
+        {() => <Redirect to="/delivery-studio" />}
+      </Route>
+      <Route path="/settings/delivery/preview-live">
+        {() => <Redirect to="/delivery-studio" />}
+      </Route>
+      <Route path="/settings/delivery/preview-v3">
+        {() => <Redirect to="/delivery-studio" />}
+      </Route>
+      <Route path="/settings/scheduler">
+        {() => <Redirect to="/delivery-studio" />}
+      </Route>
+      <Route path="/settings/intelligence-score">
+        {() => <Redirect to="/intelligence-center" />}
+      </Route>
+      <Route path="/admin/analytics">
+        {() => <Redirect to="/intelligence-center" />}
+      </Route>
+      <Route path="/admin/delivery">
+        {() => <Redirect to="/intelligence-center" />}
+      </Route>
+      <Route path="/admin/system-intelligence">
+        {() => <Redirect to="/admin/system" />}
+      </Route>
+      <Route path="/admin/source-trust">
+        {() => <Redirect to="/admin/system" />}
+      </Route>
+      <Route path="/admin/costs">
+        {() => <Redirect to="/admin/economics" />}
+      </Route>
+      <Route path="/debug/relevance">
+        {() => <Redirect to="/admin/debug" />}
+      </Route>
+      <Route path="/debug/entities">
+        {() => <Redirect to="/admin/debug" />}
+      </Route>
+      <Route path="/debug/feed-evolution">
+        {() => <Redirect to="/admin/debug" />}
+      </Route>
 
       <Route component={NotFound} />
     </Switch>

@@ -1,0 +1,569 @@
+Read first:
+
+* docs/PROJECT_VISION.md
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/SYSTEM_STATUS.md
+* docs/AGENT_RULES.md
+* docs/DEPLOYMENT_GUIDE.md
+* docs/PERSISTENT_INFRASTRUCTURE.md
+* docs/IDENTITY_FOUNDATION.md
+* docs/LOGIN_PREPARATION.md
+* docs/TOKEN_ECONOMY.md
+* docs/DELIVERY_INFRASTRUCTURE.md
+* docs/VISUAL_GUIDELINES.md
+* docs/KNOWLEDGE_COMPOUND.md
+* docs/ALPHA_GATING.md
+* docs/PRECISION_INTELLIGENCE.md
+* docs/PROACTIVE_INTELLIGENCE.md
+
+IMPORTANT:
+
+This sprint is NOT about adding more intelligence systems.
+
+This sprint is about:
+
+* consolidation
+* simplification
+* production preparation
+* architectural cleanup
+
+Preserve all existing functionality.
+
+DO NOT create duplicate systems.
+
+DO NOT create additional Telegram implementations.
+
+DO NOT create duplicate admin dashboards.
+
+DO NOT create new intelligence engines unless required for consolidation.
+
+Focus on stability and maintainability.
+
+========================================
+SPRINT 20
+SYSTEM CONSOLIDATION & PRODUCTION PREPARATION
+========================================
+
+MISSION
+
+INFOX has reached the point where feature velocity is creating architectural fragmentation.
+
+The system now contains:
+
+* overlapping dashboards
+* duplicated preview systems
+* scattered configuration logic
+* fragmented Telegram UX
+* excessive admin tooling
+* growing documentation overload
+
+This sprint exists to:
+
+STOP SYSTEM SPRAWL
+
+and prepare INFOX for:
+
+* real deployment
+* real users
+* authentication
+* payments
+* production runtime separation
+
+This is a cleanup + stabilization sprint.
+
+NOT a feature explosion sprint.
+
+========================================
+PRIMARY OBJECTIVES
+========================================
+
+1. Consolidate duplicated systems
+
+2. Reduce UI complexity
+
+3. Separate user/admin architecture
+
+4. Prepare production runtime outside Replit
+
+5. Simplify operational visibility
+
+6. Prepare clean foundation for Sprint 21 auth
+
+========================================
+NON-NEGOTIABLE RULES
+========================================
+
+1. ONE SYSTEM PER RESPONSIBILITY
+
+If two systems solve the same problem:
+merge them.
+
+2. DELETE DEAD CODE
+
+Unused pages/services/components must be removed.
+
+3. SIMPLIFY UI
+
+Reduce visual overload.
+
+4. MOBILE-FIRST
+
+All layouts must remain usable on mobile.
+
+5. TOKEN EFFICIENCY STILL MATTERS
+
+Do not increase AI usage unnecessarily.
+
+6. NO AUTH IMPLEMENTATION YET
+
+Only prepare architecture.
+
+========================================
+TASK A — FULL SYSTEM CONSOLIDATION AUDIT
+========================================
+
+Create:
+
+docs/CONSOLIDATION_AUDIT.md
+
+Audit all overlapping systems.
+
+Identify duplicates across:
+
+* Telegram preview pages
+* delivery formatting systems
+* intelligence dashboards
+* admin analytics
+* signal scoring displays
+* token monitoring
+* delivery logs
+* debug pages
+* preview systems
+* source monitoring
+
+For each duplicate:
+
+Mark as:
+
+* KEEP
+* MERGE
+* DELETE
+* ARCHIVE
+
+Then perform cleanup.
+
+Requirements:
+
+* remove dead routes
+* remove unused services
+* remove duplicated UI flows
+* remove duplicate state logic
+* remove duplicate formatting logic
+
+Goal:
+
+One coherent system per feature.
+
+========================================
+TASK B — USER / ADMIN / AUTH SEPARATION
+========================================
+
+Create proper application structure.
+
+Required route groups:
+
+/app
+/admin
+/auth
+/public
+
+Requirements:
+
+* separate layouts
+* separate navigation
+* separate route wrappers
+* separate middleware preparation
+* separate state boundaries
+
+User UI must NOT expose admin tooling anymore.
+
+Admin tools must move behind admin shell.
+
+Create architecture only.
+
+No real auth yet.
+
+========================================
+TASK C — TELEGRAM SYSTEM CONSOLIDATION
+========================================
+
+Current problem:
+
+Telegram functionality is fragmented.
+
+Merge all Telegram-related systems into ONE unified flow.
+
+Create ONE clean Telegram experience containing:
+
+* bot setup
+* delivery schedules
+* delivery preview
+* persona density mode
+* formatting preview
+* delivery logs
+* test delivery
+* signal mode integration
+
+Requirements:
+
+* one settings entry point
+* one preview engine
+* one formatter pipeline
+* one delivery status model
+
+Delete redundant Telegram pages/components/services.
+
+Goal:
+
+Telegram becomes coherent and production-ready.
+
+========================================
+TASK D — ADMIN DASHBOARD UNIFICATION
+========================================
+
+Current issue:
+
+Too many admin/debug pages.
+
+Create ONE operational intelligence dashboard:
+
+/admin/system
+
+Merge into it:
+
+* token monitoring
+* degradation state
+* source health
+* delivery health
+* runtime health
+* worker health
+* signal quality
+* cache efficiency
+* deployment readiness
+
+Requirements:
+
+* modular dashboard sections
+* collapsible panels
+* mobile compatibility
+* clean visual hierarchy
+
+Archive redundant dashboards.
+
+Goal:
+
+One operational command center.
+
+========================================
+TASK E — CONFIGURATION CENTRALIZATION
+========================================
+
+Current issue:
+
+Configs scattered across services.
+
+Create:
+
+/config
+
+Centralize:
+
+* token limits
+* signal thresholds
+* degradation configs
+* source configs
+* delivery configs
+* feature flags
+* runtime configs
+* environment mappings
+
+Requirements:
+
+* typed config access
+* environment-safe loading
+* future production override support
+
+Goal:
+
+Remove hidden hardcoded runtime logic.
+
+========================================
+TASK F — PRODUCTION RUNTIME PREPARATION
+========================================
+
+Prepare INFOX to run outside Replit.
+
+Requirements:
+
+Separate runtimes:
+
+1. frontend
+2. API
+3. workers
+4. schedulers
+5. delivery workers
+
+Create:
+
+* startup scripts
+* process separation
+* Docker Compose preparation
+* runtime env separation
+* production-ready .env examples
+
+Prepare support for:
+
+* Railway
+* Fly.io
+* Render
+* VPS
+
+Do NOT deploy yet.
+
+Preparation only.
+
+========================================
+TASK G — WORKER & PROCESS CLEANUP
+========================================
+
+Audit all workers/background systems.
+
+Requirements:
+
+* remove duplicate polling
+* centralize worker registry
+* unify retry behavior
+* standardize logging
+* standardize health reporting
+
+Create:
+
+services/runtime/
+
+Requirements:
+
+* runtime ownership map
+* process responsibilities
+* startup lifecycle management
+
+Goal:
+
+Prevent future worker chaos.
+
+========================================
+TASK H — OBSERVABILITY FOUNDATION
+========================================
+
+Create unified operational monitoring.
+
+Create:
+
+/admin/health
+
+Track:
+
+* API uptime
+* worker status
+* queue health
+* Telegram delivery health
+* AI pipeline health
+* RSS/source health
+* cache hit ratio
+* token pressure
+* degradation state
+
+Requirements:
+
+* structured logs
+* consistent health format
+* severity levels
+* graceful degradation visibility
+
+Goal:
+
+System operators understand failures instantly.
+
+========================================
+TASK I — UI CLEANUP & VISUAL STABILITY
+========================================
+
+Current issue:
+
+UI becoming visually inconsistent.
+
+Fix:
+
+* dark mode contrast
+* unreadable navy-on-black text
+* oversized cards
+* inconsistent spacing
+* duplicated buttons
+* dashboard clutter
+* mobile overflow
+* excessive glow effects
+
+Requirements:
+
+* WCAG-friendly contrast
+* simpler hierarchy
+* cleaner typography
+* calmer visuals
+* fewer unnecessary effects
+
+INFOX should feel:
+
+minimal
+executive-grade
+high-signal
+calm
+
+NOT:
+gaming dashboard chaos.
+
+========================================
+TASK J — DOCUMENTATION REDUCTION
+========================================
+
+Current issue:
+
+Documentation overload.
+
+Create:
+
+docs/MASTER_INDEX.md
+
+Requirements:
+
+* categorize all docs
+* archive outdated docs
+* merge overlapping docs
+* remove duplicated concepts
+* simplify onboarding for future developers
+
+Create:
+
+docs/ARCHIVE/
+
+Move deprecated docs there.
+
+Goal:
+
+Reduce Replit context overload.
+
+========================================
+TASK K — PREPARE AUTH FOUNDATIONS
+========================================
+
+DO NOT implement auth yet.
+
+Only prepare architecture.
+
+Requirements:
+
+* auth middleware placeholders
+* session boundary preparation
+* protected route preparation
+* user ownership preparation
+* entitlement injection preparation
+
+Goal:
+
+Sprint 21 auth implementation becomes clean and easy.
+
+========================================
+TASK L — PERFORMANCE & BUNDLE CLEANUP
+========================================
+
+Audit frontend performance.
+
+Requirements:
+
+* remove unused imports
+* remove dead components
+* reduce duplicated state
+* optimize large pages
+* reduce unnecessary renders
+* lazy-load heavy admin pages
+
+Goal:
+
+Cleaner production frontend.
+
+========================================
+SUCCESS CRITERIA
+========================================
+
+After Sprint 20:
+
+* duplicated systems reduced
+* Telegram unified
+* admin tooling consolidated
+* route separation exists
+* production runtime prepared
+* configs centralized
+* UI calmer and cleaner
+* docs manageable again
+* architecture easier to maintain
+* Sprint 21 auth can begin safely
+
+========================================
+IMPORTANT CEO DIRECTION
+========================================
+
+This sprint intentionally avoids:
+
+* payment systems
+* real auth
+* feature explosion
+* new AI experiments
+
+Because:
+
+INFOX must become stable before monetization.
+
+The next sprint (21) will begin:
+
+REAL AUTHENTICATION FOUNDATION
+
+This sprint exists to make that possible cleanly.
+
+========================================
+REQUIRED IMPLEMENTATION REPORT
+========================================
+
+At completion provide:
+
+1. Files created
+
+2. Files modified
+
+3. Files deleted
+
+4. Systems merged
+
+5. Systems archived
+
+6. Runtime architecture changes
+
+7. UI simplification summary
+
+8. Deployment preparation summary
+
+9. Documentation cleanup summary
+
+10. Remaining technical debt
+
+11. Production readiness score
+
+12. Recommended Sprint 21 preparation

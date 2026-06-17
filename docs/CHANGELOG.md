@@ -2,6 +2,36 @@
 
 ---
 
+## [2026-06-17] — Sprint 20: System Consolidation & Production Preparation
+
+**What:** Continued consolidation sprint building on Sprint 19's route merges. Deleted 17 dead page files that were de-routed in Sprint 19 but left on disk. Fixed vite.config.ts — removed hard-throw on missing PORT/BASE_PATH, replaced with safe defaults (23519/`/`). Rewired App.tsx to use wouter `<Redirect>` for legacy URLs instead of dead imports. Added `/admin/system` (unified ops dashboard with 6 collapsible sections: Runtime, Token Economy, Workers, Delivery, Sources, Cache/Storage) and `/admin/health` (real-time API health monitor with 15s auto-refresh). Added `/auth/login` placeholder with Sprint 21 architecture contract. Created `artifacts/api-server/src/middleware/auth.ts` with typed stubs for `requireAuth`, `requireAdmin`, `requireEntitlement`, `optionalAuth`. Created `artifacts/newsroom/src/components/auth/ProtectedRoute.tsx` with passthrough (Sprint 21 contract). Wrote `docs/CONSOLIDATION_AUDIT.md` (full system audit), `docs/MASTER_INDEX.md` (canonical docs navigator), `deployment/Makefile` (dev/build/docker/deploy commands). Production runtime files (Dockerfile, fly.toml, railway.toml, render.yaml, .env.example) already existed from Sprint 14 — validated and kept.
+
+**Why:** Sprint 19 removed routes from App.tsx but left 17 dead files on disk, creating import confusion. The vite.config.ts PORT hard-throw was blocking the artifact workflow from starting (it requires PORT/BASE_PATH but the Replit-managed workflow doesn't inject them). Sprint 20 closes both gaps and lays the auth + production architecture foundation for Sprint 21.
+
+### Deleted (17 dead page files)
+`settings/delivery.tsx` · `settings/delivery-debug.tsx` · `settings/delivery-preview-live.tsx` · `settings/delivery-preview-v3.tsx` · `settings/scheduler.tsx` · `settings/intelligence-score.tsx` · `admin/analytics.tsx` · `admin/delivery.tsx` · `admin/feed-quality.tsx` · `admin/habit.tsx` · `admin/source-trust.tsx` · `admin/system-intelligence.tsx` · `admin-costs.tsx` · `delivery-preview.tsx` · `debug/entities.tsx` · `debug/feed-evolution.tsx` · `debug/relevance.tsx`
+
+### New Pages
+- `admin/system.tsx` — unified ops dashboard (6 collapsible sections)
+- `admin/health.tsx` — real-time health monitor (15s auto-poll, live/paused toggle)
+- `auth/login.tsx` — Sprint 21 auth placeholder with architecture contract
+
+### Auth Foundations (Sprint 21 prep)
+- `api-server/src/middleware/auth.ts` — typed stubs: `requireAuth`, `requireAdmin`, `requireEntitlement`, `optionalAuth`; Sprint 21 TODO comments inline
+- `newsroom/src/components/auth/ProtectedRoute.tsx` — passthrough wrapper with Sprint 21 contract
+- `AuthUser` interface: `{ id, profileId, email?, role, tier, sessionId }`
+
+### Bug Fixes
+- `vite.config.ts` — removed hard-throw on missing `PORT`/`BASE_PATH`; defaults to `23519`/`/`; fixes `artifacts/newsroom: web` workflow startup
+- `App.tsx` — replaced 7 dead legacy page imports with proper wouter `<Redirect>` components
+
+### Docs
+- `docs/CONSOLIDATION_AUDIT.md` — full system audit (pages, routes, services, Telegram, admin, docs)
+- `docs/MASTER_INDEX.md` — canonical documentation navigator with route map + sprint roadmap
+- `deployment/Makefile` — standardised dev/build/docker/deploy commands
+
+---
+
 ## [2026-06-17] — Sprint 19: Platform Consolidation & Product Stabilization
 
 **What:** Structural sprint — no new features. 33 routes collapsed to 15 primary routes. Six fragmented Telegram pages merged into `/delivery-studio` (5 tabs: Config, Preview, Send, Diagnostics, Schedule). Seven analytics/admin pages merged into `/intelligence-center` (5 sections: Intelligence, Delivery, Sources, Token Economy, System). Three debug pages merged into `/admin/debug` (3 tabs: Relevance, Entities, Feed Evolution). Settings page restructured into 6 clean sections. 29 redundant sprint-specific docs archived to `docs/archive/`. Two governance documents written: `CLOSED_ALPHA_READINESS_REPORT.md` (alpha readiness score 4/10) and `ARCHITECTURE_GUARDRAILS.md` (10 rules, route budget ≤ 20, doc budget ≤ 10). React hooks-in-map violation in ScheduleTab fixed by extracting `SlotCard` as a proper component. Missing `label` arg to `addSlot()` corrected.
