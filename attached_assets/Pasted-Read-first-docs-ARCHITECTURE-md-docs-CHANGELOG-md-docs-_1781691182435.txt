@@ -1,0 +1,570 @@
+Read first:
+
+* docs/ARCHITECTURE.md
+* docs/CHANGELOG.md
+* docs/MASTER_INDEX.md
+* docs/PROJECT_VISION.md
+* docs/SYSTEM_STATUS.md
+* docs/AGENT_RULES.md
+* docs/AGENT_ARCHITECTURE.md
+* docs/PERSISTENT_INFRASTRUCTURE.md
+* docs/IDENTITY_FOUNDATION.md
+* docs/DEPLOYMENT_GUIDE.md
+* docs/TOKEN_ECONOMY.md
+* docs/CONSOLIDATION_AUDIT.md
+
+IMPORTANT:
+
+Before writing code:
+
+1. Read all documents above.
+2. Preserve all existing functionality.
+3. Do NOT create duplicate dashboards.
+4. Do NOT create duplicate analytics systems.
+5. Do NOT create duplicate Telegram pages.
+6. Do NOT create duplicate admin pages.
+7. Consolidate before creating.
+8. Fix before expanding.
+9. Production readiness is now more important than new features.
+10. INFOX is an Intelligence Product, not a feature collection.
+
+Current Mission:
+
+Prototype → Product → Business
+
+========================================
+SPRINT 21
+OBSERVABILITY & BUSINESS INTELLIGENCE
+========================================
+
+Mission:
+
+INFOX now has enough features.
+
+The priority is no longer feature creation.
+
+The priority is:
+
+- visibility
+- analytics
+- economics
+- operational control
+- business readiness
+
+The owner must be able to answer:
+
+- How many users visited?
+- What features are used?
+- How much token was spent?
+- What costs money?
+- What creates value?
+- What is broken?
+- What should be improved?
+
+WITHOUT opening multiple dashboards.
+
+========================================
+TASK A
+FIX BROKEN ADMIN SYSTEMS
+========================================
+
+Current issue:
+
+Several admin pages still throw errors.
+
+Requirements:
+
+Audit and fix:
+
+/admin/economics
+
+/admin/system-intelligence
+
+/admin/efficiency
+
+Any route returning runtime errors.
+
+Requirements:
+
+- no blank screens
+- graceful empty states
+- fallback values
+- loading states
+- error boundaries
+
+Goal:
+
+All existing admin pages must work.
+
+========================================
+TASK B
+UNIFIED COMMAND CENTER
+========================================
+
+Create:
+
+/admin/command-center
+
+This becomes the PRIMARY admin page.
+
+Do NOT create another dashboard later.
+
+Sections:
+
+----------------------------------------
+BUSINESS
+----------------------------------------
+
+Users
+
+Visitors
+
+Retention
+
+Growth
+
+----------------------------------------
+AI ECONOMICS
+----------------------------------------
+
+Token usage
+
+Estimated cost
+
+Cost per user
+
+Cost per feature
+
+Cost per briefing
+
+Cache efficiency
+
+----------------------------------------
+PRODUCT
+----------------------------------------
+
+Feed quality
+
+Signal/noise ratio
+
+Articles processed
+
+Articles delivered
+
+Most used features
+
+----------------------------------------
+DELIVERY
+----------------------------------------
+
+Telegram health
+
+Schedules active
+
+Queue status
+
+Failed deliveries
+
+Retry jobs
+
+----------------------------------------
+SYSTEM
+----------------------------------------
+
+Workers
+
+Database
+
+API health
+
+Runtime health
+
+Degradation level
+
+Goal:
+
+Single operational view.
+
+========================================
+TASK C
+EVENT TRACKING FOUNDATION
+========================================
+
+Implement event collection.
+
+Track:
+
+PAGE_VIEW
+
+FEED_VIEW
+
+ARTICLE_OPEN
+
+BRIEFING_SAVE
+
+WATCHLIST_ADD
+
+WATCHLIST_REMOVE
+
+TELEGRAM_CONNECT
+
+TELEGRAM_TEST
+
+FEEDBACK_MORE
+
+FEEDBACK_LESS
+
+FEEDBACK_IRRELEVANT
+
+INTEREST_UPDATE
+
+Store in PostgreSQL.
+
+Requirements:
+
+Event schema must support future growth.
+
+========================================
+TASK D
+PRODUCT ANALYTICS
+========================================
+
+Create analytics aggregation.
+
+Metrics:
+
+Daily Active Users
+
+Weekly Active Users
+
+Monthly Active Users
+
+Average Session Duration
+
+Articles Viewed
+
+Briefings Saved
+
+Telegram Engagement
+
+Feature Popularity
+
+Create APIs:
+
+/api/admin/analytics
+
+/api/admin/analytics/usage
+
+/api/admin/analytics/features
+
+========================================
+TASK E
+TOKEN ACCOUNTING V2
+========================================
+
+Current issue:
+
+Token monitoring exists but is fragmented.
+
+Create unified accounting.
+
+Track:
+
+Input Tokens
+
+Output Tokens
+
+Estimated Cost
+
+Per User Cost
+
+Per Feature Cost
+
+Per Topic Cost
+
+Per Briefing Cost
+
+Per Delivery Cost
+
+Requirements:
+
+Historical storage.
+
+Daily aggregation.
+
+Monthly aggregation.
+
+========================================
+TASK F
+CONVERSION FUNNEL
+========================================
+
+Implement funnel tracking.
+
+Stages:
+
+Visitor
+
+↓
+
+Interest Setup
+
+↓
+
+Telegram Setup
+
+↓
+
+Briefing Read
+
+↓
+
+Returning User
+
+↓
+
+Future Subscriber
+
+Dashboard:
+
+show conversion percentages.
+
+Goal:
+
+Understand product adoption.
+
+========================================
+TASK G
+USER INSIGHT PANEL
+========================================
+
+Create:
+
+/admin/users
+
+Requirements:
+
+Show:
+
+Anonymous ID
+
+Created Date
+
+Last Active
+
+Topics
+
+Watchlists
+
+Signal Mode
+
+Briefings Saved
+
+Token Usage
+
+Do NOT expose passwords.
+
+Do NOT expose sensitive data.
+
+Goal:
+
+Understand actual user behavior.
+
+========================================
+TASK H
+ALERTING SYSTEM
+========================================
+
+Create admin alerts.
+
+Examples:
+
+Database unhealthy
+
+Worker offline
+
+Delivery failure spike
+
+Token burn spike
+
+Cache hit ratio collapse
+
+Display inside:
+
+/admin/command-center
+
+No external notifications yet.
+
+========================================
+TASK I
+UI CONTRAST & READABILITY
+========================================
+
+Fix remaining dark-mode issues.
+
+Requirements:
+
+Remove low contrast text.
+
+Improve visibility.
+
+Follow WCAG guidelines.
+
+Audit:
+
+settings pages
+
+admin pages
+
+feed metadata buttons
+
+signal controls
+
+Goal:
+
+Nothing should disappear into black backgrounds.
+
+========================================
+TASK J
+CONFIG CENTRALIZATION
+========================================
+
+Current issue:
+
+Hardcoded values exist.
+
+Create:
+
+/config
+
+Centralize:
+
+Thresholds
+
+Limits
+
+Token budgets
+
+Signal scoring constants
+
+Cache values
+
+Degradation triggers
+
+Goal:
+
+No scattered magic numbers.
+
+========================================
+TASK K
+DATA RETENTION POLICY
+========================================
+
+Create retention architecture.
+
+Define:
+
+Event retention
+
+Analytics retention
+
+Token history retention
+
+Delivery log retention
+
+Requirements:
+
+Configurable retention periods.
+
+Cleanup jobs.
+
+========================================
+TASK L
+DOCUMENTATION CLEANUP
+========================================
+
+Update:
+
+ARCHITECTURE.md
+
+CHANGELOG.md
+
+MASTER_INDEX.md
+
+SYSTEM_STATUS.md
+
+TOKEN_ECONOMY.md
+
+Do NOT create documentation explosion.
+
+Merge when possible.
+
+Archive obsolete docs.
+
+Reduce duplication.
+
+========================================
+SUCCESS CRITERIA
+========================================
+
+After Sprint 21:
+
+✅ All admin pages work
+
+✅ One command center exists
+
+✅ Event tracking exists
+
+✅ User analytics exists
+
+✅ Conversion funnel exists
+
+✅ Token economics visible
+
+✅ User behavior visible
+
+✅ Dark mode contrast fixed
+
+✅ Config values centralized
+
+✅ Documentation cleaner
+
+Most important:
+
+INFOX owner can finally answer:
+
+- How many users exist?
+- What do users actually do?
+- What costs money?
+- Which features matter?
+- What should be built next?
+
+========================================
+IMPLEMENTATION REPORT
+========================================
+
+Provide:
+
+Files created
+
+Files modified
+
+Files removed
+
+Admin pages fixed
+
+Analytics architecture
+
+Event schema
+
+Token accounting design
+
+Conversion funnel design
+
+Config architecture
+
+Known limitations
+
+Production readiness score
+
+Recommendation for Sprint 22
