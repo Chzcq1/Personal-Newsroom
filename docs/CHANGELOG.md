@@ -2,6 +2,58 @@
 
 ---
 
+## [2026-06-17] — Sprint 23: Authentication Foundation
+
+**What:** Real user accounts — email/password auth, Google OAuth, JWT sessions, anonymous profile migration, AuthContext, and protected routes.
+
+### Database (2 new tables)
+- `users` — canonical user table: id, email, display_name, avatar_url, password_hash, provider (anonymous/email/google), role (user/admin), tier (free/founding_member/premium_future), founding_member, waitlist_position, founder_code, anonymous_profile_id, created_at, updated_at, last_login_at
+- `user_sessions` — session tracking: id, user_id, device_hint, created_at, expires_at, last_seen, is_active
+
+### Backend (API Server)
+- `lib/db/src/schema/users.ts` — users schema
+- `lib/db/src/schema/userSessions.ts` — sessions schema
+- `artifacts/api-server/src/repositories/userRepository.ts` — full CRUD for users + sessions
+- `artifacts/api-server/src/services/auth/authService.ts` — bcryptjs password hashing, JWT signing/verification (30d expiry), Google OAuth2 manual flow
+- `artifacts/api-server/src/middleware/auth.ts` — ACTIVATED: real JWT verification in requireAuth/requireAdmin, optionalAuth; AuthedRequest type replaces module augmentation
+- `artifacts/api-server/src/routes/auth.ts` — 8 new endpoints:
+  - `POST /api/auth/register` — email/password registration + anonymous profile linking
+  - `POST /api/auth/login` — email/password login → JWT
+  - `POST /api/auth/logout` — deactivates session
+  - `GET /api/auth/me` — current user from JWT
+  - `POST /api/auth/refresh` — refresh token
+  - `POST /api/auth/migrate` — link anonymous profile to account
+  - `GET /api/auth/google` — Google OAuth redirect
+  - `GET /api/auth/google/callback` — OAuth callback → JWT → frontend redirect
+  - `GET /api/auth/google/status` — whether Google OAuth is configured
+- `artifacts/api-server/src/app.ts` — added cookie-parser middleware
+
+### Frontend (Newsroom)
+- `artifacts/newsroom/src/contexts/AuthContext.tsx` — NEW: AuthProvider + useAuth() hook; login, register, loginWithGoogle, logout, profileId, isAdmin, isAuthenticated
+- `artifacts/newsroom/src/components/auth/ProtectedRoute.tsx` — ACTIVATED: real JWT check, redirect to /auth/login if unauthenticated, redirect to / if non-admin
+- `artifacts/newsroom/src/pages/auth/login.tsx` — REPLACED: real email/password form + Google OAuth button
+- `artifacts/newsroom/src/pages/auth/signup.tsx` — NEW: registration form (email, password, name) with anonymous data migration note
+- `artifacts/newsroom/src/pages/auth/callback.tsx` — NEW: OAuth callback handler (reads ?token= param, stores JWT, redirects to /profile)
+- `artifacts/newsroom/src/pages/profile.tsx` — AUTH-AWARE: shows real display name/email/avatar, "Create Account" CTA for anonymous users, sign-out button
+- `artifacts/newsroom/src/App.tsx` — wrapped with AuthProvider, added /auth/signup + /auth/callback routes
+
+### Security
+- Passwords hashed with bcryptjs (12 rounds)
+- JWT signed with HS256, 30-day expiry, stored in localStorage
+- ADMIN_EMAILS env var designates admin accounts on login/register
+- Google OAuth: manual flow, no passport dependency
+- Session tracking in DB with expiry + last_seen
+
+### Anonymous Migration Strategy
+- On register/Google login: pass anonymousProfileId → server links user_profiles row, sets migration_ready=true
+- JWT payload carries profileId (= anonymous profile ID) so all existing API routes (interests, watchlist, saved briefings) work unchanged
+- Zero data loss on account creation
+
+**Files modified:** 14 files (6 new, 8 updated)
+**DB push:** users + user_sessions tables created in PostgreSQL
+
+---
+
 ## [2026-06-17] — Sprint 21: Observability & Business Intelligence
 
 **What:** Observability sprint — zero new product features; all work improves visibility into what is running and fixes routes that were silently broken.

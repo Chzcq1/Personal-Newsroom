@@ -11,11 +11,9 @@ export interface AuthUser {
   sessionId: string;
 }
 
-declare module "express-serve-static-core" {
-  interface Request {
-    user?: AuthUser;
-  }
-}
+// Typed request that carries an authenticated user — use instead of module augmentation
+// (tsconfig "types":["node"] prevents express-serve-static-core from being augmented directly)
+export type AuthedRequest = Request & { user: AuthUser };
 
 function extractToken(req: Request): string | null {
   const authHeader = req.headers.authorization;
@@ -45,7 +43,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
   try {
     const payload = verifyJwt(token);
-    req.user = payloadToAuthUser(payload);
+    (req as AuthedRequest).user = payloadToAuthUser(payload);
     void touchSession(payload.sessionId);
     next();
   } catch {
@@ -65,7 +63,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    req.user = payloadToAuthUser(payload);
+    (req as AuthedRequest).user = payloadToAuthUser(payload);
     void touchSession(payload.sessionId);
     next();
   } catch {
@@ -85,11 +83,18 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
   if (token) {
     try {
       const payload = verifyJwt(token);
-      req.user = payloadToAuthUser(payload);
+      (req as AuthedRequest).user = payloadToAuthUser(payload);
       void touchSession(payload.sessionId);
     } catch {
       // Token present but invalid — proceed as anonymous
     }
   }
   next();
+}
+
+/** Helper — read auth user after requireAuth middleware. Throws if not present. */
+export function getAuthUser(req: Request): AuthUser {
+  const user = (req as AuthedRequest).user;
+  if (!user) throw new Error("requireAuth middleware must run first");
+  return user;
 }

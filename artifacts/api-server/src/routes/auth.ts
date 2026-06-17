@@ -20,7 +20,7 @@ import {
   deactivateSession,
 } from "../repositories/userRepository.js";
 import { upsertProfile } from "../repositories/userProfileRepository.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, getAuthUser } from "../middleware/auth.js";
 import { logger } from "../lib/logger.js";
 
 const router = Router();
@@ -121,9 +121,9 @@ router.post("/auth/login", async (req, res) => {
 // ── POST /auth/logout ───────────────────────────────────────
 
 router.post("/auth/logout", requireAuth, async (req, res) => {
-  const sessionId = req.user?.sessionId;
-  if (sessionId && sessionId !== "fallback") {
-    await deactivateSession(sessionId);
+  const authUser = getAuthUser(req);
+  if (authUser.sessionId && authUser.sessionId !== "fallback") {
+    await deactivateSession(authUser.sessionId);
   }
   res.json({ ok: true });
 });
@@ -131,11 +131,7 @@ router.post("/auth/logout", requireAuth, async (req, res) => {
 // ── GET /auth/me ────────────────────────────────────────────
 
 router.get("/auth/me", requireAuth, async (req, res) => {
-  const userId = req.user?.userId;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
+  const userId = getAuthUser(req).userId;
   const user = await getUserById(userId);
   if (!user) {
     res.status(404).json({ error: "User not found" });
@@ -176,7 +172,7 @@ router.post("/auth/migrate", requireAuth, async (req, res) => {
     res.status(400).json({ error: "anonymousProfileId required" });
     return;
   }
-  const userId = req.user!.userId;
+  const userId = getAuthUser(req).userId;
   const user = await getUserById(userId);
   if (!user) {
     res.status(404).json({ error: "User not found" });
