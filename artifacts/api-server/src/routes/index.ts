@@ -30,6 +30,7 @@ import adminAnalyticsRouter from "./adminAnalytics.js";
 import interestRouter from "./interestRoutes.js";
 import watchlistRouter from "./watchlistRoutes.js";
 import discoverRouter from "./discoverRoutes.js";
+import authRouter from "./auth.js";
 
 const router: IRouter = Router();
 
@@ -64,5 +65,6 @@ router.use(adminAnalyticsRouter);
 router.use(interestRouter);
 router.use(watchlistRouter);
 router.use(discoverRouter);
+router.use(authRouter);
 
 export default router;

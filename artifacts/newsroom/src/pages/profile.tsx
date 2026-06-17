@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   User,
@@ -12,12 +12,15 @@ import {
   Cpu,
   Clock,
   Hash,
+  LogOut,
+  LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BottomNav } from "@/components/BottomNav";
-import { getOrCreateProfile, getProfileStats } from "@/lib/userIdentity";
+import { getProfileStats } from "@/lib/userIdentity";
 import { getSavedCount } from "@/lib/briefingStorage";
+import { useAuth } from "@/contexts/AuthContext";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -59,7 +62,8 @@ function WeightBar({ weight }: { weight: number }) {
 }
 
 export default function ProfilePage() {
-  const profile = getOrCreateProfile();
+  const { user, logout, profileId, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
   const stats = getProfileStats();
   const [interests, setInterests] = useState<Interest[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
@@ -67,38 +71,61 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const pid = profile.profileId;
     Promise.all([
-      fetch(`${BASE}/api/interests/${pid}`).then((r) => r.json()).catch(() => ({})),
-      fetch(`${BASE}/api/watchlist/${pid}`).then((r) => r.json()).catch(() => ({})),
+      fetch(`${BASE}/api/interests/${profileId}`).then((r) => r.json()).catch(() => ({})),
+      fetch(`${BASE}/api/watchlist/${profileId}`).then((r) => r.json()).catch(() => ({})),
     ]).then(([iData, wData]) => {
       setInterests((iData.interests ?? []).sort((a: Interest, b: Interest) => b.weight - a.weight));
       setWatchlist(wData.items ?? []);
     }).finally(() => setLoading(false));
-  }, [profile.profileId]);
+  }, [profileId]);
 
   const topInterests = interests.slice(0, 5);
   const completionPct = Math.min(100, Math.round(
-    (interests.length >= 3 ? 40 : (interests.length / 3) * 40) +
+    (isAuthenticated ? 20 : 0) +
+    (interests.length >= 3 ? 30 : (interests.length / 3) * 30) +
     (watchlist.length > 0 ? 20 : 0) +
     (savedCount > 0 ? 20 : 0) +
-    (profile.sessionCount >= 3 ? 20 : 0)
+    ((stats?.sessionCount ?? 0) >= 3 ? 10 : 0)
   ));
+
+  async function handleLogout() {
+    await logout();
+    setLocation("/");
+  }
+
+  const displayName = user?.displayName ?? (isAuthenticated ? user?.email?.split("@")[0] : null) ?? "Anonymous Reader";
+  const shortId = stats?.shortId ?? "—";
+  const accountAge = user
+    ? new Date(user.createdAt).toLocaleDateString("en", { month: "short", year: "numeric" })
+    : stats?.accountAge ?? "—";
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
       <header className="border-b border-border/60 bg-background/95 sticky top-0 z-10 backdrop-blur">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <User className="w-5 h-5 text-primary shrink-0" />
             <h1 className="text-base font-semibold text-foreground">Profile</h1>
           </div>
-          <Link to="/settings">
-            <Button variant="ghost" size="icon" className="w-8 h-8">
-              <Settings className="w-4 h-4 text-muted-foreground" />
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {isAuthenticated && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-destructive"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sign out
+              </Button>
+            )}
+            <Link to="/settings">
+              <Button variant="ghost" size="icon" className="w-8 h-8">
+                <Settings className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -110,27 +137,51 @@ export default function ProfilePage() {
           className="rounded-2xl border border-border/60 bg-card/50 p-5 space-y-4"
         >
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <User className="w-7 h-7 text-primary" />
+            <div className="relative w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-7 h-7 text-primary" />
+              )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground">Anonymous Reader</p>
-              <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                #{stats?.shortId ?? "—"}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+                {user?.foundingMember && (
+                  <Badge className="text-[10px] bg-amber-500/20 text-amber-400 border-amber-400/30 shrink-0">
+                    Founder
+                  </Badge>
+                )}
+                {!isAuthenticated && (
+                  <Badge variant="outline" className="text-[10px] text-muted-foreground shrink-0">
+                    Anonymous
+                  </Badge>
+                )}
+              </div>
+              {user?.email && (
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{user.email}</p>
+              )}
+              {!user?.email && (
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">#{shortId}</p>
+              )}
               <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  {stats?.accountAge ?? "—"}
+                  {accountAge}
                 </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {stats?.sessionCount ?? 0} sessions
-                </span>
+                {!isAuthenticated && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {stats?.sessionCount ?? 0} sessions
+                  </span>
+                )}
+                {user && (
+                  <Badge variant="outline" className="text-[10px] capitalize">{user.tier.replace("_", " ")}</Badge>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Completion meter */}
+          {/* Profile completeness */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">Profile completeness</span>
@@ -145,6 +196,20 @@ export default function ProfilePage() {
               />
             </div>
           </div>
+
+          {/* Create account CTA for anonymous users */}
+          {!isAuthenticated && (
+            <Link to="/auth/signup">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors cursor-pointer">
+                <LogIn className="w-4 h-4 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-primary">Create Account</p>
+                  <p className="text-[11px] text-muted-foreground">Own your data across devices</p>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-primary/60 ml-auto shrink-0" />
+              </div>
+            </Link>
+          )}
         </motion.div>
 
         {/* Stats row */}

@@ -1,0 +1,452 @@
+READ FIRST — MANDATORY
+
+Before making ANY code changes, read and follow:
+
+- AGENT_ARCHITECTURE.md
+- AGENT_RULES.md
+- PROJECT_VISION.md
+- SYSTEM_STATUS.md
+- MASTER_INDEX.md
+- CONSOLIDATION_AUDIT.md
+- IDENTITY_FOUNDATION.md
+- LOGIN_PREPARATION.md
+- PERSISTENT_INFRASTRUCTURE.md
+
+Preserve all existing functionality.
+
+Do NOT create duplicate auth systems.
+
+Do NOT create multiple user models.
+
+Do NOT create payment systems yet.
+
+==================================================
+SPRINT 23
+AUTHENTICATION FOUNDATION
+(PRODUCTION USER IDENTITY)
+==================================================
+
+MISSION
+
+INFOX now has:
+
+✓ onboarding
+✓ interests
+✓ watchlist
+✓ profile
+✓ personalized feed foundation
+
+The next requirement:
+
+Users must own their intelligence profile.
+
+Sprint 23 creates:
+
+REAL USER ACCOUNTS
+
+without implementing billing yet.
+
+Goal:
+
+Anonymous users become real users.
+
+==================================================
+CRITICAL RULES
+==================================================
+
+DO NOT:
+
+- implement payment
+- implement subscriptions
+- implement premium plans
+- implement token purchasing
+- implement social posting
+- implement AI chat
+
+ONLY:
+
+- authentication
+- identity
+- sessions
+- user ownership
+- profile migration
+
+==================================================
+TASK A
+CANONICAL USER MODEL
+==================================================
+
+Create ONE canonical user model.
+
+Database:
+
+users
+
+Fields:
+
+id
+email
+display_name
+avatar_url
+provider
+role
+tier
+created_at
+updated_at
+last_login_at
+
+Provider values:
+
+anonymous
+email
+google
+
+Role values:
+
+user
+admin
+
+Tier values:
+
+free
+founding_member
+premium_future
+
+Requirements:
+
+No duplicate user tables.
+
+One source of truth only.
+
+==================================================
+TASK B
+GOOGLE LOGIN
+==================================================
+
+Implement:
+
+Google OAuth
+
+Requirements:
+
+- login
+- logout
+- callback flow
+- account creation
+- account linking
+
+Store:
+
+email
+name
+avatar
+
+Requirements:
+
+Returning users reuse account.
+
+No duplicate accounts.
+
+==================================================
+TASK C
+EMAIL LOGIN
+==================================================
+
+Implement:
+
+Email + Password
+
+Requirements:
+
+- register
+- login
+- logout
+- password hashing
+- password validation
+
+Use:
+
+bcrypt or equivalent
+
+Requirements:
+
+Never store plaintext passwords.
+
+==================================================
+TASK D
+JWT AUTHENTICATION
+==================================================
+
+Replace Sprint 20 auth stubs.
+
+Implement:
+
+JWT access tokens
+
+Requirements:
+
+- token creation
+- token verification
+- token expiration
+- refresh flow architecture
+
+Middleware:
+
+requireAuth
+requireAdmin
+
+must become functional.
+
+==================================================
+TASK E
+SESSION MANAGEMENT
+==================================================
+
+Create:
+
+user_sessions
+
+Track:
+
+session id
+user id
+device
+created_at
+expires_at
+last_seen
+
+Requirements:
+
+User can remain logged in.
+
+Support future multi-device use.
+
+==================================================
+TASK F
+ANONYMOUS ACCOUNT MIGRATION
+==================================================
+
+Critical requirement.
+
+Current users already have:
+
+- interests
+- watchlists
+- saved briefings
+- preferences
+
+When user creates account:
+
+anonymous profile
+
+→
+
+real account
+
+Data must migrate automatically.
+
+Nothing lost.
+
+==================================================
+TASK G
+PROFILE OWNERSHIP
+==================================================
+
+Profile page must display:
+
+- avatar
+- display name
+- email
+- joined date
+- interests
+- watchlist
+- saved items
+
+Authentication aware.
+
+Anonymous users see:
+
+"Create Account"
+
+instead.
+
+==================================================
+TASK H
+AUTH CONTEXT
+==================================================
+
+Create:
+
+AuthContext
+
+Capabilities:
+
+login
+logout
+register
+current user
+loading state
+
+Requirements:
+
+Entire frontend uses one auth source.
+
+==================================================
+TASK I
+ROUTE PROTECTION
+==================================================
+
+Activate:
+
+ProtectedRoute
+
+Protect:
+
+/profile
+/watchlist
+/future premium areas
+
+Admin only:
+
+/admin/*
+
+Requirements:
+
+Unauthenticated users redirected safely.
+
+==================================================
+TASK J
+ADMIN SEPARATION
+==================================================
+
+Begin true separation.
+
+Requirements:
+
+Admin routes hidden from users.
+
+User navigation must contain ONLY:
+
+Feed
+Discover
+Watchlist
+Profile
+
+No operational tools.
+
+No admin shortcuts.
+
+==================================================
+TASK K
+AUDIT & SECURITY
+==================================================
+
+Implement:
+
+- password hashing
+- JWT verification
+- auth logging
+- login failure tracking
+- rate limiting preparation
+
+Goal:
+
+Prevent obvious abuse.
+
+==================================================
+TASK L
+FOUNDING MEMBER PREPARATION
+==================================================
+
+Create account flags.
+
+Fields:
+
+founding_member
+waitlist_position
+founder_code
+
+No payment yet.
+
+No subscriptions yet.
+
+Preparation only.
+
+==================================================
+SUCCESS CRITERIA
+==================================================
+
+Sprint complete ONLY IF:
+
+✓ Google Login works
+
+✓ Email Login works
+
+✓ JWT works
+
+✓ Sessions work
+
+✓ User table exists
+
+✓ Anonymous migration works
+
+✓ AuthContext works
+
+✓ Protected routes work
+
+✓ Admin routes separated
+
+✓ Profile ownership works
+
+✓ Existing user data survives migration
+
+✓ No duplicate identity systems
+
+==================================================
+DELIVERABLE REPORT
+==================================================
+
+Return:
+
+1. Files Created
+
+2. Files Modified
+
+3. Database Changes
+
+4. Auth Architecture
+
+5. JWT Design
+
+6. Session Design
+
+7. Anonymous Migration Strategy
+
+8. Security Decisions
+
+9. Verification URLs
+
+10. Production Readiness Score
+
+==================================================
+COO INSTRUCTION
+==================================================
+
+This sprint is NOT about monetization.
+
+This sprint is about ownership.
+
+The user must be able to say:
+
+"This account is mine."
+
+Only after that can INFOX safely sell:
+
+- subscriptions
+- premium intelligence
+- telegram delivery
+- token plans
+
+Build identity first.
+
+Build revenue later.

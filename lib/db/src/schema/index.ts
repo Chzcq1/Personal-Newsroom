@@ -11,3 +11,5 @@ export * from "./entityMemory";
 export * from "./deliveryQueue";
 export * from "./analyticsEvents";
 export * from "./tokenUsageDaily";
+export * from "./users";
+export * from "./userSessions";

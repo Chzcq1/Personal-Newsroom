@@ -2,6 +2,7 @@ import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Core user pages
 import Home from "@/pages/home";
@@ -34,8 +35,10 @@ import EfficiencyAdminPage from "@/pages/admin/efficiency";
 import DebugCenterPage from "@/pages/admin/debug";
 import CommandCenterPage from "@/pages/admin/command-center";
 
-// Auth placeholders
+// Auth (Sprint 23)
 import LoginPage from "@/pages/auth/login";
+import SignupPage from "@/pages/auth/signup";
+import CallbackPage from "@/pages/auth/callback";
 
 const queryClient = new QueryClient();
 
@@ -68,10 +71,12 @@ function Router() {
       <Route path="/admin/efficiency" component={EfficiencyAdminPage} />
       <Route path="/admin/debug" component={DebugCenterPage} />
 
-      {/* ── Auth ────────────────────────────────────────────── */}
+      {/* ── Auth (Sprint 23) ─────────────────────────────────── */}
       <Route path="/auth/login" component={LoginPage} />
+      <Route path="/auth/signup" component={SignupPage} />
+      <Route path="/auth/callback" component={CallbackPage} />
 
-      {/* ── Retired routes → redirects (Sprint 22) ──────────── */}
+      {/* ── Retired routes → redirects ───────────────────────── */}
       <Route path="/my-feed">
         {() => <Redirect to="/" />}
       </Route>
@@ -150,9 +155,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
+        <AuthProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+        </AuthProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
