@@ -58,6 +58,8 @@ import {
 } from "../services/intelligence/narrativeMemory.js";
 import { logger } from "../lib/logger.js";
 import type { RssArticle } from "../services/news/rssService.js";
+import { fetchFeed } from "../services/news/rssService.js";
+import { getSourcesForEntities } from "../services/news/entityResolver.js";
 
 const router = Router();
 
@@ -255,6 +257,31 @@ router.post("/feed/personal", async (req, res) => {
       for (const article of articles) {
         rawArticles.push({ ...article, topicId });
       }
+    }
+
+    // ── Entity-specific sources (Sprint 26) ───────────────────
+    // Fetch from entity/watchlist-specific RSS feeds in addition
+    // to general topic feeds, giving users articles about exactly
+    // what they follow (BTC, NVDA, OpenAI, etc.)
+    const entitySources = getSourcesForEntities(interests, watchlist);
+    if (entitySources.length > 0) {
+      const entityResults = await Promise.allSettled(
+        entitySources.map(async (src) => {
+          const result = await fetchFeed(src.url, src.name);
+          return { topicId: src.category, articles: result.articles };
+        }),
+      );
+      for (const result of entityResults) {
+        if (result.status === "rejected") continue;
+        const { topicId, articles } = result.value;
+        for (const article of articles) {
+          rawArticles.push({ ...article, topicId });
+        }
+      }
+      logger.debug(
+        { entitySourceCount: entitySources.length, entities: entitySources.map((s) => s.entity) },
+        "Entity-specific sources injected into feed",
+      );
     }
 
     // Deduplicate by URL

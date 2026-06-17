@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
   Users, Zap, Send, Activity, Database, Server, AlertTriangle,
   CheckCircle2, XCircle, TrendingUp, BarChart3, Clock, Shield,
-  RefreshCw, ArrowRight, Radio, Layers, DollarSign, Eye,
+  RefreshCw, ArrowRight, Radio, Layers, DollarSign, Eye, CreditCard,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -205,6 +205,26 @@ export default function CommandCenterPage() {
     queryKey: ["cc-infra"],
     queryFn: () => fetchJson(api("/economics/infrastructure")),
     refetchInterval: 180_000,
+  });
+
+  const qc = useQueryClient();
+  const { data: paymentsData, refetch: refetchPayments } = useQuery({
+    queryKey: ["cc-payments"],
+    queryFn: () => fetchJson(api("/billing/admin/payments")),
+    refetchInterval: 30_000,
+  });
+
+  const confirmPayment = useMutation({
+    mutationFn: ({ txnId, userId, planId }: { txnId: string; userId: string; planId?: string }) =>
+      fetch(api(`/billing/payment/${txnId}/confirm`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, planId }),
+      }).then((r) => r.json()),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["cc-payments"] });
+      void refetchPayments();
+    },
   });
 
   // ── Derived values ─────────────────────────────────────────
@@ -553,6 +573,77 @@ export default function CommandCenterPage() {
             </CardContent>
           </Card>
         </div>
+      </section>
+
+      {/* ── Payments (Sprint 26) ──────────────────────────── */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <SectionTitle>Payments</SectionTitle>
+          <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-muted-foreground h-7" onClick={() => void refetchPayments()}>
+            <RefreshCw className="h-3 w-3" /> Refresh
+          </Button>
+        </div>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-primary" />
+              Pending Payment Verifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const rows: Array<{
+                id: string; userId: string; amountThb: number;
+                status: string; paymentProvider: string; createdAt: string;
+              }> = paymentsData?.payments ?? [];
+              if (rows.length === 0) {
+                return (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    ไม่มีรายการชำระเงิน
+                  </p>
+                );
+              }
+              return (
+                <div className="space-y-2">
+                  {rows.map((p) => (
+                    <div key={p.id} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/30 border border-border">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <Badge
+                            variant={
+                              p.status === "confirmed" ? "outline" :
+                              p.status === "pending" ? "secondary" : "destructive"
+                            }
+                            className="text-[10px]"
+                          >
+                            {p.status}
+                          </Badge>
+                          <span className="text-xs font-semibold">฿{p.amountThb}</span>
+                          <span className="text-xs text-muted-foreground">{p.paymentProvider}</span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground font-mono truncate">{p.id}</p>
+                        <p className="text-[11px] text-muted-foreground">User: {p.userId}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {new Date(p.createdAt).toLocaleString("th-TH")}
+                        </p>
+                      </div>
+                      {p.status === "pending" && (
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white flex-shrink-0"
+                          disabled={confirmPayment.isPending}
+                          onClick={() => confirmPayment.mutate({ txnId: p.id, userId: p.userId })}
+                        >
+                          Confirm
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

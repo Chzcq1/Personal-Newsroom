@@ -32,6 +32,7 @@ import watchlistRouter from "./watchlistRoutes.js";
 import discoverRouter from "./discoverRoutes.js";
 import authRouter from "./auth.js";
 import billingRouter from "./billing.js";
+import trendsRouter from "./trends.js";
 
 const router: IRouter = Router();
 
@@ -68,5 +69,6 @@ router.use(watchlistRouter);
 router.use(discoverRouter);
 router.use(authRouter);
 router.use(billingRouter);
+router.use(trendsRouter);
 
 export default router;

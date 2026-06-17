@@ -15,3 +15,4 @@ export * from "./users";
 export * from "./userSessions";
 export * from "./plans";
 export * from "./subscriptions";
+export * from "./trendItems";

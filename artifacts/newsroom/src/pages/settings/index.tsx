@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowLeft, Send, Heart, ChevronRight, Check, X,
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { hasTelegramSettings } from "@/lib/telegramSettings";
 import { getInterests } from "@/lib/interestProfile";
 import { getPersonality, PERSONALITY_OPTIONS } from "@/lib/personalitySettings";
-import { isExecutiveModeEnabled } from "@/lib/executiveMode";
+import { isExecutiveModeEnabled, setExecutiveMode } from "@/lib/executiveMode";
 
 function SettingsRow({
   href, icon, iconBg, iconColor, title, badge, description, badgeVariant = "default",
@@ -72,7 +73,7 @@ export default function SettingsPage() {
   const interests = getInterests();
   const personality = getPersonality();
   const personalityOption = PERSONALITY_OPTIONS.find((p) => p.id === personality);
-  const execMode = isExecutiveModeEnabled();
+  const [execMode, setExecModeState] = useState(isExecutiveModeEnabled);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -153,17 +154,31 @@ export default function SettingsPage() {
           badge={<Badge variant="info">{personalityOption?.name ?? "Analyst"}</Badge>}
         />
 
-        <SettingsRow
-          href="/settings/preferences"
-          icon={<Zap className="w-4 h-4" />}
-          iconBg={execMode ? "bg-amber-500/15" : "bg-white/8"}
-          iconColor={execMode ? "text-amber-400" : "text-white/40"}
-          title="Preferences"
-          description="Executive Mode — 5-bullet briefings, 90-second reads"
-          badge={execMode
-            ? <Badge variant="warning"><Check className="w-3 h-3" /> Exec Mode</Badge>
-            : undefined}
-        />
+        {/* Exec Mode inline toggle (no separate page) */}
+        <Card className={`border transition-colors ${execMode ? "border-amber-500/25 bg-amber-500/5" : "border-white/10 bg-white/5"}`}>
+          <CardContent className="p-4 flex items-center gap-3.5">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${execMode ? "bg-amber-500/15" : "bg-white/8"}`}>
+              <Zap className={`w-4 h-4 ${execMode ? "text-amber-400" : "text-white/40"}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                <p className="font-medium text-white text-sm">Executive Mode</p>
+                {execMode && (
+                  <Badge variant="warning"><Check className="w-3 h-3" /> On</Badge>
+                )}
+              </div>
+              <p className="text-xs text-white/45 leading-relaxed">5-bullet briefings, 90-second reads</p>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => { setExecutiveMode(!execMode); setExecModeState(!execMode); }}
+              className={`text-xs flex-shrink-0 ${execMode ? "text-amber-400 hover:text-amber-300" : "text-white/40 hover:text-white"}`}
+            >
+              {execMode ? "ปิด" : "เปิด"}
+            </Button>
+          </CardContent>
+        </Card>
 
         <SettingsRow
           href="/settings/topics"

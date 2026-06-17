@@ -8,6 +8,7 @@
 import { RetryWorker } from "./retryWorker.js";
 import { NarrativeWorker } from "./narrativeWorker.js";
 import { AnalyticsWorker } from "./analyticsWorker.js";
+import { TrendIngestionWorker } from "./trendIngestionWorker.js";
 import type { IWorker, WorkerHealth } from "./workerTypes.js";
 import { logger } from "../lib/logger.js";
 
@@ -15,6 +16,7 @@ const workers: IWorker[] = [
   new RetryWorker(),
   new NarrativeWorker(),
   new AnalyticsWorker(),
+  new TrendIngestionWorker(),
 ];
 
 export function startAllWorkers(): void {

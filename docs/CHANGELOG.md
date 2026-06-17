@@ -2,6 +2,73 @@
 
 ---
 
+## [2026-06-17] — Sprint 26: Real-Time Intelligence + Payment Activation
+
+**What:** Transformed prototype into working personalized intelligence platform. Real trend ingestion, live PromptPay QR payment flow, entityResolver wired into feed pipeline, route retirement, exec mode toggle inline.
+
+### T001: DB Schema — trend_items table
+- `lib/db/src/schema/trendItems.ts` — NEW: trend_items table (id, source, title, summary, url, entity_tags, topic_tags, published_at, engagement_score, source_trust_score, language, ingested_at, expires_at with 24h TTL)
+- `lib/db/src/schema/index.ts` — exports trendItems
+- DB push applied — trend_items table created with 3 indexes
+
+### T002: Trend Ingestion Service
+- `services/trendIngestion/index.ts` — NEW: orchestrator + TrendItem normalizer + DB persistence + in-memory cache + read functions
+- `providers/redditProvider.ts` — NEW: Reddit RSS (r/CryptoCurrency, r/stocks, r/artificial, r/technology, r/geopolitics, r/startups)
+- `providers/youtubeProvider.ts` — NEW: YouTube RSS (CNBC, Bloomberg, TechCrunch, Lex Fridman, Two Minute Papers)
+- `providers/googleNewsProvider.ts` — NEW: Google News RSS (8 keyword-based feeds: Bitcoin, AI, stocks, Thailand economy, Fed, Nvidia, geopolitics, startups)
+- `providers/twitterProvider.ts` — NEW: Twitter/X adapter interface (disabled, future-ready)
+- `providers/socialProvider.ts` — NEW: TikTok/Instagram/Facebook adapter interface (disabled, future-ready)
+- `workers/trendIngestionWorker.ts` — NEW: 15-minute interval worker
+- `workers/workerRegistry.ts` — TrendIngestionWorker registered (4 total workers)
+- `routes/trends.ts` — NEW: GET /api/trends/recent, GET /api/trends/feed, GET /api/trends/status, POST /api/trends/ingest
+- `routes/index.ts` — trendsRouter registered
+
+### T003: PromptPay QR Payment Flow
+- `routes/billing.ts` — EXTENDED: POST /billing/payment/initiate (PromptPay QR), GET /billing/payment/:id/status (polling), POST /billing/payment/:id/confirm (admin verify → activate subscription), GET /billing/admin/payments (list)
+- `pages/settings/billing.tsx` — REPLACED: real PromptPay QR flow using promptpay-qr + qrcode packages
+  - PaymentQrModal component: QR code rendered in browser, 4-second polling, success detection
+  - Active upgrade buttons (enabled when PROMPTPAY_PHONE_NUMBER env var is set)
+  - Transaction ID displayed for manual slip matching
+- Installed: `qrcode` + `promptpay-qr` in @workspace/newsroom
+
+### T004: Admin Payment Verification
+- `pages/admin/command-center.tsx` — EXTENDED: Payments section at bottom
+  - Lists all recent payments with status badge, amount, user, timestamp
+  - "Confirm" button calls POST /billing/payment/:id/confirm
+  - Polls every 30 seconds, manual refresh button
+
+### T005: Feed Pipeline Wire-up
+- `routes/feed.ts` — `getSourcesForEntities()` from entityResolver.ts now wired into /feed/personal
+  - After topic-based collection, entity-specific RSS sources are fetched
+  - Watchlist items (BTC, NVDA, OpenAI, Tesla, etc.) trigger dedicated feeds
+  - Entity sources merged into rawArticles pool before deduplication + ranking
+  - Debug log traces which entities injected which sources
+
+### T006: Product Flow Cleanup + Route Retirement
+- `App.tsx` — Removed dead `Home` import (page replaced by /my-feed redirect)
+- `App.tsx` — `/settings/preferences` retired → redirects to `/settings`
+- `App.tsx` — `/admin/narratives` retired → redirects to `/intelligence-center`
+- `App.tsx` — Removed AdminNarrativesPage import
+- `settings/index.tsx` — Exec Mode toggle now inline in settings hub (no separate page)
+  - Toggle button updates localStorage + local state immediately
+  - Amber accent when enabled, white/muted when disabled
+- Route budget: 22 → 20 (within ≤20 constraint)
+
+### T007: Google OAuth Verification
+- Auth code handles `GOOGLE_CLIENT_ID` absence gracefully (redirects with `?error=google_not_configured`)
+- Setup requires: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` in Replit Secrets
+- Redirect URI: `https://<REPLIT_DEV_DOMAIN>/api/auth/google/callback`
+
+### T008: Configuration Requirements (env vars to activate features)
+- `PROMPTPAY_PHONE_NUMBER` — activates PromptPay QR payments (10-digit Thai mobile number)
+- `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` — activates Google OAuth login
+- `ADMIN_EMAILS` — comma-separated emails with admin role (already documented)
+
+**Files modified:** 15 new, 12 updated
+**DB push:** trend_items table with 3 indexes
+
+---
+
 ## [2026-06-17] — Sprint 25: Product Convergence + Payment Foundation
 
 **What:** Feed unification, entity-source resolver, auto-refresh, billing foundation, admin/user separation.

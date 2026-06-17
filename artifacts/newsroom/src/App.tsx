@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 // Core user pages
-import Home from "@/pages/home";
 import SavedBriefings from "@/pages/saved-briefings";
 import OnboardingPage from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
@@ -23,7 +22,6 @@ import MyFeedPage from "@/pages/my-feed";
 import SettingsPage from "@/pages/settings/index";
 import TopicsPage from "@/pages/settings/topics";
 import PersonalityPage from "@/pages/settings/personality";
-import PreferencesPage from "@/pages/settings/preferences";
 import SignalModePage from "@/pages/settings/signal-mode";
 
 // Delivery Studio
@@ -34,7 +32,6 @@ import IntelligenceCenterPage from "@/pages/intelligence-center";
 
 // Admin pages
 import EconomicsPage from "@/pages/admin/economics";
-import AdminNarrativesPage from "@/pages/admin/narratives";
 import EfficiencyAdminPage from "@/pages/admin/efficiency";
 import DebugCenterPage from "@/pages/admin/debug";
 import CommandCenterPage from "@/pages/admin/command-center";
@@ -64,20 +61,24 @@ function Router() {
       <Route path="/settings" component={SettingsPage} />
       <Route path="/settings/topics" component={TopicsPage} />
       <Route path="/settings/personality" component={PersonalityPage} />
-      <Route path="/settings/preferences" component={PreferencesPage} />
       <Route path="/settings/signal-mode" component={SignalModePage} />
+      <Route path="/settings/preferences">
+        {() => <Redirect to="/settings" />}
+      </Route>
       <Route path="/settings/billing" component={BillingPage} />
 
       {/* ── Hub pages (2) ───────────────────────────────────── */}
       <Route path="/delivery-studio" component={DeliveryStudioPage} />
       <Route path="/intelligence-center" component={IntelligenceCenterPage} />
 
-      {/* ── Admin (5, within budget) ────────────────────────── */}
+      {/* ── Admin (4, retired /admin/narratives → /intelligence-center) ── */}
       <Route path="/admin/command-center" component={CommandCenterPage} />
       <Route path="/admin/economics" component={EconomicsPage} />
-      <Route path="/admin/narratives" component={AdminNarrativesPage} />
       <Route path="/admin/efficiency" component={EfficiencyAdminPage} />
       <Route path="/admin/debug" component={DebugCenterPage} />
+      <Route path="/admin/narratives">
+        {() => <Redirect to="/intelligence-center" />}
+      </Route>
 
       {/* ── Auth (Sprint 23) ─────────────────────────────────── */}
       <Route path="/auth/login" component={LoginPage} />
