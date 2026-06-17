@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import SavedBriefings from "@/pages/saved-briefings";
 import OnboardingPage from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
+import BillingPage from "@/pages/settings/billing";
 
 // Sprint 22 — Personalization
 import DiscoverPage from "@/pages/discover";
@@ -48,20 +49,24 @@ const queryClient = new QueryClient();
 function Router() {
   return (
     <Switch>
-      {/* ── Core user routes (6, within budget) ─────────────── */}
-      <Route path="/" component={Home} />
+      {/* ── Core user routes ──────────────────────────────────── */}
+      {/* "/" → For You Feed (product homepage) */}
+      <Route path="/">
+        {() => <Redirect to="/my-feed" />}
+      </Route>
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/saved" component={SavedBriefings} />
       <Route path="/discover" component={DiscoverPage} />
       <Route path="/watchlist" component={WatchlistPage} />
       <Route path="/profile" component={ProfilePage} />
 
-      {/* ── Settings (5 pages, within ≤7 budget) ─────────────── */}
+      {/* ── Settings ─────────────────────────────────────────── */}
       <Route path="/settings" component={SettingsPage} />
       <Route path="/settings/topics" component={TopicsPage} />
       <Route path="/settings/personality" component={PersonalityPage} />
       <Route path="/settings/preferences" component={PreferencesPage} />
       <Route path="/settings/signal-mode" component={SignalModePage} />
+      <Route path="/settings/billing" component={BillingPage} />
 
       {/* ── Hub pages (2) ───────────────────────────────────── */}
       <Route path="/delivery-studio" component={DeliveryStudioPage} />

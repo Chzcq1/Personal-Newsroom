@@ -1,8 +1,8 @@
 import { Link } from "wouter";
 import {
   ArrowLeft, Send, Heart, ChevronRight, Check, X,
-  Brain, Zap, Layers, Radio, BarChart3, Shield,
-  User, Palette, Wrench,
+  Brain, Zap, Layers, Radio, BarChart3, CreditCard,
+  User,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -174,59 +174,33 @@ export default function SettingsPage() {
           description="Manage built-in topics and add custom RSS feeds"
         />
 
-        {/* ── Appearance ────────────────────────────────────────── */}
-        <SectionLabel>Appearance</SectionLabel>
-
-        <div className="p-4 bg-white/3 border border-white/6 rounded-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-              <Palette className="w-4 h-4 text-white/35" />
-            </div>
-            <div>
-              <p className="text-sm text-white/55">Appearance settings</p>
-              <p className="text-xs text-white/40 mt-0.5">Coming in a future update</p>
-            </div>
-          </div>
-        </div>
-
         {/* ── Account ───────────────────────────────────────────── */}
         <SectionLabel>Account</SectionLabel>
 
-        <div className="p-4 bg-white/3 border border-white/6 rounded-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 text-white/35" />
-            </div>
-            <div>
-              <p className="text-sm text-white/55">Account & subscription</p>
-              <p className="text-xs text-white/40 mt-0.5">Coming in a future update</p>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Advanced ──────────────────────────────────────────── */}
-        <SectionLabel>Advanced</SectionLabel>
-
         <SettingsRow
-          href="/admin/economics"
-          icon={<Shield className="w-4 h-4" />}
-          iconBg="bg-emerald-500/10"
-          iconColor="text-emerald-400"
-          title="Token Economics"
-          description="Cost tracking, usage history, provider breakdown"
+          href="/settings/billing"
+          icon={<CreditCard className="w-4 h-4" />}
+          iconBg="bg-amber-500/10"
+          iconColor="text-amber-400"
+          title="Billing & Plans"
+          description="แผนปัจจุบัน, การใช้งาน, และอัปเกรด"
+          badge={<Badge variant="default">Free</Badge>}
         />
 
         <SettingsRow
-          href="/admin/efficiency"
-          icon={<Wrench className="w-4 h-4" />}
+          href="/profile"
+          icon={<User className="w-4 h-4" />}
           iconBg="bg-white/8"
           iconColor="text-white/40"
-          title="Efficiency Admin"
-          description="AI pipeline tiers, cache stats, degradation controls"
+          title="Profile"
+          description="Account details, sign in / sign out"
         />
 
         <div className="pt-6 pb-4 text-center">
           <p className="text-xs text-white/35">INFOX · Personal AI Newsroom</p>
+          <Link href="/admin/command-center">
+            <p className="text-[10px] text-white/15 mt-1 hover:text-white/30 transition-colors cursor-pointer">Admin</p>
+          </Link>
         </div>
 
       </main>

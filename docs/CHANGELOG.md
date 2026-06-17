@@ -2,6 +2,48 @@
 
 ---
 
+## [2026-06-17] — Sprint 25: Product Convergence + Payment Foundation
+
+**What:** Feed unification, entity-source resolver, auto-refresh, billing foundation, admin/user separation.
+
+### Feed Unification (Task A)
+- `App.tsx` — Route "/" now redirects to "/my-feed"; For You feed is the product homepage
+- `my-feed.tsx` — Header redesigned: removed back-to-home button (since it IS home); added Settings gear; title changed "My Feed" → "For You"
+- `my-feed.tsx` — Auto-refresh every 90s via `refetchInterval`; countdown timer displayed in subheader ("↻ 42s"); "Refreshing…" state shown in emerald
+
+### Entity-Source Resolver (Task B)
+- `services/news/entityResolver.ts` — NEW: maps interests + watchlist to specific RSS feeds
+  - Bitcoin → CoinDesk, Cointelegraph
+  - Nvidia → Reuters, Yahoo Finance, TechCrunch
+  - OpenAI/Anthropic/AI Agents → TechCrunch AI, VentureBeat, Hacker News
+  - Tesla → Reuters, Yahoo Finance, Electrek
+  - Gaming/Nintendo/Steam → IGN, Kotaku, PC Gamer
+  - EV → Electrek, InsideEVs, Reuters
+- Watchlist alias lookup (btc→Bitcoin, nvda→Nvidia, chatgpt→OpenAI, etc.)
+
+### Payment Foundation (Task D)
+- `lib/db/src/schema/plans.ts` — NEW: plans table (id, displayName, priceThb, limits)
+- `lib/db/src/schema/subscriptions.ts` — NEW: subscriptions + payments tables
+- DB push applied — 3 new tables in PostgreSQL
+- `routes/billing.ts` — NEW: GET /api/billing/plans, GET /api/billing/status
+- `pages/settings/billing.tsx` — NEW: /settings/billing UI shell
+  - Shows current plan (Free) + usage stats
+  - Lists Free / Pro (฿299) / Elite (฿699) plans
+  - Upgrade buttons disabled with "PromptPay coming soon" notice
+  - NO fake payment success — architecture-only
+- `App.tsx` — Added /settings/billing route
+
+### Admin / User Separation (Task E)
+- `settings/index.tsx` — Removed admin links (Token Economics, Efficiency Admin) from user-facing settings
+- `settings/index.tsx` — Added Billing & Plans row in Account section
+- `settings/index.tsx` — Profile row replaces old "Account coming soon" placeholder
+- `settings/index.tsx` — Tiny "Admin" footer link → /admin/command-center (discoverable but not prominent)
+
+**Files modified:** 9 files (4 new, 5 updated)
+**DB push:** plans, subscriptions, payments tables created
+
+---
+
 ## [2026-06-17] — Sprint 24: Personalized Feed Engine
 
 **What:** For You feed as primary product surface — TikTok-style cards, Google OAuth URL fixes, DB watchlist auto-load, real trending engine, and BottomNav redesign.

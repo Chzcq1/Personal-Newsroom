@@ -17,7 +17,6 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  ArrowLeft,
   RefreshCw,
   Newspaper,
   ExternalLink,
@@ -36,6 +35,7 @@ import {
   BookOpen,
   Bookmark,
   Plus,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInterests } from "@/lib/interestProfile";
@@ -673,6 +673,10 @@ export default function MyFeedPage() {
   // Derive taste signal (from localStorage events)
   const tasteSignal = deriveTasteSignal();
 
+  // Auto-refresh every 90 seconds in background
+  const AUTO_REFRESH_SEC = 90;
+  const [countdown, setCountdown] = useState(AUTO_REFRESH_SEC);
+
   const { data, isLoading, error, refetch, isFetching } = useQuery<FeedResponse>({
     queryKey: ["my-feed", interests, combinedWatchlist],
     queryFn: async () => {
@@ -684,8 +688,22 @@ export default function MyFeedPage() {
       if (!res.ok) throw new Error("Failed to fetch personal feed");
       return res.json();
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 90 * 1000,
+    refetchInterval: AUTO_REFRESH_SEC * 1000,
+    refetchIntervalInBackground: false,
   });
+
+  // Countdown timer synced to refetch interval
+  useEffect(() => {
+    setCountdown(AUTO_REFRESH_SEC);
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) return AUTO_REFRESH_SEC;
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [data]);
 
   const allUrls = data?.items.map((i) => i.url) ?? [];
   const { readCount, markRead, readUrls } = useReadingProgress(allUrls);
@@ -726,17 +744,15 @@ export default function MyFeedPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Header */}
+      {/* Header — product homepage, no back button */}
       <header className="sticky top-0 z-50 border-b border-white/8 bg-[#0a0a0a]/95 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex items-center gap-3">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="text-white/50 hover:text-white gap-1.5 -ml-2 px-2">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Newspaper className="w-4 h-4 text-white/50" />
+          </div>
 
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold tracking-tight">My Feed</h1>
+            <h1 className="text-sm font-semibold tracking-tight">For You</h1>
             <div className="flex items-center gap-2 text-[10px] text-white/35">
               {interests.length > 0
                 ? <span>{interests.length} interest{interests.length !== 1 ? "s" : ""}</span>
@@ -744,8 +760,11 @@ export default function MyFeedPage() {
               {data && readCount > 0 && (
                 <><span>·</span><span>{readCount} of {allUrls.length} read</span></>
               )}
-              {data && (
-                <><span>·</span><span>{format(new Date(data.generatedAt), "HH:mm")}</span></>
+              {data && !isFetching && (
+                <><span>·</span><span className="tabular-nums">↻ {countdown}s</span></>
+              )}
+              {isFetching && (
+                <><span>·</span><span className="text-emerald-400/60">Refreshing…</span></>
               )}
             </div>
           </div>
@@ -777,9 +796,15 @@ export default function MyFeedPage() {
             </div>
 
             <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}
-              className="text-white/50 hover:text-white px-2" title="Refresh">
+              className="text-white/50 hover:text-white px-2" title="Refresh now">
               <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             </Button>
+
+            <Link href="/settings">
+              <Button variant="ghost" size="sm" className="text-white/50 hover:text-white px-2" title="Settings">
+                <Settings className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
