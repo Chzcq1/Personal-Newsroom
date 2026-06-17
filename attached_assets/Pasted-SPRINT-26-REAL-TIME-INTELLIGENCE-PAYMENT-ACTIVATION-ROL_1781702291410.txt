@@ -1,0 +1,351 @@
+SPRINT 26 — REAL-TIME INTELLIGENCE + PAYMENT ACTIVATION
+ROLE: COO / PRODUCT CONVERGENCE COMMAND
+
+MISSION
+Stop building placeholders and disconnected systems.
+
+Sprint 26 must transform the product from:
+“prototype with UI shells”
+into:
+“working personalized intelligence platform ready for first paying users”.
+
+NO NEW ADMIN DASHBOARDS.
+NO NEW PLACEHOLDER PAGES.
+NO MOCK DATA.
+NO STATIC TRENDING LISTS.
+NO DUPLICATE SETTINGS.
+
+The goal is:
+real data
+real personalization
+real payments
+real onboarding flow
+real product identity
+
+====================================================
+PRIMARY OBJECTIVES
+====================================================
+
+A. REAL-TIME TREND INGESTION
+B. FEED PERSONALIZATION ENGINE
+C. PROMPTPAY PAYMENT ACTIVATION
+D. PRODUCT FLOW UNIFICATION
+E. GOOGLE LOGIN FIX (FINAL)
+F. REMOVE DEAD / CONFUSING UX
+
+====================================================
+A — REAL-TIME TREND INGESTION
+====================================================
+
+The system MUST start ingesting REAL trends automatically.
+
+Create:
+services/trendIngestion/
+
+Supported providers:
+
+1. Reddit
+- Reddit RSS
+- subreddit ingestion
+- track:
+  crypto
+  stocks
+  ai
+  technology
+  geopolitics
+  startups
+
+2. YouTube
+- YouTube RSS feeds
+- trending finance/ai/news channels
+
+3. Google News
+- RSS by keyword
+
+4. X/Twitter
+DO NOT build full scraper yet.
+Create provider abstraction only.
+Use mock adapter interface with future-ready architecture.
+
+5. TikTok / Instagram / Facebook
+DO NOT scrape yet.
+Create:
+adapter contracts only.
+
+Architecture must support future ingestion without rewrite.
+
+====================================================
+REQUIREMENTS
+====================================================
+
+Every trend item must normalize into:
+
+{
+  id,
+  source,
+  title,
+  summary,
+  url,
+  entityTags[],
+  topicTags[],
+  publishedAt,
+  engagementScore,
+  sourceTrustScore,
+  language
+}
+
+Store in PostgreSQL.
+
+====================================================
+B — FEED PERSONALIZATION ENGINE
+====================================================
+
+CURRENT PROBLEM:
+users still manually request AI.
+
+THIS MUST END.
+
+The feed itself becomes the AI product.
+
+====================================================
+BUILD:
+====================================================
+
+1. Automatic personalized feed generation
+
+When user opens /my-feed:
+system auto-generates feed from:
+- interests
+- watchlist
+- engagement history
+- followed topics
+- trending entities
+
+NO MANUAL PROMPT REQUIRED.
+
+2. Feed ranking upgrade
+
+Current ranking:
+interest + trust + signal + recency
+
+Add:
+- engagement similarity
+- trending acceleration
+- user behavior memory
+
+3. TikTok-style infinite feed
+
+Implement:
+- infinite scroll
+- preload next batch
+- swipe-friendly spacing
+- mobile-first cards
+
+4. “Why am I seeing this?”
+Every article card must explain:
+- matched watchlist
+- followed topic
+- trending globally
+- because user liked similar stories
+
+5. AI summary integration
+
+Bring AI pipeline BACK into product flow.
+
+Each card:
+- short AI summary
+- why it matters
+- bullish/bearish/neutral signal
+
+AI must summarize automatically in background.
+
+====================================================
+C — PROMPTPAY PAYMENT ACTIVATION
+====================================================
+
+CURRENT STATE:
+billing shell exists only.
+
+Sprint 26 must activate REAL payment flow.
+
+====================================================
+BUILD:
+====================================================
+
+1. PromptPay QR generation
+2. Payment pending state
+3. Manual admin verification system
+4. Credit/subscription activation
+5. Payment history UI
+6. Expiration tracking
+
+DO NOT build auto-bank reconciliation yet.
+
+Manual verification is acceptable for first 50-100 users.
+
+====================================================
+PRICING
+====================================================
+
+FREE
+- delayed feed
+- limited bookmarks
+- limited refresh
+- no Telegram instant alerts
+
+PRO — 299 THB
+- personalized feed
+- instant refresh
+- Telegram delivery
+- AI summaries
+- watchlists
+- faster ranking updates
+
+ELITE — 699 THB
+- priority feed
+- advanced signal summaries
+- faster ingestion
+- premium sources
+- future webhook/API access
+
+====================================================
+D — PRODUCT FLOW UNIFICATION
+====================================================
+
+CURRENT PROBLEM:
+too many disconnected experiences.
+
+FIX PRODUCT FLOW:
+
+BEFORE:
+discover
+feed
+AI pull page
+watchlist
+settings
+admin
+
+AFTER:
+1. onboarding
+2. choose interests
+3. login
+4. personalized feed
+5. follow/save/watchlist
+6. payment upgrade
+7. telegram delivery
+
+ONE CORE FLOW ONLY.
+
+====================================================
+REMOVE / MERGE
+====================================================
+
+REMOVE:
+- old AI pull workflow
+- duplicate profile/settings sections
+- dead admin links in user UX
+- confusing navigation loops
+
+MERGE:
+watchlist + interests + follow system
+
+====================================================
+E — GOOGLE LOGIN FIX (FINAL)
+====================================================
+
+Google OAuth MUST fully work in Replit preview.
+
+Tasks:
+- validate redirect URI generation
+- enforce absolute callback URL
+- log OAuth failures clearly
+- verify cookies/session persistence
+- test signup/login/logout lifecycle
+
+DO NOT SHIP SPRINT 26 UNTIL GOOGLE LOGIN WORKS.
+
+====================================================
+F — USER PROFILE ACCESSIBILITY
+====================================================
+
+Profile access is currently hidden and bad UX.
+
+FIX:
+Bottom nav:
+Feed
+Discover
+Watchlist
+Profile
+
+Profile must be one-tap accessible.
+
+====================================================
+ADMIN SEPARATION
+====================================================
+
+Create clear separation:
+
+USER APP
+/
+my-feed
+discover
+watchlist
+profile
+billing
+
+ADMIN APP
+/admin/*
+
+User must NEVER accidentally enter admin flow.
+
+====================================================
+DELIVERABLES
+====================================================
+
+By end of Sprint 26:
+
+Users can:
+✓ login with Google
+✓ choose interests
+✓ receive personalized feed automatically
+✓ follow entities
+✓ receive AI summaries
+✓ pay via PromptPay
+✓ upgrade subscription
+✓ access Telegram delivery prep
+✓ browse infinite real-time feed
+
+Admin can:
+✓ verify payments
+✓ see subscriptions
+✓ see active users
+✓ see token costs
+✓ monitor ingestion health
+
+====================================================
+SUCCESS CRITERIA
+====================================================
+
+The product must finally feel like:
+
+“Tiktok + Investing + Personalized Intelligence”
+
+NOT:
+“AI demo dashboard with disconnected tools”
+
+====================================================
+IMPORTANT COO DIRECTIVE
+====================================================
+
+Do NOT create fake systems.
+Do NOT create placeholder widgets.
+Do NOT create static trending arrays.
+Do NOT create disconnected admin experiments.
+
+Every new UI element must connect to:
+real DB
+real ingestion
+real ranking
+real user behavior
+
+The product must now converge into ONE experience.
