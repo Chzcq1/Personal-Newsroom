@@ -34,7 +34,7 @@ const router = Router();
 
 // ── GET /api/admin/narratives ─────────────────────────────────
 
-router.get("/api/admin/narratives", (_req, res) => {
+router.get("/admin/narratives", (_req, res) => {
   try {
     const threads = getPersistentNarratives();
 
@@ -103,7 +103,7 @@ router.get("/api/admin/narratives", (_req, res) => {
 
 // ── GET /api/admin/narratives/stats ──────────────────────────
 
-router.get("/api/admin/narratives/stats", (_req, res) => {
+router.get("/admin/narratives/stats", (_req, res) => {
   try {
     const memStats = getNarrativeMemoryStats();
     const threads = getActiveNarratives(50);
@@ -141,7 +141,7 @@ router.get("/api/admin/narratives/stats", (_req, res) => {
 
 // ── GET /api/admin/narratives/:id/health ──────────────────────
 
-router.get("/api/admin/narratives/:id/health", (req, res) => {
+router.get("/admin/narratives/:id/health", (req, res) => {
   try {
     const thread = getNarrativeById(req.params.id);
     if (!thread) {

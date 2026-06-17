@@ -34,6 +34,8 @@ import EfficiencyAdminPage from "@/pages/admin/efficiency";
 import DebugCenterPage from "@/pages/admin/debug";
 import SystemDashboardPage from "@/pages/admin/system";
 import HealthPage from "@/pages/admin/health";
+import CommandCenterPage from "@/pages/admin/command-center";
+import UsersAdminPage from "@/pages/admin/users";
 
 // Auth placeholders
 import LoginPage from "@/pages/auth/login";
@@ -65,12 +67,14 @@ function Router() {
       <Route path="/intelligence-center" component={IntelligenceCenterPage} />
 
       {/* ── Admin ───────────────────────────────────────────── */}
-      <Route path="/admin/system" component={SystemDashboardPage} />
-      <Route path="/admin/health" component={HealthPage} />
+      <Route path="/admin/command-center" component={CommandCenterPage} />
+      <Route path="/admin/users" component={UsersAdminPage} />
       <Route path="/admin/economics" component={EconomicsPage} />
       <Route path="/admin/narratives" component={AdminNarrativesPage} />
       <Route path="/admin/efficiency" component={EfficiencyAdminPage} />
       <Route path="/admin/debug" component={DebugCenterPage} />
+      <Route path="/admin/system" component={SystemDashboardPage} />
+      <Route path="/admin/health" component={HealthPage} />
 
       {/* ── Auth (Sprint 21) ────────────────────────────────── */}
       <Route path="/auth/login" component={LoginPage} />
@@ -101,10 +105,10 @@ function Router() {
         {() => <Redirect to="/intelligence-center" />}
       </Route>
       <Route path="/admin/system-intelligence">
-        {() => <Redirect to="/admin/system" />}
+        {() => <Redirect to="/admin/command-center" />}
       </Route>
       <Route path="/admin/source-trust">
-        {() => <Redirect to="/admin/system" />}
+        {() => <Redirect to="/admin/command-center" />}
       </Route>
       <Route path="/admin/costs">
         {() => <Redirect to="/admin/economics" />}

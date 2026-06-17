@@ -17,7 +17,7 @@ import { logger } from "../lib/logger.js";
 
 const router = Router();
 
-router.get("/api/intelligence/compound", (_req, res) => {
+router.get("/intelligence/compound", (_req, res) => {
   try {
     const days = parseInt(String(_req.query["days"] ?? "7"), 10);
     const safeDays = isNaN(days) || days < 1 ? 7 : Math.min(days, 90);
@@ -30,7 +30,7 @@ router.get("/api/intelligence/compound", (_req, res) => {
   }
 });
 
-router.get("/api/intelligence/compound/weekly", (_req, res) => {
+router.get("/intelligence/compound/weekly", (_req, res) => {
   try {
     res.json(getWeeklySummary());
   } catch (err) {
@@ -39,7 +39,7 @@ router.get("/api/intelligence/compound/weekly", (_req, res) => {
   }
 });
 
-router.post("/api/intelligence/compound/session", (req, res) => {
+router.post("/intelligence/compound/session", (req, res) => {
   try {
     const body = req.body;
     if (!body || typeof body !== "object") {

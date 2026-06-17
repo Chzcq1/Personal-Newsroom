@@ -19,6 +19,7 @@ import {
   getProfile,
   markOnboardingComplete,
   markFoundingMember,
+  getAllProfiles,
 } from "../repositories/userProfileRepository.js";
 import {
   saveBriefing,
@@ -43,9 +44,9 @@ function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === "string");
 }
 
-// ── POST /api/identity/sync ─────────────────────────────────
+// ── POST /identity/sync ─────────────────────────────────────
 
-router.post("/api/identity/sync", async (req, res) => {
+router.post("/identity/sync", async (req, res) => {
   const body = req.body as Record<string, unknown>;
 
   if (!body || typeof body.id !== "string" || !body.id) {
@@ -74,9 +75,21 @@ router.post("/api/identity/sync", async (req, res) => {
   res.json({ ok: true, persisted: true, profile });
 });
 
-// ── GET /api/identity/:id ───────────────────────────────────
+// ── GET /identity/profiles (admin — list all) ────────────────
+// Must be declared BEFORE /identity/:id to avoid wildcard match
 
-router.get("/api/identity/:id", async (req, res) => {
+router.get("/identity/profiles", async (_req, res) => {
+  try {
+    const profiles = await getAllProfiles();
+    res.json({ ok: true, profiles, count: profiles.length });
+  } catch (err) {
+    res.json({ ok: true, profiles: [], count: 0 });
+  }
+});
+
+// ── GET /identity/:id ───────────────────────────────────────
+
+router.get("/identity/:id", async (req, res) => {
   const { id } = req.params;
   const profile = await getProfile(id);
 
@@ -88,9 +101,9 @@ router.get("/api/identity/:id", async (req, res) => {
   res.json({ ok: true, profile });
 });
 
-// ── POST /api/identity/:id/onboarding ──────────────────────
+// ── POST /identity/:id/onboarding ──────────────────────────
 
-router.post("/api/identity/:id/onboarding", async (req, res) => {
+router.post("/identity/:id/onboarding", async (req, res) => {
   const { id } = req.params;
   const { foundingMember } = req.body as { foundingMember?: boolean };
 
@@ -103,9 +116,9 @@ router.post("/api/identity/:id/onboarding", async (req, res) => {
   res.json({ ok: true });
 });
 
-// ── POST /api/identity/:id/feedback ────────────────────────
+// ── POST /identity/:id/feedback ────────────────────────────
 
-router.post("/api/identity/:id/feedback", async (req, res) => {
+router.post("/identity/:id/feedback", async (req, res) => {
   const { id } = req.params;
   const body = req.body as Record<string, unknown>;
 
@@ -147,26 +160,26 @@ router.post("/api/identity/:id/feedback", async (req, res) => {
   res.json({ ok: true });
 });
 
-// ── GET /api/identity/:id/feedback/stats ───────────────────
+// ── GET /identity/:id/feedback/stats ───────────────────────
 
-router.get("/api/identity/:id/feedback/stats", async (req, res) => {
+router.get("/identity/:id/feedback/stats", async (req, res) => {
   const { id } = req.params;
   const stats = await getFeedbackStats(id);
   res.json({ ok: true, stats });
 });
 
-// ── GET /api/identity/:id/briefings ────────────────────────
+// ── GET /identity/:id/briefings ────────────────────────────
 
-router.get("/api/identity/:id/briefings", async (req, res) => {
+router.get("/identity/:id/briefings", async (req, res) => {
   const { id } = req.params;
   const limit = Math.min(Number(req.query.limit) || 50, 100);
   const briefings = await getBriefingsForProfile(id, limit);
   res.json({ ok: true, briefings });
 });
 
-// ── POST /api/identity/briefing ─────────────────────────────
+// ── POST /identity/briefing ──────────────────────────────────
 
-router.post("/api/identity/briefing", async (req, res) => {
+router.post("/identity/briefing", async (req, res) => {
   const body = req.body as Record<string, unknown>;
 
   if (!body || typeof body.id !== "string" || !body.id) {
@@ -205,9 +218,9 @@ router.post("/api/identity/briefing", async (req, res) => {
   res.json({ ok: true, persisted: Boolean(briefing), briefing });
 });
 
-// ── DELETE /api/identity/briefing/:briefingId ───────────────
+// ── DELETE /identity/briefing/:briefingId ───────────────────
 
-router.delete("/api/identity/briefing/:briefingId", async (req, res) => {
+router.delete("/identity/briefing/:briefingId", async (req, res) => {
   const { briefingId } = req.params;
   const ok = await deleteBriefing(briefingId);
   res.json({ ok });

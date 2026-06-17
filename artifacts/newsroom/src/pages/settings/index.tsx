@@ -46,7 +46,7 @@ function SettingsRow({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] text-white/30 uppercase tracking-widest px-1 pt-5 pb-1 font-medium">
+    <p className="text-[11px] text-white/50 uppercase tracking-widest px-1 pt-5 pb-1 font-medium">
       {children}
     </p>
   );
@@ -180,11 +180,11 @@ export default function SettingsPage() {
         <div className="p-4 bg-white/3 border border-white/6 rounded-xl">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-              <Palette className="w-4 h-4 text-white/20" />
+              <Palette className="w-4 h-4 text-white/35" />
             </div>
             <div>
-              <p className="text-sm text-white/40">Appearance settings</p>
-              <p className="text-xs text-white/20 mt-0.5">Coming in a future update</p>
+              <p className="text-sm text-white/55">Appearance settings</p>
+              <p className="text-xs text-white/40 mt-0.5">Coming in a future update</p>
             </div>
           </div>
         </div>
@@ -195,11 +195,11 @@ export default function SettingsPage() {
         <div className="p-4 bg-white/3 border border-white/6 rounded-xl">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4 text-white/20" />
+              <User className="w-4 h-4 text-white/35" />
             </div>
             <div>
-              <p className="text-sm text-white/40">Account & subscription</p>
-              <p className="text-xs text-white/20 mt-0.5">Coming in a future update</p>
+              <p className="text-sm text-white/55">Account & subscription</p>
+              <p className="text-xs text-white/40 mt-0.5">Coming in a future update</p>
             </div>
           </div>
         </div>
@@ -226,7 +226,7 @@ export default function SettingsPage() {
         />
 
         <div className="pt-6 pb-4 text-center">
-          <p className="text-xs text-white/20">INFOX · Personal AI Newsroom</p>
+          <p className="text-xs text-white/35">INFOX · Personal AI Newsroom</p>
         </div>
 
       </main>

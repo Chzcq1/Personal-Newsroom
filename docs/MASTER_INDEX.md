@@ -1,6 +1,6 @@
 # MASTER_INDEX.md — INFOX Documentation Navigator
 
-**Last updated:** 2026-06-17 (Sprint 20)
+**Last updated:** 2026-06-17 (Sprint 21)
 
 This is the canonical entry point for all INFOX documentation.
 Start here. Everything else is linked from here.
@@ -16,6 +16,8 @@ Start here. Everything else is linked from here.
 | Deploy it | [DEPLOYMENT_GUIDE.md](#deployment) |
 | Contribute or modify it | [AGENT_RULES.md](#rules) |
 | Check system status | [SYSTEM_STATUS.md](#operations) |
+| See admin command center | `/admin/command-center` (live) |
+| See user insights | `/admin/users` (live) |
 | See what changed | [CHANGELOG.md](#history) |
 | Understand DB/workers | [PERSISTENT_INFRASTRUCTURE.md](#infrastructure) |
 | Understand token economy | [TOKEN_ECONOMY.md](#intelligence) |

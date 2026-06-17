@@ -26,7 +26,7 @@ interface WaitlistEntry {
 const MAX_ENTRIES = 1000;
 const entries: WaitlistEntry[] = [];
 
-router.post("/api/waitlist/submit", (req, res) => {
+router.post("/waitlist/submit", (req, res) => {
   try {
     const body = req.body;
     if (!body || typeof body !== "object") {
@@ -60,7 +60,7 @@ router.post("/api/waitlist/submit", (req, res) => {
   }
 });
 
-router.get("/api/waitlist/stats", (_req, res) => {
+router.get("/waitlist/stats", (_req, res) => {
   try {
     const total = entries.length;
     if (total === 0) {

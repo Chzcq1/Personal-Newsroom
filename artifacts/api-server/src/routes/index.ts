@@ -25,6 +25,8 @@ import signalModeRouter from "./signalMode.js";
 import systemIntelligenceRouter from "./systemIntelligence.js";
 import efficiencyAdminRouter from "./efficiencyAdmin.js";
 import sprint18AdminRouter from "./sprint18Admin.js";
+import eventTrackingRouter from "./eventTracking.js";
+import adminAnalyticsRouter from "./adminAnalytics.js";
 
 const router: IRouter = Router();
 
@@ -54,5 +56,7 @@ router.use(signalModeRouter);
 router.use(systemIntelligenceRouter);
 router.use(efficiencyAdminRouter);
 router.use(sprint18AdminRouter);
+router.use(eventTrackingRouter);
+router.use(adminAnalyticsRouter);
 
 export default router;

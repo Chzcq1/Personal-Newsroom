@@ -2,6 +2,59 @@
 
 ---
 
+## [2026-06-17] — Sprint 21: Observability & Business Intelligence
+
+**What:** Observability sprint — zero new product features; all work improves visibility into what is running and fixes routes that were silently broken.
+
+### Critical Route Fixes (Task A + expanded)
+Root cause: 7 route files declared paths with `/api/` prefix inside a router already mounted at `app.use("/api", router)` — creating double `/api/api/...` paths that all returned 404.
+
+**Fixed files:**
+- `economics.ts` — 4 routes: `/api/economics/*` → `/economics/*`
+- `identity.ts` — 8 routes: `/api/identity/*` → `/identity/*`
+- `adminNarratives.ts` — 3 routes: `/api/admin/narratives*` → `/admin/narratives*`
+- `knowledgeCompound.ts` — 3 routes: `/api/intelligence/compound*` → `/intelligence/compound*`
+- `proactiveIntelligence.ts` — 8 routes: `/api/intelligence/*` → `/intelligence/*`
+- `waitlist.ts` — 2 routes: `/api/waitlist/*` → `/waitlist/*`
+
+**Impact:** `/admin/economics`, onboarding identity sync, narrative admin, intelligence routes, and waitlist were ALL returning 404. Now operational.
+
+### New DB Tables (Task C, E)
+- `analytics_events` — event stream: PAGE_VIEW, FEED_VIEW, ARTICLE_OPEN, BRIEFING_SAVE, TELEGRAM_CONNECT, etc.
+- `token_usage_daily` — daily token aggregation per feature/topic/briefing type
+
+### New Backend Routes
+- `POST /api/events/track` — fire-and-forget event recording
+- `POST /api/events/batch` — batch event recording (up to 50)
+- `GET /api/admin/events/recent` — recent events list
+- `GET /api/admin/events/stats` — event counts by type (24h + 7d)
+- `GET /api/admin/analytics` — business snapshot (users DAU/WAU/MAU, delivery, events)
+- `GET /api/admin/analytics/usage` — 14-day daily user activity chart
+- `GET /api/admin/analytics/features` — feature popularity ranked by 7d events
+- `GET /api/admin/analytics/funnel` — conversion funnel (visitor → interest → telegram → briefing → returning)
+- `GET /api/admin/analytics/alerts` — system alert conditions (queue, degradation, token budget, workers)
+- `GET /api/identity/profiles` — admin endpoint listing all anonymous profiles
+
+Also fixed route conflict: old `/admin/analytics` in `analytics.ts` renamed to `/admin/analytics/delivery-quality`.
+
+### New Frontend Pages
+- `/admin/command-center` — unified admin view: Alerts, Business, AI Economics, Product, Delivery, System
+- `/admin/users` — anonymous user insight panel with profile list and engagement stats
+
+### New Frontend Hook
+- `useAnalytics` / `trackEvent` — fire-and-forget event tracking; batched with 300ms debounce; silently swallows errors; never blocks UI
+
+### UI Contrast Fixes (Task I)
+In `settings/index.tsx`:
+- `SectionLabel`: `text-white/30` → `text-white/50`
+- Appearance/Account placeholder cards: `text-white/20` → `text-white/40`, `text-white/35` and `text-white/40`
+- Footer branding: `text-white/20` → `text-white/35`
+
+### Route Budget
+Routes: 17 primary (`/admin/command-center` + `/admin/users` added; both `/admin/system` and `/admin/health` kept for backwards compat — within ≤ 20 budget).
+
+---
+
 ## [2026-06-17] — Sprint 20: System Consolidation & Production Preparation
 
 **What:** Continued consolidation sprint building on Sprint 19's route merges. Deleted 17 dead page files that were de-routed in Sprint 19 but left on disk. Fixed vite.config.ts — removed hard-throw on missing PORT/BASE_PATH, replaced with safe defaults (23519/`/`). Rewired App.tsx to use wouter `<Redirect>` for legacy URLs instead of dead imports. Added `/admin/system` (unified ops dashboard with 6 collapsible sections: Runtime, Token Economy, Workers, Delivery, Sources, Cache/Storage) and `/admin/health` (real-time API health monitor with 15s auto-refresh). Added `/auth/login` placeholder with Sprint 21 architecture contract. Created `artifacts/api-server/src/middleware/auth.ts` with typed stubs for `requireAuth`, `requireAdmin`, `requireEntitlement`, `optionalAuth`. Created `artifacts/newsroom/src/components/auth/ProtectedRoute.tsx` with passthrough (Sprint 21 contract). Wrote `docs/CONSOLIDATION_AUDIT.md` (full system audit), `docs/MASTER_INDEX.md` (canonical docs navigator), `deployment/Makefile` (dev/build/docker/deploy commands). Production runtime files (Dockerfile, fly.toml, railway.toml, render.yaml, .env.example) already existed from Sprint 14 — validated and kept.

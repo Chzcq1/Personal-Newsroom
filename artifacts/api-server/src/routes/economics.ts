@@ -29,7 +29,7 @@ const TELEGRAM_COST_PER_MESSAGE = 0;       // free tier
 
 // ── GET /api/economics/summary ──────────────────────────────
 
-router.get("/api/economics/summary", async (_req, res) => {
+router.get("/economics/summary", async (_req, res) => {
   const [deliveryStats, profileCount, queueStatus] = await Promise.all([
     getDeliveryStats(),
     getProfileCount(),
@@ -79,7 +79,7 @@ router.get("/api/economics/summary", async (_req, res) => {
 
 // ── GET /api/economics/delivery ─────────────────────────────
 
-router.get("/api/economics/delivery", async (_req, res) => {
+router.get("/economics/delivery", async (_req, res) => {
   const [stats, last7Days] = await Promise.all([
     getDeliveryStats(),
     getDeliveriesSince(new Date(Date.now() - 7 * 24 * 3600 * 1000)),
@@ -116,7 +116,7 @@ router.get("/api/economics/delivery", async (_req, res) => {
 
 // ── GET /api/economics/users ─────────────────────────────────
 
-router.get("/api/economics/users", async (_req, res) => {
+router.get("/economics/users", async (_req, res) => {
   const [profiles, aggregation] = await Promise.all([
     getAllProfiles(),
     Promise.resolve(getLatestAggregation()),
@@ -148,7 +148,7 @@ router.get("/api/economics/users", async (_req, res) => {
 
 // ── GET /api/economics/infrastructure ───────────────────────
 
-router.get("/api/economics/infrastructure", async (_req, res) => {
+router.get("/economics/infrastructure", async (_req, res) => {
   const startupReport = getStartupReport();
 
   const monthlyEstimates = {

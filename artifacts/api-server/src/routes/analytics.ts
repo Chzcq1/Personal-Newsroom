@@ -11,7 +11,7 @@ import { getAllTrends } from "../services/news/trendMemory.js";
 
 const router = Router();
 
-router.get("/admin/analytics", (_req, res) => {
+router.get("/admin/analytics/delivery-quality", (_req, res) => {
   const snapshot = getAnalyticsSnapshot();
   const activeStories = getAllActiveStories();
   const trendMemory = getAllTrends();

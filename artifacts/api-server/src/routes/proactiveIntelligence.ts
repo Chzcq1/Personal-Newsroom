@@ -49,7 +49,7 @@ const router = Router();
 
 // ── GET /api/intelligence/trends ─────────────────────────────
 
-router.get("/api/intelligence/trends", async (_req, res) => {
+router.get("/intelligence/trends", async (_req, res) => {
   try {
     const threads = getActiveNarratives(50);
     const entities = getAllTrackedEntities();
@@ -79,7 +79,7 @@ router.get("/api/intelligence/trends", async (_req, res) => {
 
 // ── GET /api/intelligence/signals ────────────────────────────
 
-router.get("/api/intelligence/signals", (_req, res) => {
+router.get("/intelligence/signals", (_req, res) => {
   try {
     const signals = getActiveSignals();
     res.json({ signals, count: signals.length });
@@ -88,7 +88,7 @@ router.get("/api/intelligence/signals", (_req, res) => {
   }
 });
 
-router.get("/api/intelligence/signals/stats", (_req, res) => {
+router.get("/intelligence/signals/stats", (_req, res) => {
   try {
     const stats = getSignalStats();
     res.json(stats);
@@ -99,7 +99,7 @@ router.get("/api/intelligence/signals/stats", (_req, res) => {
 
 // ── GET /api/intelligence/relationships ──────────────────────
 
-router.get("/api/intelligence/relationships", (_req, res) => {
+router.get("/intelligence/relationships", (_req, res) => {
   try {
     const threads = getActiveNarratives(50);
     const graph = buildNarrativeGraph(threads);
@@ -109,7 +109,7 @@ router.get("/api/intelligence/relationships", (_req, res) => {
   }
 });
 
-router.get("/api/intelligence/relationships/:narrativeId", (req, res) => {
+router.get("/intelligence/relationships/:narrativeId", (req, res) => {
   try {
     const threads = getActiveNarratives(50);
     const graph = buildNarrativeGraph(threads);
@@ -126,7 +126,7 @@ router.get("/api/intelligence/relationships/:narrativeId", (req, res) => {
 
 // ── GET /api/intelligence/influence ──────────────────────────
 
-router.get("/api/intelligence/influence", (_req, res) => {
+router.get("/intelligence/influence", (_req, res) => {
   try {
     const entities = getAllTrackedEntities();
     const threads = getActiveNarratives(50);
@@ -137,7 +137,7 @@ router.get("/api/intelligence/influence", (_req, res) => {
   }
 });
 
-router.get("/api/intelligence/influence/:entityId", (req, res) => {
+router.get("/intelligence/influence/:entityId", (req, res) => {
   try {
     const entities = getAllTrackedEntities();
     const threads = getActiveNarratives(50);
@@ -156,7 +156,7 @@ router.get("/api/intelligence/influence/:entityId", (req, res) => {
 
 // ── GET /api/intelligence/profile ────────────────────────────
 
-router.get("/api/intelligence/profile", (req, res) => {
+router.get("/intelligence/profile", (req, res) => {
   try {
     const interests = String(req.query.interests ?? "")
       .split(",")
@@ -172,7 +172,7 @@ router.get("/api/intelligence/profile", (req, res) => {
 // ── GET /api/intelligence/briefing ───────────────────────────
 // Intelligence Briefing Mode (Task F) — strategic analysis data
 
-router.get("/api/intelligence/briefing", (_req, res) => {
+router.get("/intelligence/briefing", (_req, res) => {
   try {
     const threads = getActiveNarratives(30);
     const entities = getAllTrackedEntities();
