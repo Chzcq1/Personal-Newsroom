@@ -1,9 +1,9 @@
 import { Link, useLocation } from "wouter";
-import { Home, Compass, Star, User } from "lucide-react";
+import { Newspaper, Compass, Star, User } from "lucide-react";
 import { motion } from "framer-motion";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Feed", Icon: Home },
+  { href: "/my-feed", label: "For You", Icon: Newspaper },
   { href: "/discover", label: "Discover", Icon: Compass },
   { href: "/watchlist", label: "Watchlist", Icon: Star },
   { href: "/profile", label: "Profile", Icon: User },
@@ -16,7 +16,7 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-background/95 backdrop-blur safe-area-bottom">
       <div className="flex items-center justify-around max-w-lg mx-auto h-16 px-2">
         {NAV_ITEMS.map(({ href, label, Icon }) => {
-          const active = href === "/" ? location === "/" : location.startsWith(href);
+          const active = location === href || location.startsWith(href + "/");
           return (
             <Link key={href} to={href}>
               <button

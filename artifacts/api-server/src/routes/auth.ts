@@ -25,7 +25,15 @@ import { logger } from "../lib/logger.js";
 
 const router = Router();
 
-const FRONTEND_URL = process.env["FRONTEND_URL"] ?? "http://localhost:23519";
+/** Resolves the frontend URL for post-OAuth redirects.
+ *  Priority: FRONTEND_URL > REPLIT_DEV_DOMAIN > localhost fallback.
+ */
+function resolveFrontendUrl(): string {
+  if (process.env["FRONTEND_URL"]) return process.env["FRONTEND_URL"].replace(/\/$/, "");
+  if (process.env["REPLIT_DEV_DOMAIN"]) return `https://${process.env["REPLIT_DEV_DOMAIN"]}`;
+  return "http://localhost:23519";
+}
+const FRONTEND_URL = resolveFrontendUrl();
 
 function isValidEmail(v: unknown): v is string {
   return typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);

@@ -2,6 +2,44 @@
 
 ---
 
+## [2026-06-17] — Sprint 24: Personalized Feed Engine
+
+**What:** For You feed as primary product surface — TikTok-style cards, Google OAuth URL fixes, DB watchlist auto-load, real trending engine, and BottomNav redesign.
+
+### Google OAuth Fix
+- `authService.ts` — `getApiBaseUrl()` now uses `REPLIT_DEV_DOMAIN` as fallback; `getGoogleRedirectUri()` helper centralises redirect URI resolution; hard error if redirect_uri is not absolute
+- `routes/auth.ts` — `resolveFrontendUrl()` uses `REPLIT_DEV_DOMAIN` fallback (was hardcoded to `http://localhost:23519`); both functions fail loudly if env is missing
+
+### For You Feed (restored)
+- `App.tsx` — `/my-feed` route restored with `MyFeedPage` (was redirecting to `/`); import added
+- `BottomNav.tsx` — "Feed" → "For You" pointing to `/my-feed`; `Home` icon → `Newspaper`; active detection fixed (exact + prefix match, no special-case for `/`)
+
+### TikTok-Style Feed Cards
+- `my-feed.tsx` — `FeedCard` detailed mode completely redesigned:
+  - Source row (avatar · name · age · read time) + badge cluster (Breaking / Tier / Topic)
+  - Headline at `text-[15px] font-semibold`, `line-clamp-3`
+  - Full-width thumbnail between headline and description
+  - ⚡ "Why this matters" block with amber accent border when `selectionReason` is available
+  - Narrative thread + graph context lines preserved below body
+  - Cards use `rounded-xl overflow-hidden` (no inner padding bleed)
+- `my-feed.tsx` — `FeedbackBar` replaced with `ActionBar`:
+  - 5 equal-width buttons: **Like** (👍) · **Pass** (👎) · **Save** (🔖) · **Follow** (➕) · **Open** (↗)
+  - Like/Pass → `POST /api/adaptive/feedback` (type=more_like_this / less_like_this)
+  - Save → `localStorage` (`ai-newsroom:saved-articles` key); button shows filled Bookmark when saved
+  - Follow → `POST /api/interests/feedback` (action=follow, topicLabel from matchedInterests[0])
+  - Open → external link; all buttons show active state with colored border
+
+### DB Watchlist Auto-Load
+- `my-feed.tsx` — `useAuth()` provides `profileId`; `useQuery` fetches `GET /api/watchlist/:profileId` on mount; `combinedWatchlist` merges DB labels + locally-typed terms via `useMemo`; feed query key and body both use `combinedWatchlist`
+
+### Real Trending Engine
+- `discoverRoutes.ts` — `GET /discover/trending` now calls `getAllTrackedEntities()` from entity memory, sorts by `mentionCount` (desc), takes top 8; `trendLabel()` maps count → hot/rising/active/steady; falls back to curated list when entity memory is empty; response includes `source: "live" | "curated"` and `entityCount`
+
+**Files modified:** 7 files
+**DB changes:** none (uses existing watchlist table)
+
+---
+
 ## [2026-06-17] — Sprint 23: Authentication Foundation
 
 **What:** Real user accounts — email/password auth, Google OAuth, JWT sessions, anonymous profile migration, AuthContext, and protected routes.

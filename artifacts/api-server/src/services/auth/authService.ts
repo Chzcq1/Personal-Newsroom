@@ -49,10 +49,27 @@ export function buildJwtPayload(user: User, sessionId: string): JwtPayload {
   };
 }
 
+/** Resolves the absolute base URL of the API server.
+ *  Priority: API_BASE_URL > REPLIT_DEV_DOMAIN > empty string.
+ *  An empty result will produce a relative redirect_uri that Google will reject.
+ */
+function getApiBaseUrl(): string {
+  if (process.env["API_BASE_URL"]) return process.env["API_BASE_URL"].replace(/\/$/, "");
+  if (process.env["REPLIT_DEV_DOMAIN"]) return `https://${process.env["REPLIT_DEV_DOMAIN"]}`;
+  return "";
+}
+
+function getGoogleRedirectUri(): string {
+  return process.env["GOOGLE_REDIRECT_URI"] ?? `${getApiBaseUrl()}/api/auth/google/callback`;
+}
+
 export function buildGoogleAuthUrl(): string {
   const clientId = process.env["GOOGLE_CLIENT_ID"];
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID not configured");
-  const redirectUri = process.env["GOOGLE_REDIRECT_URI"] ?? `${process.env["API_BASE_URL"] ?? ""}/api/auth/google/callback`;
+  const redirectUri = getGoogleRedirectUri();
+  if (!redirectUri.startsWith("http")) {
+    throw new Error("Google OAuth requires an absolute redirect URI. Set API_BASE_URL or GOOGLE_REDIRECT_URI.");
+  }
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -74,7 +91,7 @@ export interface GoogleUserInfo {
 export async function exchangeGoogleCode(code: string): Promise<GoogleUserInfo> {
   const clientId = process.env["GOOGLE_CLIENT_ID"];
   const clientSecret = process.env["GOOGLE_CLIENT_SECRET"];
-  const redirectUri = process.env["GOOGLE_REDIRECT_URI"] ?? `${process.env["API_BASE_URL"] ?? ""}/api/auth/google/callback`;
+  const redirectUri = getGoogleRedirectUri();
 
   if (!clientId || !clientSecret) throw new Error("Google OAuth not configured");
 

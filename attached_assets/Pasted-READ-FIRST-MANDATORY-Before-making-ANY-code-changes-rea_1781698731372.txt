@@ -1,0 +1,465 @@
+READ FIRST — MANDATORY
+
+Before making ANY code changes, read and follow:
+
+- AGENT_ARCHITECTURE.md
+- AGENT_RULES.md
+- PROJECT_VISION.md
+- SYSTEM_STATUS.md
+- MASTER_INDEX.md
+- CONSOLIDATION_AUDIT.md
+- IDENTITY_FOUNDATION.md
+- LOGIN_PREPARATION.md
+- PERSISTENT_INFRASTRUCTURE.md
+- SIGNAL_MODES.md
+- STRATEGIC_CONTEXT.md
+
+Preserve all existing functionality.
+
+Do NOT create duplicate feeds.
+
+Do NOT create new admin dashboards.
+
+Do NOT create payment systems.
+
+Do NOT create new analytics pages.
+
+Focus only on:
+USER EXPERIENCE
+PERSONALIZED NEWS
+GOOGLE AUTH FIXES
+
+==================================================
+SPRINT 24
+PERSONALIZED FEED ENGINE
+(TIKTOK + INVESTING FOUNDATION)
+==================================================
+
+MISSION
+
+INFOX currently has:
+
+✓ Login
+✓ Profile
+✓ Interests
+✓ Watchlists
+✓ Feed foundation
+✓ Ranking foundation
+
+But users still need to:
+
+- manually trigger AI
+- manually add URLs
+- manually discover topics
+
+This is not the final vision.
+
+The product must become:
+
+"News finds the user."
+
+Goal:
+
+Create the first true personalized news feed.
+
+==================================================
+CRITICAL RULES
+==================================================
+
+DO NOT:
+
+- build payments
+- build subscriptions
+- build credits
+- build AI chat
+- create new admin systems
+
+ONLY:
+
+- feed quality
+- personalization
+- onboarding intelligence
+- source integration
+- Google auth fixes
+
+==================================================
+TASK A
+GOOGLE LOGIN FIX
+==================================================
+
+Current issue:
+
+Google OAuth exists but does not complete login.
+
+Audit:
+
+- OAuth callback
+- redirect URI
+- environment variables
+- JWT handoff
+- session creation
+
+Requirements:
+
+Google login must work end-to-end.
+
+Test:
+
+New account
+Existing account
+Logout
+Re-login
+
+Deliver:
+
+Root cause report.
+
+==================================================
+TASK B
+FOR YOU FEED
+==================================================
+
+Create:
+
+Primary feed mode
+
+"For You"
+
+Ranking factors:
+
+Interest Match
+Watchlist Match
+Engagement History
+Signal Priority
+Source Trust
+Recency
+
+Goal:
+
+Every user sees a different feed.
+
+==================================================
+TASK C
+INTEREST → NEWS PIPELINE
+==================================================
+
+Current issue:
+
+Users select interests.
+
+But feed does not truly use them.
+
+Requirements:
+
+Map interests directly into source discovery.
+
+Examples:
+
+AI
+→ OpenAI
+→ Anthropic
+→ Google DeepMind
+→ NVIDIA
+
+Crypto
+→ Bitcoin
+→ Ethereum
+→ ETF news
+
+Stocks
+→ earnings
+→ analysts
+→ market news
+
+Goal:
+
+Interest selections affect feed immediately.
+
+==================================================
+TASK D
+AUTO FOLLOW LEARNING
+==================================================
+
+User actions:
+
+Like
+Dislike
+Save
+Open
+
+Must update:
+
+interest weight
+entity weight
+topic weight
+
+Requirements:
+
+Adaptive learning.
+
+No manual setup required.
+
+==================================================
+TASK E
+DISCOVER REBUILD
+==================================================
+
+Current Discover page is static.
+
+Convert into:
+
+Live discovery engine.
+
+Sections:
+
+Trending Today
+
+Technology
+
+AI
+
+Markets
+
+Crypto
+
+Business
+
+Thailand
+
+Global
+
+Goal:
+
+Discover becomes useful daily.
+
+==================================================
+TASK F
+TIKTOK STYLE FEED CARDS
+==================================================
+
+Redesign feed cards.
+
+Each card contains:
+
+Headline
+
+Source
+
+Summary
+
+Why This Matters
+
+Save
+
+Follow Topic
+
+Like
+
+Dislike
+
+Open Source
+
+Requirements:
+
+Fast scanning.
+
+Mobile-first.
+
+==================================================
+TASK G
+WATCHLIST INTEGRATION
+==================================================
+
+Current watchlist is isolated.
+
+Integrate into feed.
+
+Examples:
+
+Watchlist contains:
+
+NVDA
+
+Feed boosts:
+
+NVIDIA
+AI chips
+earnings
+supply chain
+
+Goal:
+
+Watchlist changes feed behavior.
+
+==================================================
+TASK H
+TRENDING ENGINE
+==================================================
+
+Create:
+
+Trending score
+
+Factors:
+
+mentions
+velocity
+engagement
+source count
+
+Sources:
+
+RSS
+Reddit
+YouTube
+
+Twitter/X architecture ready
+
+Do not require paid APIs yet.
+
+==================================================
+TASK I
+PROFILE CONSOLIDATION
+==================================================
+
+Current issue:
+
+Profile
+Interests
+Onboarding
+Settings
+
+contain overlapping functionality.
+
+Merge ownership controls into:
+
+Profile Center
+
+Single source of truth.
+
+==================================================
+TASK J
+REAL FEED DATA
+==================================================
+
+Reduce dependency on:
+
+manual URL entry
+
+Increase:
+
+automatic article ingestion
+
+Requirements:
+
+Users should see news immediately after login.
+
+Without creating sources manually.
+
+==================================================
+TASK K
+FEED PERFORMANCE
+==================================================
+
+Requirements:
+
+Feed load:
+
+< 2 seconds
+
+Ranking cache
+
+Interest cache
+
+Watchlist cache
+
+Use existing infrastructure.
+
+==================================================
+TASK L
+DOCUMENTATION
+==================================================
+
+Update only:
+
+ARCHITECTURE.md
+CHANGELOG.md
+
+Create only if necessary:
+
+PERSONALIZED_FEED.md
+
+No documentation explosion.
+
+==================================================
+SUCCESS CRITERIA
+==================================================
+
+Sprint complete ONLY IF:
+
+✓ Google Login works
+
+✓ Feed auto-populates
+
+✓ Interests affect feed
+
+✓ Watchlists affect feed
+
+✓ Trending works
+
+✓ Discover is dynamic
+
+✓ Feed is personalized
+
+✓ User no longer needs manual URLs
+
+✓ Profile duplication reduced
+
+✓ Feed feels like TikTok for News
+
+==================================================
+DELIVERABLE REPORT
+==================================================
+
+Return:
+
+1. Files Created
+
+2. Files Modified
+
+3. Google OAuth Fix
+
+4. Feed Ranking Changes
+
+5. Trending Architecture
+
+6. Interest Mapping Design
+
+7. Watchlist Integration
+
+8. Performance Results
+
+9. Verification URLs
+
+10. Production Readiness Score
+
+==================================================
+COO INSTRUCTION
+==================================================
+
+This sprint is not about monetization.
+
+This sprint is about creating a product users
+want to open every day.
+
+The feed must become the product.
+
+No new admin toys.
+
+No new dashboards.
+
+No payment systems.
+
+Make the feed addictive,
+personalized,
+and useful.

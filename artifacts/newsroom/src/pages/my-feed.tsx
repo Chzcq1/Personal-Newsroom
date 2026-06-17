@@ -12,9 +12,10 @@
 //   • Context summary from personal context layer (Task H)
 // ============================================================
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft,
   RefreshCw,
@@ -33,6 +34,8 @@ import {
   Star,
   X,
   BookOpen,
+  Bookmark,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getInterests } from "@/lib/interestProfile";
@@ -315,109 +318,133 @@ function FeedCard({
     );
   }
 
-  // Detailed mode
+  // ── Detailed mode (Sprint 24 — TikTok card) ─────────────────
   return (
     <div ref={cardRef}
-      className={`rounded-lg border p-4 transition-colors group ${
-        isRead ? "border-white/5 hover:border-white/10 bg-white/[0.02]" : "border-white/8 hover:border-white/15 bg-white/[0.03] hover:bg-white/[0.05]"
+      className={`rounded-xl border overflow-hidden transition-colors ${
+        isRead
+          ? "border-white/5 bg-white/[0.02]"
+          : "border-white/10 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.035]"
       }`}>
-      {/* Meta row */}
-      <div className="flex items-center gap-2 mb-2.5">
-        <SourceAvatar source={item.source} />
-        <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-          {item.source && (
-            <span className="text-[11px] font-medium text-white/60 truncate">{item.source}</span>
-          )}
-          {item.pubDate && (
-            <>
-              <span className="text-white/20 text-[10px]">·</span>
-              <span className="text-[10px] text-white/35">{formatAge(item.pubDate)}</span>
-            </>
-          )}
-          {rt && (
-            <>
-              <span className="text-white/20 text-[10px]">·</span>
-              <span className="text-[10px] text-white/30">{rt} read</span>
-            </>
-          )}
-        </div>
-        <TierBadge tier={item.sourceTier} />
-        <RelevanceClassBadge cls={item.relevanceClass} />
-      </div>
 
-      {/* Title + image */}
-      <div className="flex items-start gap-3 mb-2">
-        <a href={item.url} target="_blank" rel="noopener noreferrer"
-          className={`flex-1 text-[13px] font-semibold leading-snug transition-colors hover:text-white line-clamp-2 ${
-            isRead ? "text-white/55" : "text-white/90"
-          }`}>
+      {/* Card body */}
+      <div className="p-4 pb-3">
+
+        {/* Source row */}
+        <div className="flex items-center gap-2 mb-3">
+          <SourceAvatar source={item.source} />
+          <div className="flex-1 min-w-0 flex items-center gap-1.5">
+            {item.source && (
+              <span className="text-[11px] font-medium text-white/55 truncate">{item.source}</span>
+            )}
+            {item.pubDate && (
+              <>
+                <span className="text-white/20">·</span>
+                <span className="text-[10px] text-white/35">{formatAge(item.pubDate)}</span>
+              </>
+            )}
+            {rt && (
+              <>
+                <span className="text-white/20">·</span>
+                <span className="text-[10px] text-white/30">{rt} read</span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <RecencyBadge label={item.recencyLabel} />
+            <TierBadge tier={item.sourceTier} />
+            <TopicTag topicId={item.topicId} />
+          </div>
+        </div>
+
+        {/* Headline — large & scannable */}
+        <h2 className={`text-[15px] font-semibold leading-snug mb-2.5 line-clamp-3 ${
+          isRead ? "text-white/50" : "text-white/90"
+        }`}>
           {item.title}
-        </a>
-        <ArticleThumbnail imageUrl={item.imageUrl} title={item.title} />
-      </div>
+        </h2>
 
-      {/* Description */}
-      {item.description && (
-        <p className="text-[12px] text-white/50 leading-relaxed line-clamp-2 mb-2.5">
-          {item.description}
-        </p>
-      )}
+        {/* Thumbnail (full-width, above description) */}
+        {item.imageUrl && (
+          <ArticleThumbnail imageUrl={item.imageUrl} title={item.title} />
+        )}
 
-      {/* Graph entities (if contextual match) */}
-      {item.graphMatchedEntities.length > 0 && item.relevanceClass === "contextual" && (
-        <div className="flex items-center gap-1.5 mb-2">
-          <GitBranch className="w-3 h-3 text-sky-400/50 flex-shrink-0" />
-          <span className="text-[10px] text-sky-400/50">
-            Via: {item.graphMatchedEntities.slice(0, 3).join(", ")}
-          </span>
-        </div>
-      )}
+        {/* Description */}
+        {item.description && (
+          <p className="text-[12px] text-white/45 leading-relaxed line-clamp-3 mb-3">
+            {item.description}
+          </p>
+        )}
 
-      {/* Narrative cluster badge */}
-      {item.narrativeClusterHeadline && (
-        <div className="flex items-center gap-1.5 mb-2">
-          <Layers className="w-3 h-3 text-sky-400/40 flex-shrink-0" />
-          <span className="text-[10px] text-white/30 truncate max-w-[300px]">
-            {item.narrativeClusterHeadline.length > 60
-              ? item.narrativeClusterHeadline.slice(0, 60) + "…"
-              : item.narrativeClusterHeadline}
-          </span>
-        </div>
-      )}
-
-      {/* Footer row */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <TopicTag topicId={item.topicId} />
-          <RecencyBadge label={item.recencyLabel} />
-          {item.selectionReason && (
-            <span className="text-[10px] text-white/30 italic truncate max-w-[280px]">
+        {/* Why this matters */}
+        {item.selectionReason && item.selectionReason !== "General coverage" && (
+          <div className="flex items-start gap-1.5 mb-1 px-3 py-2 bg-amber-400/[0.05] rounded-lg border border-amber-400/[0.12]">
+            <span className="text-amber-400/80 text-[11px] flex-shrink-0 mt-0.5">⚡</span>
+            <p className="text-[11px] text-white/40 leading-snug">
+              <span className="text-white/60 font-medium">Why this matters: </span>
               {item.selectionReason}
+            </p>
+          </div>
+        )}
+
+        {/* Narrative thread (if available) */}
+        {item.narrativeClusterHeadline && (
+          <div className="flex items-center gap-1.5 mt-2">
+            <Layers className="w-3 h-3 text-sky-400/40 flex-shrink-0" />
+            <span className="text-[10px] text-white/30 truncate">
+              {item.narrativeClusterHeadline.length > 70
+                ? item.narrativeClusterHeadline.slice(0, 70) + "…"
+                : item.narrativeClusterHeadline}
             </span>
-          )}
-        </div>
-        <a href={item.url} target="_blank" rel="noopener noreferrer"
-          className="flex-shrink-0 inline-flex items-center gap-1 text-[11px] text-white/40 hover:text-white/70 transition-colors">
-          Read
-          <ExternalLink className="w-3 h-3" />
-        </a>
+          </div>
+        )}
+
+        {/* Graph context */}
+        {item.graphMatchedEntities.length > 0 && item.relevanceClass === "contextual" && (
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <GitBranch className="w-3 h-3 text-sky-400/40 flex-shrink-0" />
+            <span className="text-[10px] text-sky-400/40">
+              Via: {item.graphMatchedEntities.slice(0, 3).join(", ")}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Sprint 10 Task F — Relevance feedback */}
-      <FeedbackBar item={item} interests={interests} />
+      {/* Action bar — full-width, prominent */}
+      <ActionBar item={item} interests={interests} />
     </div>
   );
 }
 
-// ── Relevance Feedback Bar (Sprint 10 Task F) ─────────────────
+// ── Action Bar (Sprint 24 — TikTok-style) ────────────────────
+// Replaces the old FeedbackBar with full-size action buttons.
+// Like/Pass → adaptive feedback   Save → localStorage
+// Follow Topic → interests API    Open → external link
 
-function FeedbackBar({ item, interests }: { item: FeedItem; interests: string[] }) {
-  const [sent, setSent] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
+const SAVED_KEY = "ai-newsroom:saved-articles";
 
-  async function sendFeedback(type: "more_like_this" | "less_like_this" | "irrelevant" | "high_value") {
-    if (sending || sent) return;
-    setSending(true);
+function getSavedUrls(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(SAVED_KEY) ?? "[]")); }
+  catch { return new Set(); }
+}
+
+function toggleSaved(url: string): boolean {
+  const saved = getSavedUrls();
+  if (saved.has(url)) { saved.delete(url); } else { saved.add(url); }
+  try { localStorage.setItem(SAVED_KEY, JSON.stringify([...saved])); } catch { /**/ }
+  return saved.has(url);
+}
+
+function ActionBar({ item, interests }: { item: FeedItem; interests: string[] }) {
+  const [liked, setLiked] = useState<"like" | "dislike" | null>(null);
+  const [saved, setSaved] = useState(() => getSavedUrls().has(item.url));
+  const [followed, setFollowed] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function sendFeedback(type: "more_like_this" | "less_like_this") {
+    if (busy) return;
+    setBusy(true);
+    setLiked(type === "more_like_this" ? "like" : "dislike");
     try {
       await fetch(`${BASE}/api/adaptive/feedback`, {
         method: "POST",
@@ -431,62 +458,100 @@ function FeedbackBar({ item, interests }: { item: FeedItem; interests: string[] 
           narrativeId: item.narrativeClusterId,
         }),
       });
-      setSent(type);
-    } catch { /* silent */ } finally {
-      setSending(false);
-    }
+    } catch { /**/ } finally { setBusy(false); }
   }
 
-  if (sent) {
-    return (
-      <div className="mt-2 text-[10px] text-white/30 italic">
-        {sent === "high_value" && "★ Marked high value — boosting similar content"}
-        {sent === "more_like_this" && "✓ More like this — noted"}
-        {sent === "less_like_this" && "↓ Less like this — reducing similar content"}
-        {sent === "irrelevant" && "✗ Marked irrelevant — won't show similar"}
-      </div>
-    );
+  async function followTopic() {
+    if (followed || busy) return;
+    setBusy(true);
+    setFollowed(true);
+    const topicLabel = item.matchedInterests[0] ?? item.topicId;
+    try {
+      await fetch(`${BASE}/api/interests/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topicLabel, action: "follow" }),
+      });
+    } catch { /**/ } finally { setBusy(false); }
+  }
+
+  function handleSave() {
+    const isNowSaved = toggleSaved(item.url);
+    setSaved(isNowSaved);
   }
 
   return (
-    <div className="mt-2.5 flex items-center gap-1 transition-opacity">
-      <span className="text-[9px] text-white/20 mr-1">Rate:</span>
-      <button
-        onClick={() => sendFeedback("high_value")}
-        disabled={sending}
-        title="High value — show more like this"
-        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] text-amber-400/60 hover:text-amber-400 hover:bg-amber-400/10 transition-colors disabled:opacity-40"
-      >
-        <Star className="w-2.5 h-2.5" />
-        <span>High value</span>
-      </button>
+    <div className="flex items-center border-t border-white/[0.06] px-3 py-2.5 gap-1">
+      {/* Like */}
       <button
         onClick={() => sendFeedback("more_like_this")}
-        disabled={sending}
+        disabled={busy || liked !== null}
+        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-medium transition-colors ${
+          liked === "like"
+            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+            : "text-white/40 hover:text-emerald-400 hover:bg-emerald-400/10 disabled:opacity-50"
+        }`}
         title="More like this"
-        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] text-emerald-400/60 hover:text-emerald-400 hover:bg-emerald-400/10 transition-colors disabled:opacity-40"
       >
-        <ThumbsUp className="w-2.5 h-2.5" />
-        <span>More</span>
+        <ThumbsUp className="w-3.5 h-3.5" />
+        <span>Like</span>
       </button>
+
+      {/* Dislike */}
       <button
         onClick={() => sendFeedback("less_like_this")}
-        disabled={sending}
+        disabled={busy || liked !== null}
+        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-medium transition-colors ${
+          liked === "dislike"
+            ? "bg-red-500/15 text-red-400 border border-red-500/25"
+            : "text-white/40 hover:text-red-400 hover:bg-red-400/10 disabled:opacity-50"
+        }`}
         title="Less like this"
-        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors disabled:opacity-40"
       >
-        <ThumbsDown className="w-2.5 h-2.5" />
-        <span>Less</span>
+        <ThumbsDown className="w-3.5 h-3.5" />
+        <span>Pass</span>
       </button>
+
+      {/* Save */}
       <button
-        onClick={() => sendFeedback("irrelevant")}
-        disabled={sending}
-        title="Irrelevant — never show similar"
-        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] text-red-400/50 hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-40"
+        onClick={handleSave}
+        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-medium transition-colors ${
+          saved
+            ? "bg-amber-500/15 text-amber-400 border border-amber-500/25"
+            : "text-white/40 hover:text-amber-400 hover:bg-amber-400/10"
+        }`}
+        title={saved ? "Saved" : "Save article"}
       >
-        <X className="w-2.5 h-2.5" />
-        <span>Irrelevant</span>
+        <Bookmark className={`w-3.5 h-3.5 ${saved ? "fill-current" : ""}`} />
+        <span>{saved ? "Saved" : "Save"}</span>
       </button>
+
+      {/* Follow Topic */}
+      <button
+        onClick={followTopic}
+        disabled={busy || followed}
+        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-medium transition-colors ${
+          followed
+            ? "bg-sky-500/15 text-sky-400 border border-sky-500/25"
+            : "text-white/40 hover:text-sky-400 hover:bg-sky-400/10 disabled:opacity-50"
+        }`}
+        title="Follow this topic"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        <span>{followed ? "Following" : "Follow"}</span>
+      </button>
+
+      {/* Open */}
+      <a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-medium text-white/40 hover:text-white/80 hover:bg-white/8 transition-colors"
+        title="Open full article"
+      >
+        <ExternalLink className="w-3.5 h-3.5" />
+        <span>Open</span>
+      </a>
     </div>
   );
 }
@@ -553,6 +618,19 @@ function FeedQualityBar({ fq, filtered }: {
 
 export default function MyFeedPage() {
   const interests = getInterests();
+  const { profileId } = useAuth();
+
+  // ── Load watchlist from DB (Sprint 24) ──────────────────────
+  const { data: dbWatchlistData } = useQuery<{ items: Array<{ entityLabel: string }> }>({
+    queryKey: ["watchlist-db", profileId],
+    queryFn: async () => {
+      if (!profileId) return { items: [] };
+      const res = await fetch(`${BASE}/api/watchlist/${profileId}`);
+      if (!res.ok) return { items: [] };
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [density, setDensity] = useState<Density>(() => {
     try {
@@ -582,16 +660,26 @@ export default function MyFeedPage() {
     try { localStorage.setItem(DENSITY_KEY, next); } catch { /**/ }
   }, []);
 
+  // Sprint 24 — Merge DB watchlist with locally-added terms
+  const dbWatchlistLabels = useMemo(
+    () => (dbWatchlistData?.items ?? []).map((i) => i.entityLabel),
+    [dbWatchlistData],
+  );
+  const combinedWatchlist = useMemo(
+    () => [...new Set([...dbWatchlistLabels, ...watchlist])],
+    [dbWatchlistLabels, watchlist],
+  );
+
   // Derive taste signal (from localStorage events)
   const tasteSignal = deriveTasteSignal();
 
   const { data, isLoading, error, refetch, isFetching } = useQuery<FeedResponse>({
-    queryKey: ["my-feed", interests, watchlist],
+    queryKey: ["my-feed", interests, combinedWatchlist],
     queryFn: async () => {
       const res = await fetch(`${BASE}/api/feed/personal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interests, watchlist, tasteSignal }),
+        body: JSON.stringify({ interests, watchlist: combinedWatchlist, tasteSignal }),
       });
       if (!res.ok) throw new Error("Failed to fetch personal feed");
       return res.json();

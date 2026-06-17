@@ -1,10 +1,12 @@
 // ============================================================
-// DISCOVER ROUTES — Sprint 22
+// DISCOVER ROUTES — Sprint 24 (updated from Sprint 22)
 // Mounted at /api via app.use("/api", router)
 // Provides search and trending topics for the Discover page.
+// Trending now uses real entity memory data (Sprint 24).
 // ============================================================
 
 import { Router } from "express";
+import { getAllTrackedEntities } from "../services/intelligence/entityMemory.js";
 
 const router = Router();
 
@@ -44,6 +46,26 @@ const DISCOVER_CATALOG = [
   { id: "person-sam", label: "Sam Altman", type: "person", tags: ["openai", "chatgpt"] },
 ];
 
+// ── Curated fallback trending list ───────────────────────────
+
+const CURATED_TRENDING = [
+  { id: "ai", label: "Artificial Intelligence", type: "topic", trend: "hot" },
+  { id: "crypto-btc", label: "Bitcoin (BTC)", type: "crypto", trend: "rising" },
+  { id: "company-nvidia", label: "NVIDIA", type: "company", trend: "hot" },
+  { id: "geopolitics", label: "Geopolitics", type: "topic", trend: "active" },
+  { id: "company-openai", label: "OpenAI", type: "company", trend: "rising" },
+  { id: "energy", label: "Energy & Climate", type: "topic", trend: "active" },
+];
+
+// ── Trend label from mention count ───────────────────────────
+
+function trendLabel(mentions: number): "hot" | "rising" | "active" | "steady" {
+  if (mentions >= 10) return "hot";
+  if (mentions >= 5) return "rising";
+  if (mentions >= 2) return "active";
+  return "steady";
+}
+
 // GET /discover/search?q=&type=
 router.get("/discover/search", (req, res) => {
   const q = ((req.query.q as string) ?? "").toLowerCase().trim();
@@ -65,17 +87,37 @@ router.get("/discover/search", (req, res) => {
   res.json({ results, total: results.length, q, type });
 });
 
-// GET /discover/trending — returns curated trending topics
+// GET /discover/trending — live trending from entity memory
+// Falls back to curated list when entity memory is empty.
 router.get("/discover/trending", (_req, res) => {
-  const trending = [
-    { id: "ai", label: "Artificial Intelligence", type: "topic", trend: "hot" },
-    { id: "crypto-btc", label: "Bitcoin (BTC)", type: "crypto", trend: "rising" },
-    { id: "company-nvidia", label: "NVIDIA", type: "company", trend: "hot" },
-    { id: "geopolitics", label: "Geopolitics", type: "topic", trend: "active" },
-    { id: "company-openai", label: "OpenAI", type: "company", trend: "rising" },
-    { id: "energy", label: "Energy & Climate", type: "topic", trend: "active" },
-  ];
-  res.json({ trending });
+  const entities = getAllTrackedEntities();
+
+  if (entities.length === 0) {
+    res.json({ trending: CURATED_TRENDING, source: "curated" });
+    return;
+  }
+
+  // Sort by mention count (descending), take top 8
+  const sorted = [...entities]
+    .sort((a, b) => (b.mentionCount ?? 0) - (a.mentionCount ?? 0))
+    .slice(0, 8);
+
+  const trending = sorted.map((entity) => {
+    const catalogMatch = DISCOVER_CATALOG.find(
+      (c) => c.label.toLowerCase() === entity.entityId.toLowerCase() ||
+              c.tags.some((t) => entity.entityId.toLowerCase().includes(t)),
+    );
+
+    return {
+      id: catalogMatch?.id ?? entity.entityId.toLowerCase().replace(/\s+/g, "-"),
+      label: entity.entityId,
+      type: catalogMatch?.type ?? "topic",
+      trend: trendLabel(entity.mentionCount ?? 1),
+      mentions: entity.mentionCount ?? 1,
+    };
+  });
+
+  res.json({ trending, source: "live", entityCount: entities.length });
 });
 
 export default router;

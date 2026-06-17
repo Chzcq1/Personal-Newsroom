@@ -15,6 +15,9 @@ import DiscoverPage from "@/pages/discover";
 import WatchlistPage from "@/pages/watchlist";
 import ProfilePage from "@/pages/profile";
 
+// Sprint 24 — For You Feed (restored from /my-feed redirect)
+import MyFeedPage from "@/pages/my-feed";
+
 // Settings
 import SettingsPage from "@/pages/settings/index";
 import TopicsPage from "@/pages/settings/topics";
@@ -76,10 +79,10 @@ function Router() {
       <Route path="/auth/signup" component={SignupPage} />
       <Route path="/auth/callback" component={CallbackPage} />
 
+      {/* ── For You Feed (Sprint 24 — restored) ─────────────── */}
+      <Route path="/my-feed" component={MyFeedPage} />
+
       {/* ── Retired routes → redirects ───────────────────────── */}
-      <Route path="/my-feed">
-        {() => <Redirect to="/" />}
-      </Route>
       <Route path="/narratives">
         {() => <Redirect to="/intelligence-center" />}
       </Route>
