@@ -1,0 +1,330 @@
+SPRINT 25 — PRODUCT CONVERGENCE + PAYMENT FOUNDATION
+
+MISSION
+หยุดสร้างระบบแยกส่วน
+เชื่อม Feed + Interests + Watchlist + AI Pipeline + Payments ให้เริ่มทำงานเป็น “สินค้าเดียวกัน”
+
+ห้ามสร้าง dashboard ใหม่
+ห้ามสร้าง mock system ใหม่
+ห้ามสร้าง admin page ใหม่
+ห้ามเพิ่ม experimental UI
+
+Sprint นี้คือ:
+REAL DATA
+REAL FLOW
+REAL PRODUCT
+
+==================================================
+CORE PRODUCT DIRECTION (LOCKED)
+==================================================
+
+ผลิตภัณฑ์นี้คือ:
+
+“Tiktok + Investing + Personalized Intelligence Feed”
+
+ผู้ใช้:
+1. Login
+2. เลือกความสนใจ
+3. Follow/watchlist
+4. เปิด For You feed
+5. ระบบดึงข่าวจริงมาให้เอง
+6. AI สรุป + จัดอันดับ + คัด noise
+7. ผู้ใช้ scroll feed ได้ทันที
+
+ผู้ใช้ไม่ควร:
+- กรอก URL เอง
+- กด AI fetch เองทุกครั้ง
+- ตั้งค่าซับซ้อน
+- เห็น admin tools
+- งงว่า feed ไหนคือ feed หลัก
+
+==================================================
+SPRINT 25 OBJECTIVES
+==================================================
+
+A. UNIFY THE FEED SYSTEM
+B. REMOVE FAKE INTERACTIONS
+C. CONNECT REAL NEWS INGESTION
+D. START PAYMENT ARCHITECTURE
+E. SEPARATE ADMIN FROM USER
+F. PREPARE REAL DEPLOYMENT
+
+==================================================
+TASK A — UNIFY FEED ARCHITECTURE
+==================================================
+
+PROBLEM:
+ตอนนี้มี:
+- AI fetch page
+- My Feed
+- Discover
+- Watchlist
+
+แต่ยังไม่เชื่อมกันจริง
+
+GOAL:
+เหลือ “For You Feed” เป็นศูนย์กลางเดียว
+
+IMPLEMENT:
+
+1. Make /my-feed the primary homepage
+- Route "/" → redirect to "/my-feed"
+- Feed คือ product หลัก
+
+2. Remove manual fetch dependency
+- User ไม่ต้องกรอก URL เพื่อเห็นข่าว
+- Feed โหลดอัตโนมัติจาก interests/watchlist
+
+3. Feed pipeline:
+user interests
+→ tracked entities
+→ RSS/X/YouTube/Reddit ingestion
+→ ranking
+→ AI summary
+→ feed cards
+
+4. Feed auto-refresh
+- refresh ทุก 60–120 วินาที
+- background refresh
+- no full page reload
+
+5. Remove duplicated navigation
+REMOVE:
+- old AI fetch entry points
+- duplicated onboarding/settings routes
+- dead feed pages
+
+==================================================
+TASK B — REAL INTEREST-DRIVEN CONTENT
+==================================================
+
+PROBLEM:
+BTC ไม่มีอะไรตอบสนองจริง
+
+GOAL:
+interests/watchlist ต้องดึงข้อมูลจริง
+
+IMPLEMENT:
+
+1. Build REAL entity ingestion mapping
+
+BTC →
+- CoinDesk RSS
+- Cointelegraph
+- Reddit crypto
+- YouTube crypto channels
+- X/Twitter keyword tracking architecture stub
+
+NVDA →
+- Reuters
+- Yahoo Finance
+- SEC
+- Reddit wallstreetbets
+- YouTube finance
+
+AI →
+- TechCrunch
+- OpenAI blog
+- GitHub trending AI
+- Hacker News
+
+2. Create entity-source resolver service
+
+entityResolver.ts
+
+Input:
+["BTC", "NVDA", "AI"]
+
+Output:
+relevant sources[]
+
+3. Feed must visibly react to interests
+If user follows BTC:
+- crypto appears more
+- crypto ranking score increases
+- crypto cards appear immediately
+
+NO MORE STATIC DEMO BEHAVIOR
+
+==================================================
+TASK C — REAL-TIME FEED EXPERIENCE
+==================================================
+
+GOAL:
+Feed feels alive like TikTok/Investing
+
+IMPLEMENT:
+
+1. Infinite scroll
+2. Lazy loading
+3. Skeleton loading
+4. Swipe/mobile-first cards
+5. Card density optimization
+6. “Why you see this” explanation
+7. Real timestamps
+8. Open article externally
+
+==================================================
+TASK D — PAYMENT FOUNDATION (NO FAKE PAYMENTS)
+==================================================
+
+IMPORTANT:
+Do NOT implement fake payment success.
+
+GOAL:
+Prepare real PromptPay architecture.
+
+IMPLEMENT:
+
+1. Create billing tables
+
+subscriptions
+payments
+credit_ledger
+plans
+
+2. Build plan architecture
+
+FREE
+- limited feed refresh
+- limited AI summaries
+
+PRO
+- faster refresh
+- full summaries
+- Telegram delivery
+- watchlist expansion
+
+ELITE
+- realtime priority
+- premium intelligence
+- future webhook support
+
+3. Build billing UI shell
+/settings/billing
+
+Show:
+- current plan
+- token usage
+- renewal date
+- upgrade button
+
+4. PromptPay architecture preparation
+NO FAKE QR SUCCESS
+
+ONLY:
+- payment provider abstraction
+- transaction states
+- webhook architecture
+- receipt model
+
+==================================================
+TASK E — ADMIN / USER SEPARATION
+==================================================
+
+PROBLEM:
+Admin UI still leaks into user product
+
+GOAL:
+Users never see admin tools
+
+IMPLEMENT:
+
+1. Move ALL admin pages under:
+ /admin/*
+
+2. Require requireAdmin middleware
+
+3. Remove admin navigation from user UI
+
+4. User product aesthetic:
+dark minimal
+clean
+feed-first
+mobile-first
+
+5. Admin aesthetic:
+separate
+operational
+analytics-focused
+
+NO MIXED DESIGN LANGUAGE
+
+==================================================
+TASK F — GOOGLE LOGIN FIX (CRITICAL)
+==================================================
+
+GOAL:
+Google login must work end-to-end.
+
+IMPLEMENT:
+
+1. Audit callback URLs
+2. Verify env propagation
+3. Verify OAuth redirect origin
+4. Ensure production-safe redirect handling
+5. Add explicit frontend error states
+6. Add login diagnostics logging
+
+SUCCESS CRITERIA:
+- Login with Google works on fresh browser
+- Session persists after refresh
+- Logout clears session correctly
+
+==================================================
+TASK G — DEPLOYMENT PREP
+==================================================
+
+IMPLEMENT:
+
+1. Production env validator
+2. Startup config validation
+3. Missing env warnings
+4. Deployment readiness page
+5. Healthcheck endpoint
+6. Runtime diagnostics page
+
+==================================================
+STRICT RULES
+==================================================
+
+DO NOT:
+- create fake analytics
+- create fake AI metrics
+- create placeholder systems
+- create more unused dashboards
+- create more experimental pages
+- create duplicate routes
+- create disconnected systems
+
+DO:
+- connect systems together
+- simplify UX
+- improve runtime stability
+- build real product flow
+- prioritize mobile feed UX
+- reduce cognitive load
+
+==================================================
+EXPECTED OUTPUT
+==================================================
+
+By end of Sprint 25:
+
+1. User logs in
+2. Chooses interests
+3. Feed automatically personalized
+4. Watchlist affects ranking
+5. News sources connected for real
+6. Feed feels alive
+7. Admin separated
+8. Billing foundation exists
+9. Google login works
+10. Product direction becomes clear
+
+This sprint is about convergence.
+Not expansion.
+
+Build fewer things.
+Connect existing things.
+Make them real.
