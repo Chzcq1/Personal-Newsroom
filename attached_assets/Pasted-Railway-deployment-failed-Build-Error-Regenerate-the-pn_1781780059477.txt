@@ -1,0 +1,44 @@
+Railway deployment failed — Build Error
+
+Regenerate the pnpm lockfile by running `pnpm install` locally and committing the updated `pnpm-lock.yaml`. The build failed because the `overrides` configuration in `pnpm-workspace.yaml` does not match what is recorded in `pnpm-lock.yaml`, causing `pnpm install --frozen-lockfile` to exit with `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`. This is the first deployment of this service and the lockfile mismatch predates the triggering commit.
+
+Repository: https://github.com/Chzcq1/Personal-Newsroom
+Branch: main · Commit: b5e0b11 — Update the application with Thai translations and a theme toggle
+
+Implement full Thai UI localization, add a dark/light theme toggle, adjust pricing tiers, and refine onboarding and settings pages.
+
+Replit-Commit-Author: Agent
+Replit-Commit-Session-Id: 5d7f3828-4769-4727-8e5e-26cff4c14aee
+Replit-Commit-Checkpoint-Type: full_checkpoint
+Replit-Commit-Event-Id: ac9c66db-c369-4eec-a5c3-96f90561ec77
+Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/a9d29071-2fa5-4dab-87f0-c7fab52e270a/5d7f3828-4769-4727-8e5e-26cff4c14aee/ezwSI25
+Replit-Helium-Checkpoint-Created: true
+Deployment ID: cec0206f-7175-4ed5-956e-4d1bef8f5f04
+Service ID: 2f59d276-6f77-4233-816f-06ed34a58c43
+Environment ID: 032df92d-d7e9-465a-8782-fdd6e936c0dd
+
+---
+
+## Problem
+The build fails at the `pnpm install --frozen-lockfile --prefer-offline` step with `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`. The `overrides` configuration in `pnpm-workspace.yaml` does not match what is recorded in `pnpm-lock.yaml`.
+
+Build log error:
+```
+ERR_PNPM_LOCKFILE_CONFIG_MISMATCH  Cannot proceed with the frozen installation. The current "overrides" configuration doesn't match the value found in the lockfile
+Update your lockfile using "pnpm install --no-frozen-lockfile"
+```
+
+The service uses the RAILPACK builder with pnpm v9.15.9 in a monorepo with 9 workspace projects. The build stage failed; no railway.json or railway.toml config file is in use.
+
+## Diagnosis
+`pnpm-workspace.yaml` defines extensive `overrides` that exclude non-linux-x64 platform binaries for esbuild, lightningcss, @tailwindcss/oxide, rollup, and @expo/ngrok-bin, and also pins esbuild to 0.27.3 and replaces @esbuild-kit/esm-loader with tsx. The `pnpm-lock.yaml` was generated when these overrides were different or absent, so the frozen install correctly rejects the mismatch. The triggering commit only changed UI translation files and added a ThemeContext — no changes were made to `pnpm-workspace.yaml` or `pnpm-lock.yaml`, confirming the mismatch predates this commit. This is the first deployment of this service.
+
+## Fix
+1. **File:** `pnpm-lock.yaml` (repo root)
+2. **Action:** Regenerate by running locally:
+   ```bash
+   pnpm install
+   ```
+   This updates `pnpm-lock.yaml` to reflect the current `overrides` in `pnpm-workspace.yaml`.
+3. **Commit** the updated `pnpm-lock.yaml` and push to `main`.
+4. This resolves the mismatch because the lockfile will now contain the same overrides configuration that pnpm reads from `pnpm-workspace.yaml` at install time.
