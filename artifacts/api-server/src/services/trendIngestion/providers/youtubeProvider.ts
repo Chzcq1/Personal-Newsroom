@@ -1,12 +1,19 @@
-// YouTube RSS provider — ingests recent videos from finance/AI channels
+// YouTube RSS provider — ingests recent videos from finance/AI/tech/social channels
 import type { TrendIngestionProvider, TrendItem } from "../index.js";
 
 const YOUTUBE_CHANNELS: Array<{ channelId: string; name: string; topics: string[]; entities: string[] }> = [
+  // Finance & Markets
   { channelId: "UCrp_UI8XtuYfpiqluWLD7Lw", name: "CNBC", topics: ["markets", "economy", "stocks"], entities: ["Markets", "Economy"] },
   { channelId: "UCIALMKvObZNtJ6AmdCLP7Lg", name: "Bloomberg", topics: ["markets", "economy", "business"], entities: ["Markets", "Bloomberg"] },
+  { channelId: "UC8RC1QSjSjlz7P1yT4UDH0w", name: "Yahoo Finance", topics: ["stocks", "economy", "markets"], entities: ["Stocks", "Markets", "Economy"] },
+  // AI & Technology
   { channelId: "UCCjyq_K1Xwfg8Lndy7lKMpA", name: "TechCrunch", topics: ["technology", "ai", "startups"], entities: ["Technology", "AI"] },
   { channelId: "UCSHZKyawb77ixDdsGog4iWA", name: "Lex Fridman", topics: ["ai", "technology"], entities: ["AI", "Technology"] },
   { channelId: "UCbfYPyITQ-7l4upoX8nvctg", name: "Two Minute Papers", topics: ["ai"], entities: ["AI", "Research"] },
+  { channelId: "UCVHFbw7woebKtfvuto0RZtg", name: "AI Explained", topics: ["ai"], entities: ["AI", "OpenAI", "Gemini"] },
+  // Business & Economy
+  { channelId: "UCkWbqlDAyJh2n8DN5X3NXQA", name: "Wall Street Journal", topics: ["economy", "markets", "business"], entities: ["Economy", "Markets"] },
+  { channelId: "UC16niRr50-MSBwiO3YDb3RA", name: "The Economist", topics: ["economy", "politics", "geopolitics"], entities: ["Economy", "Geopolitics"] },
 ];
 
 function parseYoutubeItems(xml: string): Array<{ title: string; link: string; published: string; description: string }> {

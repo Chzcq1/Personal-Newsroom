@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   RefreshCw,
@@ -26,8 +26,16 @@ import {
   Settings,
   TrendingUp,
   Plus,
+  SlidersHorizontal,
+  Check,
 } from "lucide-react";
-import { getInterests } from "@/lib/interestProfile";
+import {
+  getInterests,
+  addInterest,
+  removeInterest,
+  hasInterest,
+  PRESET_INTERESTS,
+} from "@/lib/interestProfile";
 import { formatDistanceToNow } from "date-fns";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -558,18 +566,137 @@ function FeedStatsBar({ stats }: { stats: FeedResponse["stats"] | undefined }) {
   );
 }
 
+// ── Inline Interest Filter ────────────────────────────────────
+
+function InterestFilterBar({
+  activeInterests,
+  onToggle,
+  onClearAll,
+}: {
+  activeInterests: string[];
+  onToggle: (interest: string) => void;
+  onClearAll: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? PRESET_INTERESTS : PRESET_INTERESTS;
+
+  return (
+    <div className="border-b border-white/[0.06] bg-black/60 backdrop-blur-sm">
+      <div className="px-4 py-3">
+        <div className="flex items-center gap-2 mb-2.5">
+          <SlidersHorizontal className="w-3.5 h-3.5 text-white/40" />
+          <span className="text-[11px] font-semibold text-white/40 tracking-wide uppercase">
+            สิ่งที่สนใจ
+          </span>
+          {activeInterests.length > 0 && (
+            <button
+              onClick={onClearAll}
+              className="ml-auto text-[10px] text-white/30 hover:text-white/60 transition-colors"
+            >
+              ล้างทั้งหมด
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {PRESET_INTERESTS.map((interest) => {
+            const active = activeInterests.includes(interest);
+            return (
+              <button
+                key={interest}
+                onClick={() => onToggle(interest)}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+                  active
+                    ? "bg-purple-500/25 text-purple-300 border border-purple-500/40"
+                    : "bg-white/5 text-white/45 border border-white/10 hover:bg-white/10 hover:text-white/70"
+                }`}
+              >
+                {active && <Check className="w-2.5 h-2.5" strokeWidth={3} />}
+                {interest}
+              </button>
+            );
+          })}
+        </div>
+        {activeInterests.length === 0 && (
+          <p className="text-[10px] text-white/20 mt-2">
+            เลือกหัวข้อเพื่อให้ฟีดแสดงข่าวที่ตรงกับความสนใจ
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────
 
 export default function MyFeedPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const [interests, setInterests] = useState<string[]>(() => getInterests());
   const [watchlistInput, setWatchlistInput] = useState("");
   const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [showInterestFilter, setShowInterestFilter] = useState(false);
 
-  // Sync interests from localStorage on mount
+  // ── Sync interests from localStorage when page gains focus
+  // or when another tab/page changes localStorage (settings page)
   useEffect(() => {
-    setInterests(getInterests());
+    function syncInterests() {
+      const fresh = getInterests();
+      setInterests((prev) => {
+        const same =
+          prev.length === fresh.length &&
+          prev.every((x, i) => x === fresh[i]);
+        return same ? prev : fresh;
+      });
+    }
+
+    // Re-sync when user navigates back (page visibility change)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") syncInterests();
+    };
+    // Re-sync when localStorage changes from another tab
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "ai-newsroom:interest-profile") syncInterests();
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("storage", onStorage);
+    // Also sync on mount in case navigating back in SPA
+    syncInterests();
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  // ── Invalidate query when interests change so feed refreshes
+  const prevInterestsRef = useRef<string[]>(interests);
+  useEffect(() => {
+    const prev = prevInterestsRef.current;
+    const changed =
+      prev.length !== interests.length ||
+      prev.some((x, i) => x !== interests[i]);
+    if (changed) {
+      prevInterestsRef.current = interests;
+      queryClient.invalidateQueries({ queryKey: ["trend-feed"] });
+    }
+  }, [interests, queryClient]);
+
+  // ── Toggle interest directly from feed page ──────────────────
+  const toggleInterest = useCallback((interest: string) => {
+    if (hasInterest(interest)) {
+      removeInterest(interest);
+      setInterests((prev) => prev.filter((i) => i !== interest));
+    } else {
+      addInterest(interest);
+      setInterests((prev) => [...prev, interest]);
+    }
+  }, []);
+
+  const clearAllInterests = useCallback(() => {
+    for (const i of getInterests()) removeInterest(i);
+    setInterests([]);
   }, []);
 
   const addWatchlistItem = useCallback(() => {
@@ -643,123 +770,117 @@ export default function MyFeedPage() {
               {topicsLabel}
             </span>
             {isFetching && (
-              <span className="text-[11px] text-white/30 ml-1">· Refreshing...</span>
+              <span className="text-[11px] text-white/25 animate-pulse">· Refreshing...</span>
             )}
             {!isFetching && countdown && (
-              <span className="text-[11px] text-white/20 ml-1">· {countdown}</span>
+              <span className="text-[10px] text-white/20">· {countdown}</span>
             )}
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowInterestFilter((v) => !v)}
+              className={`p-2 rounded-xl transition-all ${
+                showInterestFilter
+                  ? "bg-purple-500/20 text-purple-400"
+                  : "text-white/40 hover:text-white/70 hover:bg-white/5"
+              }`}
+              aria-label="Toggle interest filter"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              {interests.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-purple-500" />
+              )}
+            </button>
+            <button
               onClick={() => refetch()}
               disabled={isFetching}
-              className="p-2 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/5 transition-all disabled:opacity-40"
-              title="Refresh feed"
+              className="p-2 rounded-xl text-white/40 hover:text-white/70 hover:bg-white/5 transition-all disabled:opacity-40"
+              aria-label="Refresh feed"
             >
               <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
             </button>
             <Link href="/settings">
-              <button className="p-2 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/5 transition-all">
+              <button className="p-2 rounded-xl text-white/40 hover:text-white/70 hover:bg-white/5 transition-all">
                 <Settings className="w-4 h-4" />
               </button>
             </Link>
           </div>
         </div>
+
+        {/* ── Interest filter bar (collapsible) ── */}
+        {showInterestFilter && (
+          <InterestFilterBar
+            activeInterests={interests}
+            onToggle={toggleInterest}
+            onClearAll={clearAllInterests}
+          />
+        )}
       </header>
 
-      {/* ── Watchlist input ────────────────────────────────────── */}
-      <div className="max-w-lg mx-auto">
-        <WatchlistBar
-          value={watchlistInput}
-          onChange={setWatchlistInput}
-          onAdd={addWatchlistItem}
-        />
+      {/* ── Watchlist bar ──────────────────────────────────────── */}
+      <WatchlistBar
+        value={watchlistInput}
+        onChange={setWatchlistInput}
+        onAdd={addWatchlistItem}
+      />
 
-        {/* Active watchlist chips */}
-        {watchlist.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 px-4 pb-2">
-            {watchlist.map((term) => (
-              <button
-                key={term}
-                onClick={() => setWatchlist((prev) => prev.filter((t) => t !== term))}
-                className="flex items-center gap-1 text-[11px] text-white/60 bg-white/8 border border-white/10 rounded-full px-2.5 py-1 hover:bg-rose-500/15 hover:text-rose-300 hover:border-rose-500/25 transition-all"
-              >
-                {term} ×
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Feed stats */}
-        <FeedStatsBar stats={data?.stats} />
-      </div>
-
-      {/* ── Feed content ─────────────────────────────────────── */}
-      <main className="max-w-lg mx-auto px-4 pb-28 space-y-4 mt-2">
-
-        {/* Error state */}
-        {isError && !isFetching && (
-          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-6 text-center">
-            <p className="text-[14px] text-rose-300/70 mb-3">Could not load feed</p>
+      {/* ── Watchlist chips ────────────────────────────────────── */}
+      {watchlist.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-4 pt-2 pb-1">
+          {watchlist.map((term) => (
             <button
-              onClick={() => refetch()}
-              className="text-[13px] text-white/50 hover:text-white/80 underline transition-colors"
+              key={term}
+              onClick={() => setWatchlist((prev) => prev.filter((t) => t !== term))}
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-sky-500/10 border border-sky-500/25 rounded-full text-[11px] text-sky-400 hover:bg-rose-500/10 hover:border-rose-500/25 hover:text-rose-400 transition-all"
             >
-              Try again
+              {term}
+              <span className="text-[10px]">×</span>
             </button>
-          </div>
-        )}
+          ))}
+        </div>
+      )}
 
-        {/* Loading skeletons */}
+      {/* ── Feed stats ─────────────────────────────────────────── */}
+      <FeedStatsBar stats={data?.stats} />
+
+      {/* ── Feed cards ─────────────────────────────────────────── */}
+      <main className="max-w-lg mx-auto px-4 pb-28 space-y-3">
         {isFetching && cards.length === 0 && (
           <>
-            <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
           </>
         )}
 
-        {/* Trend cards */}
+        {isError && (
+          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-6 text-center">
+            <p className="text-[13px] text-rose-400 mb-3">ไม่สามารถโหลดฟีดได้</p>
+            <button
+              onClick={() => refetch()}
+              className="px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[12px] text-rose-400 hover:bg-rose-500/20 transition-all"
+            >
+              ลองใหม่
+            </button>
+          </div>
+        )}
+
+        {!isError && !isFetching && cards.length === 0 && (
+          <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-8 text-center">
+            <p className="text-[14px] text-white/40 mb-2">ไม่พบเนื้อหา</p>
+            <p className="text-[12px] text-white/25">
+              เลือกสิ่งที่สนใจด้านบนหรือเพิ่ม keyword ใน Watchlist
+            </p>
+          </div>
+        )}
+
         {cards.map((card) => {
-          if (card.type === "trend") return <TrendCard key={card.id} card={card} />;
           if (card.type === "discovery") return <DiscoveryCard key={card.id} card={card} />;
-          return <ArticleCard key={card.id} card={card} />;
+          if (card.type === "article") return <ArticleCard key={card.id} card={card} />;
+          return <TrendCard key={card.id} card={card} />;
         })}
-
-        {/* Empty state */}
-        {!isFetching && !isError && cards.length === 0 && (
-          <div className="py-16 text-center space-y-4">
-            <p className="text-[15px] text-white/40">No trends detected yet</p>
-            <p className="text-[13px] text-white/25">
-              Trend data updates every 15 minutes
-            </p>
-            <Link href="/profile">
-              <button className="inline-flex items-center gap-2 mt-2 px-5 py-2.5 bg-white/8 border border-white/12 rounded-xl text-[13px] text-white/60 hover:text-white/85 hover:bg-white/12 transition-all">
-                <Plus className="w-3.5 h-3.5" />
-                Set your interests
-              </button>
-            </Link>
-          </div>
-        )}
-
-        {/* Setup prompt when no interests */}
-        {!isFetching && cards.length > 0 && interests.length === 0 && (
-          <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5 text-center space-y-3">
-            <p className="text-[13px] text-white/50">
-              Set your interests for a personalized feed
-            </p>
-            <Link href="/profile">
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/8 border border-white/12 rounded-xl text-[13px] text-white/60 hover:text-white/85 hover:bg-white/12 transition-all">
-                <Plus className="w-3.5 h-3.5" />
-                Personalize feed
-              </button>
-            </Link>
-          </div>
-        )}
       </main>
 
-      {/* ── Bottom nav ────────────────────────────────────────── */}
       <BottomNav />
     </div>
   );

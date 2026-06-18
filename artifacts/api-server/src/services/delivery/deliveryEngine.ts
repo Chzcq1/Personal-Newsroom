@@ -44,6 +44,7 @@ import { TOPICS } from "../../config/topics.js";
 import { logger } from "../../lib/logger.js";
 import type { IDeliveryChannel, ChannelDeliveryResult } from "./telegramDelivery.js";
 import type { RssArticle } from "../news/rssService.js";
+import { getRecentTrends } from "../trendIngestion/index.js";
 
 export type BriefingType = "morning" | "evening";
 export type FullBriefingType = BriefingType | "executive" | "intelligence";
@@ -236,10 +237,27 @@ export async function generateBriefing(
 
   // Context injection
   const digestContext = formatDigestContextForAI(type) ?? undefined;
-  const storyContext = resolvedTopicIds
+  const storyContextBase = resolvedTopicIds
     .map((id) => formatStoryContextForAI(id))
     .filter(Boolean)
     .join("\n\n") || undefined;
+
+  // Inject live trend intelligence from multi-platform ingestion
+  // (Reddit, YouTube, Google News, Google Trends)
+  const liveTrends = getRecentTrends(15);
+  let trendContext: string | undefined;
+  if (liveTrends.length > 0) {
+    const trendLines = liveTrends
+      .slice(0, 10)
+      .map((t) => {
+        const sources = [...new Set([t.source, ...t.entityTags.slice(0, 2)])].join(", ");
+        return `• ${t.title} [${sources}]`;
+      })
+      .join("\n");
+    trendContext = `LIVE TREND SIGNALS (from Reddit, YouTube, Google News):\n${trendLines}`;
+  }
+
+  const storyContext = [storyContextBase, trendContext].filter(Boolean).join("\n\n") || undefined;
 
   const generatedAt = new Date().toISOString();
 

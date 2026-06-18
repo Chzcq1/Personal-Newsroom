@@ -1,13 +1,29 @@
-// Reddit RSS provider — ingests top posts from finance/tech subreddits
+// Reddit RSS provider — ingests top posts from finance/tech/social subreddits
 import type { TrendIngestionProvider, TrendItem } from "../index.js";
 
 const SUBREDDIT_FEEDS: Array<{ url: string; topics: string[]; entities: string[] }> = [
+  // Finance & Stocks
   { url: "https://www.reddit.com/r/CryptoCurrency/hot.rss?limit=20", topics: ["crypto"], entities: ["Bitcoin", "Ethereum", "Crypto"] },
   { url: "https://www.reddit.com/r/stocks/hot.rss?limit=20", topics: ["stocks", "markets"], entities: ["Stocks", "Markets"] },
+  { url: "https://www.reddit.com/r/wallstreetbets/hot.rss?limit=15", topics: ["stocks", "markets"], entities: ["Stocks", "Wall Street", "Options"] },
+  { url: "https://www.reddit.com/r/investing/hot.rss?limit=15", topics: ["stocks", "economy"], entities: ["Investing", "Markets", "Economy"] },
+  // AI & Technology
   { url: "https://www.reddit.com/r/artificial/hot.rss?limit=20", topics: ["ai", "technology"], entities: ["AI", "OpenAI", "Anthropic"] },
+  { url: "https://www.reddit.com/r/MachineLearning/hot.rss?limit=15", topics: ["ai"], entities: ["AI", "Machine Learning", "Research"] },
   { url: "https://www.reddit.com/r/technology/hot.rss?limit=20", topics: ["technology"], entities: ["Technology"] },
+  { url: "https://www.reddit.com/r/singularity/hot.rss?limit=15", topics: ["ai", "technology"], entities: ["AI", "Singularity", "Future"] },
+  // Gaming
+  { url: "https://www.reddit.com/r/gaming/hot.rss?limit=15", topics: ["gaming", "technology"], entities: ["Gaming", "Nintendo", "Steam"] },
+  { url: "https://www.reddit.com/r/Games/hot.rss?limit=15", topics: ["gaming"], entities: ["Gaming", "PlayStation", "Xbox"] },
+  // Business & Economy
   { url: "https://www.reddit.com/r/geopolitics/hot.rss?limit=15", topics: ["geopolitics", "politics"], entities: ["Geopolitics"] },
   { url: "https://www.reddit.com/r/startups/hot.rss?limit=15", topics: ["startups", "business"], entities: ["Startups"] },
+  { url: "https://www.reddit.com/r/Economics/hot.rss?limit=15", topics: ["economy"], entities: ["Economy", "Fed", "Inflation"] },
+  // Social & Trending
+  { url: "https://www.reddit.com/r/worldnews/hot.rss?limit=20", topics: ["politics", "geopolitics"], entities: ["World News"] },
+  { url: "https://www.reddit.com/r/Futurology/hot.rss?limit=15", topics: ["technology", "ai"], entities: ["Future", "Technology", "AI"] },
+  // EV & Climate
+  { url: "https://www.reddit.com/r/electricvehicles/hot.rss?limit=15", topics: ["ev", "technology"], entities: ["EV", "Tesla", "BYD"] },
 ];
 
 function parseFeedItems(xml: string): Array<{ title: string; link: string; description: string; pubDate: string }> {
