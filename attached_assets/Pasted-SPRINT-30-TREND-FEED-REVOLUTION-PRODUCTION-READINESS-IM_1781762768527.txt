@@ -1,0 +1,268 @@
+SPRINT 30 — TREND FEED REVOLUTION + PRODUCTION READINESS
+
+IMPORTANT:
+Read ALL docs before coding:
+- WEB_TEAM.md
+- PRODUCT_BRIEF.md
+- QUALITY_GATE.md
+- CHANGELOG.md
+- MASTER_INDEX.md
+
+====================================================
+MISSION
+====================================================
+
+INFOX is NOT:
+- a finance newspaper
+- an RSS dashboard
+- an AI article summarizer
+
+INFOX IS:
+A personalized trend intelligence feed.
+
+This sprint transforms INFOX from:
+“article-centric”
+→
+“trend-centric”
+
+AND prepares the product for:
+real users + real payments + production deployment.
+
+====================================================
+SECTION 1 — FEED REVOLUTION
+====================================================
+
+CRITICAL:
+Feed must stop feeling like Investing.com.
+
+Users should feel:
+- curiosity
+- momentum
+- discovery
+- addiction
+- relevance
+
+====================================================
+TASK T001 — TREND-FIRST FEED ARCHITECTURE
+====================================================
+
+CURRENT PROBLEM:
+Feed ranks articles.
+
+NEW MODEL:
+Feed ranks trends first.
+
+Articles become:
+supporting evidence.
+
+CREATE:
+services/feed/feedAssembler.ts
+
+NEW FEED FLOW:
+
+1. detect active trends
+2. cluster related content
+3. build trend cards
+4. attach supporting articles/videos/posts
+5. personalize order
+
+OUTPUT:
+TrendFeedCard[]
+
+NOT:
+Article[]
+
+====================================================
+TASK T002 — TIKTOK-STYLE FEED UI
+====================================================
+
+REDESIGN /my-feed completely.
+
+REQUIREMENTS:
+- mobile-first
+- full-height card feeling
+- swipe-like scrolling
+- focused reading width
+- large trend title
+- momentum animation
+- smooth transitions
+- sticky top feed state
+
+CARD LAYOUT:
+
+TREND TITLE
+Momentum
+Why trending
+Platforms discussing
+Supporting evidence
+Actions
+
+NOT:
+newspaper article layout.
+
+====================================================
+TASK T003 — TREND GROUPING
+====================================================
+
+GROUP:
+all related content.
+
+EXAMPLE:
+
+Trend:
+"OpenAI Device"
+
+Inside:
+- YouTube videos
+- Reddit posts
+- articles
+- Google trend spikes
+
+Users consume:
+THE TREND
+
+not individual links.
+
+====================================================
+TASK T004 — PERSONALIZATION FIX
+====================================================
+
+CURRENT ISSUE:
+interest selection feels fake.
+
+FIX:
+User interests MUST directly affect:
+- trend ranking
+- discovery injection
+- notifications
+- Telegram delivery
+
+IF user likes:
+anime + gaming
+
+DO NOT show:
+finance-heavy feed.
+
+====================================================
+TASK T005 — REAL DISCOVERY
+====================================================
+
+CREATE:
+“For You Discovery”
+
+System injects:
+adjacent trends.
+
+EXAMPLE:
+User follows:
+- AI
+
+Inject:
+- robotics
+- Nvidia
+- creator tools
+- startup funding
+
+Goal:
+increase curiosity loops.
+
+====================================================
+TASK T006 — REAL PAYMENT ACTIVATION
+====================================================
+
+IMPORTANT:
+No fake payment UI.
+
+COMPLETE:
+- PromptPay QR flow
+- payment verification
+- subscription activation
+- payment history
+- billing status
+
+CREATE:
+- /billing
+- /billing/history
+- /billing/success
+
+ADMIN:
+must confirm payment cleanly.
+
+====================================================
+TASK T007 — GOOGLE LOGIN FIX
+====================================================
+
+Google login MUST work fully.
+
+VERIFY:
+- OAuth callback
+- redirect URI
+- cookie/session
+- JWT issuance
+- frontend auth state
+
+NO MOCK SUCCESS STATES.
+
+====================================================
+TASK T008 — EMAIL VERIFICATION
+====================================================
+
+ADD:
+- verification email
+- token expiry
+- resend verification
+- password reset
+
+IMPORTANT:
+real auth only.
+
+====================================================
+TASK T009 — DEPLOYMENT EXIT PLAN
+====================================================
+
+PREPARE:
+INFOX must run outside Replit.
+
+VERIFY:
+- Docker build
+- Railway deploy
+- Fly.io deploy
+- PostgreSQL backup
+- environment separation
+- production build
+
+CREATE:
+deployment/PRODUCTION_CHECKLIST.md
+
+====================================================
+TASK T010 — REMOVE PRODUCT CONFUSION
+====================================================
+
+REMOVE:
+- dead admin links
+- duplicate settings
+- fake controls
+- finance-only bias
+- unused dashboards
+
+USER PRODUCT:
+must feel clean and focused.
+
+====================================================
+SUCCESS CRITERIA
+====================================================
+
+[ ] Feed feels like TikTok for trends
+[ ] Interests actually affect content
+[ ] Trends are primary objects
+[ ] Supporting articles grouped correctly
+[ ] Google login works
+[ ] PromptPay works
+[ ] Subscription activates correctly
+[ ] Product deploys outside Replit
+[ ] Feed no longer feels like newspaper
+[ ] Product feels commercially launchable
+
+FINAL RULE:
+INFOX tracks what people care about,
+not just what publishers write.

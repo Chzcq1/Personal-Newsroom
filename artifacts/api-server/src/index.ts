@@ -6,6 +6,7 @@ import { runStartupRecovery } from "./services/infra/startupRecovery";
 import { registerSourceAdapter } from "./services/sources/sourceAdapter";
 import { redditAdapter } from "./services/sources/redditSourceAdapter";
 import { twitterAdapter } from "./services/sources/twitterSignalAdapter";
+import { ingestAllProviders } from "./services/trendIngestion/index";
 
 const rawPort = process.env["PORT"];
 
@@ -49,4 +50,11 @@ app.listen(port, async (err) => {
 
   // Start background workers (retry, narrative prune, analytics aggregation)
   startAllWorkers();
+
+  // Warm trend cache on startup (non-blocking — don't delay server ready)
+  ingestAllProviders().then((result) => {
+    logger.info({ ingested: result.ingested, bySource: result.bySource }, "[Startup] Trend cache warmed");
+  }).catch((err) => {
+    logger.warn({ err }, "[Startup] Trend warm-up failed (non-fatal)");
+  });
 });

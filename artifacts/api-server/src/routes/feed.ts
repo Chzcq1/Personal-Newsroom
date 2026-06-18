@@ -54,6 +54,8 @@ import { fetchFeed } from "../services/news/rssService.js";
 import { getSourcesForEntities } from "../services/news/entityResolver.js";
 // Sprint 29 — trend-first feed
 import { getRecentTrends } from "../services/trendIngestion/index.js";
+// Sprint 30 — trend-first feed assembler
+import { assembleForUser } from "../services/feed/feedAssembler.js";
 import { expandEntities } from "../services/trendGraph/entityGraph.js";
 import {
   matchArticleToTrends,
@@ -533,6 +535,42 @@ router.post("/feed/personal", async (req, res) => {
   } catch (err) {
     logger.error({ err }, "Personal feed generation failed");
     res.status(500).json({ error: "Failed to generate personal feed" });
+  }
+});
+
+// ── Route: POST /feed/trend-cards ────────────────────────────
+// Sprint 30 — Trend-First Feed Architecture.
+// Returns TrendFeedCard[] — trends as primary objects,
+// articles as supporting evidence. Replaces the article-list model.
+
+router.post("/feed/trend-cards", async (req, res) => {
+  const {
+    interests = [],
+    watchlist = [],
+  } = req.body as {
+    interests?: string[];
+    watchlist?: string[];
+  };
+
+  if (!Array.isArray(interests)) {
+    res.status(400).json({ error: "interests must be an array" });
+    return;
+  }
+  if (!Array.isArray(watchlist)) {
+    res.status(400).json({ error: "watchlist must be an array" });
+    return;
+  }
+
+  try {
+    const { cards, stats } = await assembleForUser(interests, watchlist);
+    res.json({
+      cards,
+      stats,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    logger.error({ err }, "Trend-cards feed assembly failed");
+    res.status(500).json({ error: "Failed to assemble trend feed" });
   }
 });
 
