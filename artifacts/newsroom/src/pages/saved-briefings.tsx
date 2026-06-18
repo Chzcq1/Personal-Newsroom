@@ -95,7 +95,7 @@ function BriefingCard({
         <div className="flex items-center gap-3 flex-shrink-0">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <FileText className="w-3 h-3" />
-            <span>{briefing.articleCount} articles</span>
+            <span>{briefing.articleCount} บทความ</span>
           </div>
           <span className="text-xs text-muted-foreground/60">
             {format(new Date(briefing.savedAt), "d MMM yyyy · HH:mm")}
@@ -171,7 +171,7 @@ function BriefingCard({
                 <div className="space-y-3 pt-2 border-t border-border/30">
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground flex items-center gap-1.5">
                     <ExternalLink className="w-3 h-3" />
-                    Source Articles
+                    แหล่งข่าว
                   </p>
                   <div className="space-y-1.5">
                     {briefing.sources.map((s, idx) => (
@@ -222,14 +222,14 @@ export default function SavedBriefings() {
           <Link to="/">
             <Button variant="ghost" size="sm" className="gap-2 text-xs -ml-2">
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back
+              กลับ
             </Button>
           </Link>
           <div className="w-px h-4 bg-border" />
           <div className="flex items-center gap-2">
             <Bookmark className="w-4 h-4 text-primary" />
             <span className="text-sm font-semibold tracking-tight text-foreground">
-              My Briefings
+              สรุปข่าวของฉัน
             </span>
           </div>
           {briefings.length > 0 && (

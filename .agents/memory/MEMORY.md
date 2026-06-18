@@ -30,3 +30,4 @@
 - [Sprint 29 Real-Time Trend Intelligence](sprint29-intelligence.md) — entity graph (34 nodes/197 edges), trendFusion cross-references articles with trend cache, TrendMetaBar UI, /trends/graph+discovery+momentum+daily routes, feedMemory service
 - [Analytics API Shape](analytics-api-shape.md) — /api/admin/analytics returns snapshot.deliveries not stats; intelligence-center DeliverySection was fixed to use this shape; alertStats fetched separately from /api/admin/analytics/alerts
 - [Onboarding Gate](onboarding-gate.md) — first-visit gate uses localStorage keys ai-newsroom:onboarded + ai-newsroom:interest-profile; onboarding sets both keys + syncs interests to localStorage before API call
+- [Thai UI & Theme System](thai-ui-theme.md) — full Thai UI; ThemeContext applies dark class to html; CSS overrides in index.css for white/opacity classes; TOPIC_PRESETS use labelTh for display + label (English) for interest matching; pricing Pro=99 Elite=249 THB

@@ -10,18 +10,18 @@ import { setInterests } from "@/lib/interestProfile";
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 const TOPIC_PRESETS = [
-  { id: "ai", label: "AI & Machine Learning", icon: "🤖" },
-  { id: "technology", label: "Technology", icon: "💻" },
-  { id: "crypto", label: "Crypto & Web3", icon: "₿" },
-  { id: "stocks", label: "Stock Market", icon: "📈" },
-  { id: "business", label: "Business & Finance", icon: "📊" },
-  { id: "startups", label: "Startups & VC", icon: "🚀" },
-  { id: "energy", label: "Energy & Climate", icon: "🌱" },
-  { id: "politics", label: "Politics", icon: "🏛️" },
-  { id: "geopolitics", label: "Geopolitics", icon: "🌍" },
-  { id: "science", label: "Science & Research", icon: "🔬" },
-  { id: "gaming", label: "Gaming", icon: "🎮" },
-  { id: "sports", label: "Sports", icon: "⚽" },
+  { id: "ai", label: "AI & Machine Learning", labelTh: "AI & Machine Learning", icon: "🤖" },
+  { id: "technology", label: "Technology", labelTh: "เทคโนโลยี", icon: "💻" },
+  { id: "crypto", label: "Crypto & Web3", labelTh: "Crypto & Web3", icon: "₿" },
+  { id: "stocks", label: "Stock Market", labelTh: "ตลาดหุ้น", icon: "📈" },
+  { id: "business", label: "Business & Finance", labelTh: "ธุรกิจและการเงิน", icon: "📊" },
+  { id: "startups", label: "Startups & VC", labelTh: "Startups & VC", icon: "🚀" },
+  { id: "energy", label: "Energy & Climate", labelTh: "พลังงานและสิ่งแวดล้อม", icon: "🌱" },
+  { id: "politics", label: "Politics", labelTh: "การเมือง", icon: "🏛️" },
+  { id: "geopolitics", label: "Geopolitics", labelTh: "ภูมิรัฐศาสตร์", icon: "🌍" },
+  { id: "science", label: "Science & Research", labelTh: "วิทยาศาสตร์และวิจัย", icon: "🔬" },
+  { id: "gaming", label: "Gaming", labelTh: "เกม", icon: "🎮" },
+  { id: "sports", label: "Sports", labelTh: "กีฬา", icon: "⚽" },
 ];
 
 const MIN_INTERESTS = 3;
@@ -29,23 +29,23 @@ const MIN_INTERESTS = 3;
 const STEPS = [
   {
     id: "welcome",
-    title: "Welcome to INFOX",
-    subtitle: "Your personal AI intelligence briefing, delivered in Thai",
+    title: "ยินดีต้อนรับสู่ INFOX",
+    subtitle: "สรุปข่าวกรอง AI ส่วนตัว ส่งตรงถึงคุณเป็นภาษาไทย",
   },
   {
     id: "topics",
-    title: "What do you follow?",
-    subtitle: "Pick at least 3 topics. The feed personalises around these.",
+    title: "คุณสนใจเรื่องอะไร?",
+    subtitle: "เลือกอย่างน้อย 3 หัวข้อ ฟีดจะปรับแต่งตามนี้",
   },
   {
     id: "delivery",
-    title: "Get briefings when it matters",
-    subtitle: "Morning and evening briefings, delivered to Telegram when you're ready.",
+    title: "รับข่าวสารในเวลาที่เหมาะสม",
+    subtitle: "สรุปข่าวเช้า-เย็น ส่งถึง Telegram เมื่อคุณพร้อม",
   },
   {
     id: "founding",
-    title: "You're an early member",
-    subtitle: "You're joining INFOX before its public launch.",
+    title: "คุณเป็นสมาชิกคนแรกๆ",
+    subtitle: "คุณกำลังเข้าร่วม INFOX ก่อนเปิดตัวสาธารณะ",
   },
 ];
 
@@ -56,20 +56,20 @@ function WelcomeStep() {
       <div className="space-y-3">
         <div className="flex items-center justify-center gap-2">
           <Cpu className="h-5 w-5 text-violet-500" />
-          <span className="text-sm font-medium">AI-powered intelligence</span>
+          <span className="text-sm font-medium">ข่าวกรองพลัง AI</span>
         </div>
         <div className="flex items-center justify-center gap-2">
           <Send className="h-5 w-5 text-blue-500" />
-          <span className="text-sm font-medium">Delivered to Telegram</span>
+          <span className="text-sm font-medium">ส่งตรงถึง Telegram</span>
         </div>
         <div className="flex items-center justify-center gap-2">
           <Globe className="h-5 w-5 text-emerald-500" />
-          <span className="text-sm font-medium">Summarised in Thai</span>
+          <span className="text-sm font-medium">สรุปเป็นภาษาไทย</span>
         </div>
       </div>
       <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-        INFOX reads hundreds of news sources, scores them for signal, and
-        delivers only what matters — in clear Thai.
+        INFOX อ่านข่าวจากหลายร้อยแหล่ง, ให้คะแนนสัญญาณ,
+        และส่งเฉพาะสิ่งที่สำคัญ — ชัดเจนเป็นภาษาไทย
       </p>
     </div>
   );
@@ -88,13 +88,13 @@ function TopicsStep({
       {remaining > 0 && (
         <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-lg">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          <span>Select {remaining} more topic{remaining !== 1 ? "s" : ""} to continue</span>
+          <span>เลือกเพิ่มอีก {remaining} หัวข้อ{remaining !== 1 ? "" : ""} เพื่อดำเนินการต่อ</span>
         </div>
       )}
       {remaining === 0 && (
         <div className="flex items-center gap-2 text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-3 py-2 rounded-lg">
           <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-          <span>Great — {selected.length} topics selected. Add more or continue.</span>
+          <span>เยี่ยม — เลือกแล้ว {selected.length} หัวข้อ เพิ่มได้อีกหรือดำเนินการต่อ</span>
         </div>
       )}
       <div className="grid grid-cols-2 gap-2.5">
@@ -111,7 +111,7 @@ function TopicsStep({
               }`}
             >
               <span className="text-xl shrink-0">{topic.icon}</span>
-              <span className="text-sm font-medium leading-tight flex-1">{topic.label}</span>
+              <span className="text-sm font-medium leading-tight flex-1">{topic.labelTh}</span>
               {isSelected && <CheckCircle className="h-4 w-4 text-violet-500 shrink-0" />}
             </button>
           );
@@ -128,8 +128,8 @@ function DeliveryStep() {
         <div className="flex items-center gap-2">
           <span className="text-lg">🌅</span>
           <div>
-            <div className="text-sm font-semibold">Morning Briefing</div>
-            <div className="text-xs text-muted-foreground">07:00 — Overnight news, market open</div>
+            <div className="text-sm font-semibold">สรุปข่าวเช้า</div>
+            <div className="text-xs text-muted-foreground">07:00 — ข่าวค้างคืน, ตลาดเปิด</div>
           </div>
           <Badge variant="secondary" className="ml-auto">07:00</Badge>
         </div>
@@ -138,15 +138,15 @@ function DeliveryStep() {
         <div className="flex items-center gap-2">
           <span className="text-lg">🌆</span>
           <div>
-            <div className="text-sm font-semibold">Evening Briefing</div>
-            <div className="text-xs text-muted-foreground">18:00 — Day wrap-up, what changed</div>
+            <div className="text-sm font-semibold">สรุปข่าวเย็น</div>
+            <div className="text-xs text-muted-foreground">18:00 — สรุปวัน, สิ่งที่เปลี่ยนแปลง</div>
           </div>
           <Badge variant="secondary" className="ml-auto">18:00</Badge>
         </div>
       </div>
       <p className="text-sm text-muted-foreground text-center">
-        Connect Telegram in Settings → Delivery to activate scheduled briefings.
-        You can read briefings here anytime without Telegram.
+        เชื่อมต่อ Telegram ใน การตั้งค่า → ศูนย์ส่งข้อมูล เพื่อเปิดใช้การส่งตามกำหนดเวลา
+        คุณสามารถอ่านสรุปข่าวที่นี่ได้ทุกเวลาโดยไม่ต้องใช้ Telegram
       </p>
     </div>
   );
@@ -161,21 +161,22 @@ function FoundingStep() {
         </div>
       </div>
       <div className="space-y-2">
-        <Badge className="bg-violet-600 text-white">Founding Member</Badge>
+        <Badge className="bg-violet-600 text-white">สมาชิกผู้ก่อตั้ง</Badge>
         <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-          You're among the first people to use INFOX. Your feedback directly shapes
-          how the platform evolves. Thank you for being here early.
+          คุณเป็นหนึ่งในผู้ใช้งานคนแรกๆ ของ INFOX
+          ความคิดเห็นของคุณจะช่วยกำหนดทิศทางของแพลตฟอร์ม
+          ขอบคุณที่เข้าร่วมตั้งแต่เนิ่นๆ
         </p>
       </div>
       <div className="rounded-xl border p-4 bg-muted/30 text-left space-y-2">
         <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          What's coming
+          กำลังจะมา
         </div>
         <ul className="text-sm space-y-1 text-muted-foreground">
-          <li>• Multi-device sync via account login</li>
-          <li>• Custom source subscriptions</li>
-          <li>• Entity watchlists & alerts</li>
-          <li>• Deeper narrative tracking</li>
+          <li>• ซิงค์หลายอุปกรณ์ผ่านบัญชีผู้ใช้</li>
+          <li>• สมัครติดตามแหล่งข้อมูลกำหนดเอง</li>
+          <li>• Watchlist และการแจ้งเตือน Entity</li>
+          <li>• ติดตามเรื่องเล่าเชิงลึก</li>
         </ul>
       </div>
     </div>
@@ -207,7 +208,7 @@ export default function OnboardingPage() {
   async function completeOnboarding() {
     const identity = getOrCreateProfile();
 
-    // Map topic IDs to their labels for display
+    // Map topic IDs to their English labels for internal use (feed engine matches on English)
     const labels = selectedTopics.map((id) => {
       const preset = TOPIC_PRESETS.find((t) => t.id === id);
       return preset?.label ?? id;
@@ -297,11 +298,11 @@ export default function OnboardingPage() {
             {isLast ? (
               <>
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Start reading
+                เริ่มอ่านเลย
               </>
             ) : (
               <>
-                Continue
+                ต่อไป
                 <ChevronRight className="h-4 w-4 ml-2" />
               </>
             )}
@@ -309,7 +310,7 @@ export default function OnboardingPage() {
 
           {step > 0 && (
             <Button variant="ghost" size="sm" onClick={() => setStep((s) => s - 1)} className="text-muted-foreground">
-              Back
+              กลับ
             </Button>
           )}
 
@@ -318,7 +319,7 @@ export default function OnboardingPage() {
               onClick={completeOnboarding}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors text-center"
             >
-              Skip setup
+              ข้ามการตั้งค่า
             </button>
           )}
         </div>

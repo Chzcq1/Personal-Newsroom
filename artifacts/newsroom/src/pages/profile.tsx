@@ -106,7 +106,7 @@ export default function ProfilePage() {
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <User className="w-5 h-5 text-primary shrink-0" />
-            <h1 className="text-base font-semibold text-foreground">Profile</h1>
+            <h1 className="text-base font-semibold text-foreground">โปรไฟล์</h1>
           </div>
           <div className="flex items-center gap-2">
             {isAuthenticated && (
@@ -117,7 +117,7 @@ export default function ProfilePage() {
                 className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-destructive"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                Sign out
+                ออกจากระบบ
               </Button>
             )}
             <Link to="/settings">
@@ -184,7 +184,7 @@ export default function ProfilePage() {
           {/* Profile completeness */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Profile completeness</span>
+              <span className="text-xs text-muted-foreground">ความครบถ้วนของโปรไฟล์</span>
               <span className="text-xs font-semibold text-foreground">{completionPct}%</span>
             </div>
             <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden">
@@ -203,8 +203,8 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors cursor-pointer">
                 <LogIn className="w-4 h-4 text-primary shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-primary">Create Account</p>
-                  <p className="text-[11px] text-muted-foreground">Own your data across devices</p>
+                  <p className="text-xs font-semibold text-primary">สร้างบัญชี</p>
+                  <p className="text-[11px] text-muted-foreground">เก็บข้อมูลข้ามอุปกรณ์</p>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-primary/60 ml-auto shrink-0" />
               </div>
@@ -215,9 +215,9 @@ export default function ProfilePage() {
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Brain, label: "Interests", value: interests.length, href: "/discover" },
-            { icon: Star, label: "Watchlist", value: watchlist.length, href: "/watchlist" },
-            { icon: Bookmark, label: "Saved", value: savedCount, href: "/saved" },
+            { icon: Brain, label: "ความสนใจ", value: interests.length, href: "/discover" },
+            { icon: Star, label: "ติดตาม", value: watchlist.length, href: "/watchlist" },
+            { icon: Bookmark, label: "บันทึก", value: savedCount, href: "/saved" },
           ].map(({ icon: Icon, label, value, href }) => (
             <Link key={label} to={href}>
               <div className="rounded-xl border border-border/60 bg-card/50 p-3.5 text-center hover:border-border/90 transition-colors cursor-pointer">
@@ -234,12 +234,12 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Brain className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Interest Profile</h2>
+              <h2 className="text-sm font-semibold text-foreground">ความสนใจ</h2>
             </div>
             <Link to="/discover">
               <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground">
                 <Cpu className="w-3 h-3" />
-                Add more
+                เพิ่มเติม
               </Button>
             </Link>
           </div>
@@ -255,9 +255,9 @@ export default function ProfilePage() {
           {!loading && topInterests.length === 0 && (
             <div className="rounded-xl border border-dashed border-border/50 p-5 text-center space-y-2">
               <Brain className="w-6 h-6 text-muted-foreground/40 mx-auto" />
-              <p className="text-sm text-muted-foreground">No interests yet</p>
+              <p className="text-sm text-muted-foreground">ยังไม่มีความสนใจ</p>
               <Link to="/discover">
-                <Button variant="outline" size="sm" className="mt-1">Start following topics</Button>
+                <Button variant="outline" size="sm" className="mt-1">เริ่มติดตามหัวข้อ</Button>
               </Link>
             </div>
           )}
@@ -281,7 +281,7 @@ export default function ProfilePage() {
               {interests.length > 5 && (
                 <Link to="/discover">
                   <button className="w-full text-xs text-muted-foreground py-2 hover:text-foreground transition-colors">
-                    +{interests.length - 5} more interests
+                    +{interests.length - 5} ความสนใจเพิ่มเติม
                   </button>
                 </Link>
               )}
@@ -295,11 +295,11 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Star className="w-4 h-4 text-amber-400" />
-                <h2 className="text-sm font-semibold text-foreground">Watchlist</h2>
+                <h2 className="text-sm font-semibold text-foreground">ติดตาม</h2>
               </div>
               <Link to="/watchlist">
                 <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground">
-                  View all <ChevronRight className="w-3 h-3" />
+                  ดูทั้งหมด <ChevronRight className="w-3 h-3" />
                 </Button>
               </Link>
             </div>
@@ -320,12 +320,12 @@ export default function ProfilePage() {
         {/* Navigation links */}
         <section className="space-y-2">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Account
+            บัญชี
           </h2>
           {[
-            { label: "Saved Briefings", href: "/saved", icon: Bookmark },
-            { label: "Settings", href: "/settings", icon: Settings },
-            { label: "Delivery Studio", href: "/delivery-studio", icon: TrendingUp },
+            { label: "สรุปข่าวที่บันทึก", href: "/saved", icon: Bookmark },
+            { label: "การตั้งค่า", href: "/settings", icon: Settings },
+            { label: "ศูนย์ส่งข้อมูล", href: "/delivery-studio", icon: TrendingUp },
           ].map(({ label, href, icon: Icon }) => (
             <Link key={href} to={href}>
               <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/60 bg-card/30 hover:border-border/90 transition-colors cursor-pointer">
@@ -345,11 +345,11 @@ export default function ProfilePage() {
             <span className="text-base">⚡</span>
             <h3 className="text-sm font-semibold text-foreground">INFOX Pro</h3>
             <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
-              Coming soon
+              เร็วๆ นี้
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            Multi-device sync, custom sources, deeper narrative tracking, and priority intelligence.
+            ซิงค์หลายอุปกรณ์, แหล่งข้อมูลกำหนดเอง, ติดตามเรื่องเล่าเชิงลึก, และ Intelligence ระดับพิเศษ
           </p>
         </div>
       </main>

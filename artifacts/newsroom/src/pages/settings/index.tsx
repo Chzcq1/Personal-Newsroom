@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import {
   ArrowLeft, Send, Heart, ChevronRight, Check, X,
   Brain, Zap, Layers, Radio, BarChart3, CreditCard,
-  User,
+  User, Sun, Moon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { hasTelegramSettings } from "@/lib/telegramSettings";
 import { getInterests } from "@/lib/interestProfile";
 import { getPersonality, PERSONALITY_OPTIONS } from "@/lib/personalitySettings";
 import { isExecutiveModeEnabled, setExecutiveMode } from "@/lib/executiveMode";
+import { useTheme } from "@/contexts/ThemeContext";
 
 function SettingsRow({
   href, icon, iconBg, iconColor, title, badge, description, badgeVariant = "default",
@@ -74,6 +75,7 @@ export default function SettingsPage() {
   const personality = getPersonality();
   const personalityOption = PERSONALITY_OPTIONS.find((p) => p.id === personality);
   const [execMode, setExecModeState] = useState(isExecutiveModeEnabled);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -82,17 +84,26 @@ export default function SettingsPage() {
           <Link href="/">
             <Button variant="ghost" size="sm" className="text-white/55 hover:text-white gap-2 -ml-2">
               <ArrowLeft className="w-4 h-4" />
-              Back
+              กลับ
             </Button>
           </Link>
-          <h1 className="text-base font-semibold tracking-tight">Settings</h1>
+          <h1 className="text-base font-semibold tracking-tight flex-1">การตั้งค่า</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="w-8 h-8 text-white/55 hover:text-white"
+            title={theme === "dark" ? "เปลี่ยนเป็นธีมสว่าง" : "เปลี่ยนเป็นธีมมืด"}
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
         </div>
       </header>
 
       <main className="max-w-xl mx-auto px-5 py-6 space-y-0.5">
 
-        {/* ── Delivery ──────────────────────────────────────────── */}
-        <SectionLabel>Delivery</SectionLabel>
+        {/* ── การส่ง ────────────────────────────────────────────── */}
+        <SectionLabel>การส่ง</SectionLabel>
 
         <SettingsRow
           href="/delivery-studio"
@@ -100,24 +111,24 @@ export default function SettingsPage() {
           iconBg="bg-[#2AABEE]/10"
           iconColor="text-[#2AABEE]"
           title="Delivery Studio"
-          description="Telegram setup, previews, test sends, and schedule"
+          description="ตั้งค่า Telegram, ดูตัวอย่าง, ทดสอบส่ง, และกำหนดเวลา"
           badge={
             telegramOk
-              ? <Badge variant="success"><Check className="w-3 h-3" /> Connected</Badge>
-              : <Badge variant="muted"><X className="w-3 h-3" /> Not set up</Badge>
+              ? <Badge variant="success"><Check className="w-3 h-3" /> เชื่อมต่อแล้ว</Badge>
+              : <Badge variant="muted"><X className="w-3 h-3" /> ยังไม่ตั้งค่า</Badge>
           }
         />
 
-        {/* ── Intelligence ──────────────────────────────────────── */}
-        <SectionLabel>Intelligence</SectionLabel>
+        {/* ── ข่าวกรอง ──────────────────────────────────────────── */}
+        <SectionLabel>ข่าวกรอง</SectionLabel>
 
         <SettingsRow
           href="/settings/signal-mode"
           icon={<Radio className="w-4 h-4" />}
           iconBg="bg-blue-500/10"
           iconColor="text-blue-400"
-          title="Signal Mode"
-          description="Safe, Balanced, or Raw — speed vs. verification"
+          title="โหมดสัญญาณ"
+          description="ปลอดภัย, สมดุล, หรือดิบ — ความเร็ว vs. การตรวจสอบ"
         />
 
         <SettingsRow
@@ -125,22 +136,22 @@ export default function SettingsPage() {
           icon={<BarChart3 className="w-4 h-4" />}
           iconBg="bg-violet-500/10"
           iconColor="text-violet-400"
-          title="Intelligence Center"
-          description="Delivery analytics, source quality, token economy"
+          title="ศูนย์ข่าวกรอง"
+          description="การวิเคราะห์การส่ง, คุณภาพแหล่งข้อมูล, งบประมาณ token"
         />
 
-        {/* ── Personalisation ───────────────────────────────────── */}
-        <SectionLabel>Personalisation</SectionLabel>
+        {/* ── ปรับแต่ง ───────────────────────────────────────────── */}
+        <SectionLabel>ปรับแต่ง</SectionLabel>
 
         <SettingsRow
           href="/profile"
           icon={<Heart className="w-4 h-4" />}
           iconBg="bg-purple-500/10"
           iconColor="text-purple-400"
-          title="Interest Profile"
-          description="Tesla, Nvidia, Bitcoin — track what matters to you"
+          title="ความสนใจ"
+          description="Tesla, Nvidia, Bitcoin — ติดตามสิ่งที่สำคัญสำหรับคุณ"
           badge={interests.length > 0
-            ? <Badge variant="info">{interests.length} active</Badge>
+            ? <Badge variant="info">{interests.length} รายการ</Badge>
             : undefined}
         />
 
@@ -149,12 +160,12 @@ export default function SettingsPage() {
           icon={<Brain className="w-4 h-4" />}
           iconBg="bg-blue-500/10"
           iconColor="text-blue-400"
-          title="Briefing Personality"
-          description={personalityOption?.description ?? "Choose the AI writing tone"}
+          title="บุคลิก AI"
+          description={personalityOption?.description ?? "เลือกโทนการเขียนของ AI"}
           badge={<Badge variant="info">{personalityOption?.name ?? "Analyst"}</Badge>}
         />
 
-        {/* Exec Mode inline toggle (no separate page) */}
+        {/* Exec Mode inline toggle */}
         <Card className={`border transition-colors ${execMode ? "border-amber-500/25 bg-amber-500/5" : "border-white/10 bg-white/5"}`}>
           <CardContent className="p-4 flex items-center gap-3.5">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${execMode ? "bg-amber-500/15" : "bg-white/8"}`}>
@@ -162,12 +173,12 @@ export default function SettingsPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                <p className="font-medium text-white text-sm">Executive Mode</p>
+                <p className="font-medium text-white text-sm">โหมดผู้บริหาร</p>
                 {execMode && (
-                  <Badge variant="warning"><Check className="w-3 h-3" /> On</Badge>
+                  <Badge variant="warning"><Check className="w-3 h-3" /> เปิด</Badge>
                 )}
               </div>
-              <p className="text-xs text-white/45 leading-relaxed">5-bullet briefings, 90-second reads</p>
+              <p className="text-xs text-white/45 leading-relaxed">สรุป 5 ข้อ อ่านจบใน 90 วินาที</p>
             </div>
             <Button
               size="sm"
@@ -185,21 +196,21 @@ export default function SettingsPage() {
           icon={<Layers className="w-4 h-4" />}
           iconBg="bg-slate-500/10"
           iconColor="text-slate-400"
-          title="Topics & Sources"
-          description="Manage built-in topics and add custom RSS feeds"
+          title="หัวข้อและแหล่งข้อมูล"
+          description="จัดการหัวข้อในตัวและเพิ่ม RSS feed ของคุณเอง"
         />
 
-        {/* ── Account ───────────────────────────────────────────── */}
-        <SectionLabel>Account</SectionLabel>
+        {/* ── บัญชี ───────────────────────────────────────────── */}
+        <SectionLabel>บัญชี</SectionLabel>
 
         <SettingsRow
           href="/settings/billing"
           icon={<CreditCard className="w-4 h-4" />}
           iconBg="bg-amber-500/10"
           iconColor="text-amber-400"
-          title="Billing & Plans"
+          title="แผนและการชำระเงิน"
           description="แผนปัจจุบัน, การใช้งาน, และอัปเกรด"
-          badge={<Badge variant="default">Free</Badge>}
+          badge={<Badge variant="default">ฟรี</Badge>}
         />
 
         <SettingsRow
@@ -207,12 +218,12 @@ export default function SettingsPage() {
           icon={<User className="w-4 h-4" />}
           iconBg="bg-white/8"
           iconColor="text-white/40"
-          title="Profile"
-          description="Account details, sign in / sign out"
+          title="โปรไฟล์"
+          description="ข้อมูลบัญชี, เข้าสู่ระบบ / ออกจากระบบ"
         />
 
         <div className="pt-6 pb-4 text-center">
-          <p className="text-xs text-white/35">INFOX · Trend Intelligence</p>
+          <p className="text-xs text-white/35">INFOX · ข่าวกรองเทรนด์</p>
         </div>
 
       </main>

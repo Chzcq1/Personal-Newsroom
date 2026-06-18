@@ -3,10 +3,10 @@ import { Newspaper, Compass, Star, User } from "lucide-react";
 import { motion } from "framer-motion";
 
 const NAV_ITEMS = [
-  { href: "/my-feed", label: "For You", Icon: Newspaper },
-  { href: "/discover", label: "Discover", Icon: Compass },
-  { href: "/watchlist", label: "Watchlist", Icon: Star },
-  { href: "/profile", label: "Profile", Icon: User },
+  { href: "/my-feed", label: "ฟีด", Icon: Newspaper },
+  { href: "/discover", label: "ค้นพบ", Icon: Compass },
+  { href: "/watchlist", label: "ติดตาม", Icon: Star },
+  { href: "/profile", label: "โปรไฟล์", Icon: User },
 ];
 
 export function BottomNav() {

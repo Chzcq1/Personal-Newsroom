@@ -538,11 +538,11 @@ export default function IntelligenceCenterPage() {
           <Link href="/">
             <Button variant="ghost" size="sm" className="text-white/60 hover:text-white gap-2 -ml-2">
               <ArrowLeft className="w-4 h-4" />
-              Back
+              กลับ
             </Button>
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-semibold tracking-tight">Intelligence Center</h1>
+            <h1 className="text-lg font-semibold tracking-tight">ศูนย์ข่าวกรอง</h1>
             <p className="text-xs text-white/40">Analytics, sources, tokens, and system health</p>
           </div>
         </div>

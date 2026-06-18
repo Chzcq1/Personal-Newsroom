@@ -1,23 +1,38 @@
 <!DOCTYPE html>
-<html lang="en" class="dark" style="background:#0a0a0a">
+<html lang="th" class="dark" style="background:#0a0a0a">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>Personal AI Newsroom</title>
-    <meta name="description" content="Personal AI Newsroom — built on Replit. Update this description to reflect the app." />
+    <title>INFOX — ข่าวกรอง AI ส่วนตัว</title>
+    <meta name="description" content="INFOX — สรุปข่าวภาษาไทยด้วย AI ส่วนตัว ติดตามหุ้น เทรนด์ และเหตุการณ์สำคัญ" />
     <meta name="robots" content="index, follow" />
-    <meta property="og:title" content="Personal AI Newsroom" />
-    <meta property="og:description" content="Personal AI Newsroom — built on Replit. Update this description to reflect the app." />
+    <meta property="og:title" content="INFOX — ข่าวกรอง AI ส่วนตัว" />
+    <meta property="og:description" content="INFOX — สรุปข่าวภาษาไทยด้วย AI ส่วนตัว" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Personal AI Newsroom" />
-    <meta name="twitter:description" content="Personal AI Newsroom — built on Replit. Update this description to reflect the app." />
+    <meta name="twitter:title" content="INFOX — ข่าวกรอง AI ส่วนตัว" />
+    <meta name="twitter:description" content="INFOX — สรุปข่าวภาษาไทยด้วย AI ส่วนตัว" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('ai-newsroom:theme') || 'dark';
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.background = '#0a0a0a';
+            document.body && (document.body.style.background = '#0a0a0a');
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.background = '';
+          }
+        } catch(e) {}
+      })();
+    </script>
   </head>
-  <body style="background:#0a0a0a;margin:0">
+  <body style="margin:0">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

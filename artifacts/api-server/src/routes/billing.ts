@@ -44,7 +44,7 @@ const PLANS = [
     name: "pro",
     displayName: "Pro",
     description: "สำหรับนักลงทุนที่ต้องการข้อมูลเร็วและครบ",
-    priceThb: 299,
+    priceThb: 99,
     features: [
       "Feed refresh ทุก 60 วินาที",
       "AI สรุปไม่จำกัด",
@@ -65,7 +65,7 @@ const PLANS = [
     name: "elite",
     displayName: "Elite",
     description: "Intelligence ระดับ Institutional",
-    priceThb: 699,
+    priceThb: 249,
     features: [
       "ทุกอย่างใน Pro",
       "Feed Priority Realtime",

@@ -148,6 +148,60 @@
   }
 }
 
+/* ── Light mode overrides for dark-hardcoded pages ─────────── */
+/* These target Tailwind's generated class names to flip dark-specific
+   hardcoded colors when the user switches to light theme            */
+
+html:not(.dark) .bg-\[\#0a0a0a\] { background-color: hsl(210 20% 98%) !important; }
+html:not(.dark) .bg-\[\#0a0a0a\]\/95 { background-color: hsl(210 20% 98% / 0.95) !important; }
+html:not(.dark) .bg-\[\#111\] { background-color: hsl(210 20% 95%) !important; }
+html:not(.dark) .bg-black { background-color: hsl(210 20% 98%) !important; }
+
+html:not(.dark) .text-white { color: hsl(222 47% 11%) !important; }
+html:not(.dark) .text-white\/95 { color: rgba(0,0,0,0.95) !important; }
+html:not(.dark) .text-white\/90 { color: rgba(0,0,0,0.9) !important; }
+html:not(.dark) .text-white\/85 { color: rgba(0,0,0,0.85) !important; }
+html:not(.dark) .text-white\/80 { color: rgba(0,0,0,0.8) !important; }
+html:not(.dark) .text-white\/70 { color: rgba(0,0,0,0.7) !important; }
+html:not(.dark) .text-white\/60 { color: rgba(0,0,0,0.6) !important; }
+html:not(.dark) .text-white\/55 { color: rgba(0,0,0,0.55) !important; }
+html:not(.dark) .text-white\/50 { color: rgba(0,0,0,0.5) !important; }
+html:not(.dark) .text-white\/45 { color: rgba(0,0,0,0.45) !important; }
+html:not(.dark) .text-white\/40 { color: rgba(0,0,0,0.4) !important; }
+html:not(.dark) .text-white\/35 { color: rgba(0,0,0,0.35) !important; }
+html:not(.dark) .text-white\/30 { color: rgba(0,0,0,0.3) !important; }
+html:not(.dark) .text-white\/25 { color: rgba(0,0,0,0.25) !important; }
+html:not(.dark) .text-white\/20 { color: rgba(0,0,0,0.2) !important; }
+
+html:not(.dark) .bg-white\/\[0\.07\] { background-color: rgba(0,0,0,0.05) !important; }
+html:not(.dark) .bg-white\/3 { background-color: rgba(0,0,0,0.02) !important; }
+html:not(.dark) .bg-white\/4 { background-color: rgba(0,0,0,0.03) !important; }
+html:not(.dark) .bg-white\/5 { background-color: rgba(0,0,0,0.04) !important; }
+html:not(.dark) .bg-white\/8 { background-color: rgba(0,0,0,0.05) !important; }
+html:not(.dark) .bg-white\/10 { background-color: rgba(0,0,0,0.06) !important; }
+html:not(.dark) .bg-white\/12 { background-color: rgba(0,0,0,0.07) !important; }
+html:not(.dark) .bg-white\/15 { background-color: rgba(0,0,0,0.08) !important; }
+html:not(.dark) .bg-white\/20 { background-color: rgba(0,0,0,0.1) !important; }
+
+html:not(.dark) .border-white\/\[0\.06\] { border-color: rgba(0,0,0,0.07) !important; }
+html:not(.dark) .border-white\/6 { border-color: rgba(0,0,0,0.07) !important; }
+html:not(.dark) .border-white\/8 { border-color: rgba(0,0,0,0.08) !important; }
+html:not(.dark) .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
+html:not(.dark) .border-white\/12 { border-color: rgba(0,0,0,0.10) !important; }
+html:not(.dark) .border-white\/15 { border-color: rgba(0,0,0,0.12) !important; }
+html:not(.dark) .border-white\/20 { border-color: rgba(0,0,0,0.15) !important; }
+html:not(.dark) .border-white\/25 { border-color: rgba(0,0,0,0.18) !important; }
+
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+html:not(.dark) :focus-visible {
+  outline-color: rgba(0, 0, 0, 0.3);
+}
+
 /* ── Sprint 18: Signal Card Animations ─────────────────────── */
 
 @keyframes pulse-slow {

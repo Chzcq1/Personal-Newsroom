@@ -676,12 +676,12 @@ export default function DeliveryStudioPage() {
           <Link href="/settings">
             <Button variant="ghost" size="sm" className="text-white/60 hover:text-white gap-2 -ml-2">
               <ArrowLeft className="w-4 h-4" />
-              Settings
+              การตั้งค่า
             </Button>
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-semibold tracking-tight">Delivery Studio</h1>
-            <p className="text-xs text-white/40">Telegram configuration, preview, and schedule</p>
+            <h1 className="text-lg font-semibold tracking-tight">ศูนย์ส่งข้อมูล</h1>
+            <p className="text-xs text-white/40">Telegram, ดูตัวอย่าง, และกำหนดเวลา</p>
           </div>
         </div>
         <div className="max-w-2xl mx-auto px-6 flex gap-0 overflow-x-auto">

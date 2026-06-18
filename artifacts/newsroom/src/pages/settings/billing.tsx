@@ -249,10 +249,10 @@ export default function BillingPage() {
           <Link href="/settings">
             <Button variant="ghost" size="sm" className="text-white/55 hover:text-white gap-2 -ml-2">
               <ArrowLeft className="w-4 h-4" />
-              Settings
+              การตั้งค่า
             </Button>
           </Link>
-          <h1 className="text-base font-semibold tracking-tight">Billing & Plans</h1>
+          <h1 className="text-base font-semibold tracking-tight">แผนและการชำระเงิน</h1>
         </div>
       </header>
 
