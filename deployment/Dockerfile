@@ -1,8 +1,8 @@
 FROM node:24-slim AS base
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@10 --activate
+# Install pnpm — pin exact version to match pnpm-lock.yaml
+RUN corepack enable && corepack prepare pnpm@10.26.1 --activate
 
 # ── Dependency install ────────────────────────────────────────
 FROM base AS deps
