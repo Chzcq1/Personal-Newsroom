@@ -49,6 +49,17 @@ const DENSITY_KEY = "ai-newsroom:feed-density";
 
 // ── Types ─────────────────────────────────────────────────────
 
+interface TrendMeta {
+  momentumScore: number;
+  momentumLabel: "exploding" | "rising" | "stable" | "fading";
+  platforms: string[];
+  regions: string[];
+  whyTrending: string;
+  discussionCount: number;
+  adjacentEntities: string[];
+  matchedTrends: number;
+}
+
 interface FeedItem {
   title: string;
   url: string;
@@ -68,6 +79,7 @@ interface FeedItem {
   signalScore: number;
   narrativeClusterId: string | null;
   narrativeClusterHeadline: string | null;
+  trendMeta?: TrendMeta | null;
   debug?: {
     directKeywordScore: number;
     graphScore: number;
@@ -101,6 +113,10 @@ interface FeedResponse {
     clusteringRate: number;
     directCount: number;
     contextualCount: number;
+  };
+  trendSignal?: {
+    activeTrends: number;
+    trendingArticles: number;
   };
   generatedAt: string;
 }
@@ -233,6 +249,111 @@ function ArticleThumbnail({ imageUrl, title }: { imageUrl: string | null | undef
     <div className="flex-shrink-0 w-20 h-14 rounded overflow-hidden bg-white/5">
       <img src={imageUrl} alt={title} loading="lazy"
         className="w-full h-full object-cover" onError={() => setFailed(true)} />
+    </div>
+  );
+}
+
+// ── Trend Meta Bar (Sprint 29) ────────────────────────────────
+// Shows real trend intelligence: momentum bar, platform spread,
+// regional trending info, and discussion count.
+
+const PLATFORM_LABELS: Record<string, string> = {
+  reddit:      "Reddit",
+  googlenews:  "Google News",
+  "google-trends": "Google Trends",
+  youtube:     "YouTube",
+  twitter:     "Twitter/X",
+  tiktok:      "TikTok",
+  instagram:   "Instagram",
+};
+
+const REGION_FLAGS: Record<string, string> = {
+  Thailand:       "🇹🇭",
+  "United States": "🇺🇸",
+  "United Kingdom": "🇬🇧",
+  Singapore:      "🇸🇬",
+  Japan:          "🇯🇵",
+  Global:         "🌍",
+};
+
+const MOMENTUM_BAR_COLORS: Record<TrendMeta["momentumLabel"], string> = {
+  exploding: "from-orange-500 to-red-500",
+  rising:    "from-emerald-500 to-teal-400",
+  stable:    "from-white/20 to-white/10",
+  fading:    "from-white/10 to-white/5",
+};
+
+const MOMENTUM_TEXT_COLORS: Record<TrendMeta["momentumLabel"], string> = {
+  exploding: "text-orange-400",
+  rising:    "text-emerald-400",
+  stable:    "text-white/35",
+  fading:    "text-white/20",
+};
+
+function TrendMetaBar({ meta }: { meta: TrendMeta }) {
+  if (meta.momentumScore === 0) return null;
+
+  const barColor = MOMENTUM_BAR_COLORS[meta.momentumLabel];
+  const textColor = MOMENTUM_TEXT_COLORS[meta.momentumLabel];
+  const barWidth = Math.max(4, meta.momentumScore); // min 4% for visibility
+
+  const platformLabels = meta.platforms
+    .slice(0, 3)
+    .map((p) => PLATFORM_LABELS[p] ?? p)
+    .join(" · ");
+
+  const regionLabel = meta.regions.length > 0
+    ? meta.regions.map((r) => `${REGION_FLAGS[r] ?? ""}${REGION_FLAGS[r] ? " " : ""}${r}`).join(", ")
+    : null;
+
+  const discussionDisplay = meta.discussionCount > 0
+    ? meta.discussionCount >= 1_000_000
+      ? `${(meta.discussionCount / 1_000_000).toFixed(1)}M discussing`
+      : meta.discussionCount >= 1_000
+        ? `${(meta.discussionCount / 1_000).toFixed(0)}K discussing`
+        : `${meta.discussionCount} discussing`
+    : null;
+
+  return (
+    <div className="mt-2 mb-2.5 space-y-1.5">
+      {/* Momentum bar */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-1 bg-white/8 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full bg-gradient-to-r ${barColor} transition-all`}
+            style={{ width: `${barWidth}%` }}
+          />
+        </div>
+        <span className={`text-[10px] font-semibold tabular-nums flex-shrink-0 ${textColor}`}>
+          {meta.momentumLabel === "exploding" ? "🔥 Exploding" :
+           meta.momentumLabel === "rising" ? "↑ Rising" :
+           meta.momentumLabel === "stable" ? "→ Stable" : "↓ Fading"}
+        </span>
+      </div>
+
+      {/* Platform spread + region + count */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {platformLabels && (
+          <span className="text-[10px] text-white/30">{platformLabels}</span>
+        )}
+        {regionLabel && (
+          <>
+            <span className="text-white/15">·</span>
+            <span className="text-[10px] text-white/35 font-medium">{regionLabel}</span>
+          </>
+        )}
+        {discussionDisplay && (
+          <>
+            <span className="text-white/15">·</span>
+            <span className="text-[10px] text-white/25">{discussionDisplay}</span>
+          </>
+        )}
+      </div>
+
+      {/* Why trending */}
+      {meta.whyTrending && (
+        <p className="text-[10px] text-white/40 italic">{meta.whyTrending}</p>
+      )}
     </div>
   );
 }
@@ -398,8 +519,11 @@ function FeedCard({
           </div>
         </div>
 
-        {/* Momentum label (Sprint 28) */}
-        {(() => {
+        {/* Trend momentum (Sprint 29 — real data from trend pipeline) */}
+        {item.trendMeta ? (
+          <TrendMetaBar meta={item.trendMeta} />
+        ) : (() => {
+          // Fallback: derive from signal score when no live trend data
           const momentumLabel = deriveMomentum(item.signalScore, item.recencyLabel);
           const momentum = MOMENTUM_DISPLAY[momentumLabel];
           const hook = getTrendHook(momentumLabel, item.url);
@@ -967,6 +1091,9 @@ export default function MyFeedPage() {
                 )}
                 {contextualItems.length > 0 && (
                   <> · <span className="text-sky-400/60">{contextualItems.length} contextual</span></>
+                )}
+                {data.trendSignal && data.trendSignal.trendingArticles > 0 && (
+                  <> · <span className="text-orange-400/70">🔥 {data.trendSignal.trendingArticles} trending</span></>
                 )}
                 {data.topicsSearched.length > 0 && <> · {data.topicsSearched.length} topics</>}
                 {hideRead && hiddenReadCount > 0 && (

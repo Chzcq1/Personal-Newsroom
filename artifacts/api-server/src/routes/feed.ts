@@ -1,29 +1,25 @@
 // ============================================================
 // FEED ROUTE — Sprint 9 Contextual Intelligence Layer
 //
+// Sprint 29 upgrade: Trend-first feed ranking.
+//   • Cross-references articles with active trend cache
+//   • Applies momentum boost to trending articles
+//   • Attaches trendMeta (momentum bar, platform spread, region)
+//
 // POST /api/feed/personal
-//   Body: {
-//     interests: string[],
-//     watchlist?: string[],
-//     tasteSignal?: TasteSignal,
-//   }
+// POST /api/feed/memory          — record engagement event
 //
 // Pipeline:
 //   1. Build PersonalContextProfile (interest graph expansion)
 //   2. Collect articles from relevant topics
 //   3. Record entity memory
 //   4. Classify relevance (semantic, graph-aware, multi-factor)
-//   5. Apply quality filters (Task F)
-//   6. Apply personal context boost
-//   7. Cluster narratives (Task C)
-//   8. Build enriched feed items with intelligent explanations (Task I)
-//   9. Record feed quality metrics (Task J)
-//
-// Response includes:
-//   items[]           — ranked articles with full intelligence annotations
-//   narrativeClusters — grouped story narratives
-//   feedQuality       — live quality metrics snapshot
-//   expandedEntities  — interest graph expansion (debug)
+//   5. Cross-reference with active trends (Sprint 29)
+//   6. Apply quality filters
+//   7. Sort by relevance class + boostedScore (trend-boosted)
+//   8. Cluster narratives
+//   9. Build enriched feed items with trendMeta
+//  10. Record feed quality metrics
 // ============================================================
 
 import { Router } from "express";
@@ -46,20 +42,31 @@ import {
 } from "../services/intelligence/personalContext.js";
 import { recordEntityMentions } from "../services/intelligence/entityMemory.js";
 import { scoreSignal } from "../services/intelligence/signalScoring.js";
-import {
-  recordFeedQuality,
-} from "../services/analytics/feedQualityMetrics.js";
+import { recordFeedQuality } from "../services/analytics/feedQualityMetrics.js";
 import {
   applyAdaptiveRanking,
   type AdaptationSignal,
 } from "../services/intelligence/feedAdaptationEngine.js";
-import {
-  recordNarrativeCluster,
-} from "../services/intelligence/narrativeMemory.js";
+import { recordNarrativeCluster } from "../services/intelligence/narrativeMemory.js";
 import { logger } from "../lib/logger.js";
 import type { RssArticle } from "../services/news/rssService.js";
 import { fetchFeed } from "../services/news/rssService.js";
 import { getSourcesForEntities } from "../services/news/entityResolver.js";
+// Sprint 29 — trend-first feed
+import { getRecentTrends } from "../services/trendIngestion/index.js";
+import { expandEntities } from "../services/trendGraph/entityGraph.js";
+import {
+  matchArticleToTrends,
+  buildTrendMeta,
+  type TrendMeta,
+  type ArticleTrendMatch,
+} from "../services/trendGraph/trendFusion.js";
+import {
+  recordFeedEvent,
+  predictEngagement,
+  getMemoryStats,
+  type EngagementEvent,
+} from "../services/feedMemory.js";
 
 const router = Router();
 
@@ -84,6 +91,8 @@ export interface PersonalFeedItem {
   signalScore: number;
   narrativeClusterId: string | null;
   narrativeClusterHeadline: string | null;
+  // Sprint 29 — trend intelligence overlay
+  trendMeta: TrendMeta | null;
   // Debug info (always populated, shown in /debug/relevance)
   debug: {
     directKeywordScore: number;
@@ -101,7 +110,7 @@ export interface PersonalFeedItem {
   };
 }
 
-// ── Quality filter (Task F) ──────────────────────────────────
+// ── Quality filter ────────────────────────────────────────────
 
 const CLICKBAIT_PATTERNS = [
   /you won't believe/i,
@@ -121,25 +130,17 @@ function isLowQuality(
   relevance: RelevanceClassification,
   signalScore: number,
 ): boolean {
-  // Filter incidental relevance with very low signal
   if (relevance.class === "incidental" && signalScore < 15) return true;
-
-  // Filter clickbait titles
   for (const pattern of CLICKBAIT_PATTERNS) {
     if (pattern.test(article.title)) return true;
   }
-
-  // Filter very short descriptions (low-information)
   const wordCount = (article.description ?? "").trim().split(/\s+/).length;
   if (wordCount < MIN_DESCRIPTION_WORDS && relevance.class === "incidental") return true;
-
-  // Filter title-only duplicates (no description at all with incidental relevance)
   if (!article.description && relevance.class !== "direct") return true;
-
   return false;
 }
 
-// ── Recency helper ───────────────────────────────────────────
+// ── Recency helper ────────────────────────────────────────────
 
 function getRecencyLabel(pubDate: string | null | undefined): string {
   if (!pubDate) return "";
@@ -149,7 +150,7 @@ function getRecencyLabel(pubDate: string | null | undefined): string {
   return "";
 }
 
-// ── Intelligent explanation builder (Task I) ─────────────────
+// ── Intelligent explanation builder ──────────────────────────
 
 function buildIntelligentExplanation(
   relevance: RelevanceClassification,
@@ -159,10 +160,10 @@ function buildIntelligentExplanation(
   sourceTier: string,
   source: string | null,
   multiSourceConfirmed: boolean,
+  trendMeta: TrendMeta | null,
 ): string {
   const parts: string[] = [];
 
-  // Lead with the most specific signal
   if (watchlistMatches.length > 0) {
     parts.push(`Watchlist: ${watchlistMatches.join(", ")}`);
   } else if (relevance.class === "direct" && relevance.directMatches.length > 0) {
@@ -174,26 +175,28 @@ function buildIntelligentExplanation(
     parts.push("Loosely related");
   }
 
-  // Narrative context
+  // Sprint 29: trend context takes priority if strong
+  if (trendMeta && trendMeta.momentumScore >= 50 && trendMeta.whyTrending) {
+    parts.push(trendMeta.whyTrending);
+  }
+
   if (clusterHeadline) {
     parts.push(`Narrative: ${clusterHeadline.length > 50 ? clusterHeadline.slice(0, 50) + "…" : clusterHeadline}`);
   }
 
-  // Multi-source confirmation is a strong trust signal
   if (multiSourceConfirmed) {
     parts.push("Multi-source confirmed");
   } else if (sourceTier === "A" && source) {
     parts.push(`${source} (Tier A)`);
   }
 
-  // Signal level
   if (signalScore >= 80) parts.push("Critical signal");
   else if (signalScore >= 60) parts.push("High signal");
 
   return parts.length > 0 ? parts.join(" · ") : "General coverage";
 }
 
-// ── Route ────────────────────────────────────────────────────
+// ── Route: POST /feed/personal ────────────────────────────────
 
 router.post("/feed/personal", async (req, res) => {
   const startMs = Date.now();
@@ -216,7 +219,6 @@ router.post("/feed/personal", async (req, res) => {
   // ── 1. Build personal context ─────────────────────────────
   const context = buildPersonalContext(interests, watchlist, tasteSignal);
 
-  // Build interestKeywordMap from INTEREST_DEFINITIONS
   const interestKeywordMap = new Map<string, string[]>();
   for (const [key, def] of Object.entries(INTEREST_DEFINITIONS)) {
     interestKeywordMap.set(key, def.keywords);
@@ -238,7 +240,7 @@ router.post("/feed/personal", async (req, res) => {
 
   logger.info(
     { interests, watchlistCount: watchlist.length, topicIds: Array.from(topicIds) },
-    "Generating personal feed (Sprint 9)",
+    "Generating personal feed (Sprint 29 — trend-first)",
   );
 
   try {
@@ -260,9 +262,6 @@ router.post("/feed/personal", async (req, res) => {
     }
 
     // ── Entity-specific sources (Sprint 26) ───────────────────
-    // Fetch from entity/watchlist-specific RSS feeds in addition
-    // to general topic feeds, giving users articles about exactly
-    // what they follow (BTC, NVDA, OpenAI, etc.)
     const entitySources = getSourcesForEntities(interests, watchlist);
     if (entitySources.length > 0) {
       const entityResults = await Promise.allSettled(
@@ -278,10 +277,6 @@ router.post("/feed/personal", async (req, res) => {
           rawArticles.push({ ...article, topicId });
         }
       }
-      logger.debug(
-        { entitySourceCount: entitySources.length, entities: entitySources.map((s) => s.entity) },
-        "Entity-specific sources injected into feed",
-      );
     }
 
     // Deduplicate by URL
@@ -307,13 +302,11 @@ router.post("/feed/personal", async (req, res) => {
       );
       const signal = scoreSignal(article, deduped, watchlist);
 
-      // Watchlist matching
       const text = `${article.title} ${article.description ?? ""}`.toLowerCase();
       const matchedWatchlist = watchlist.filter((term) =>
         text.includes(term.toLowerCase()),
       );
 
-      // Context-boosted score
       const baseScore = relevance.combinedScore + getSourceBonus(article.source);
       const boostedScore = applyContextBoost(
         baseScore,
@@ -331,22 +324,57 @@ router.post("/feed/personal", async (req, res) => {
       };
     });
 
-    // ── 6. Quality filtering (Task F) ─────────────────────────
-    const filtered = classified.filter(
+    // ── 5b. Sprint 29 — Trend cross-reference ─────────────────
+    // Fetch the in-memory trend cache (populated by 15-min worker).
+    // Cross-reference each article against active trends.
+    // Items that match active trends get a momentum boost.
+    const activeTrends = getRecentTrends(100);
+    const entityMap = expandEntities(interests, 2);
+
+    // Pre-compute trend matches for every article
+    const trendMatchMap = new Map<string, ArticleTrendMatch[]>();
+    if (activeTrends.length > 0) {
+      for (const { article } of classified) {
+        const matches = matchArticleToTrends(
+          article.title,
+          article.description ?? null,
+          article.topicId,
+          activeTrends,
+          interests,
+        );
+        if (matches.length > 0) {
+          trendMatchMap.set(article.url, matches);
+        }
+      }
+    }
+
+    // Apply trend momentum boost to boostedScore
+    // Trending articles float to top within their relevance class
+    const classifiedWithTrend = classified.map((c) => {
+      const matches = trendMatchMap.get(c.article.url) ?? [];
+      const topMatchScore = matches.length > 0
+        ? matches.reduce((max, m) => Math.max(max, m.matchScore), 0)
+        : 0;
+      // Up to +30 points for highly trending articles
+      const trendBoost = topMatchScore * 30;
+      return { ...c, boostedScore: c.boostedScore + trendBoost };
+    });
+
+    // ── 6. Quality filtering ───────────────────────────────────
+    const filtered = classifiedWithTrend.filter(
       (c) => !isLowQuality(c.article, c.relevance, c.signal.total),
     );
-    const filteredCount = classified.length - filtered.length;
+    const filteredCount = classifiedWithTrend.length - filtered.length;
 
-    // Sort: direct first, then by boostedScore
+    // Sort: direct first, then by boostedScore (trend-boosted)
     const classOrder = { direct: 4, contextual: 3, weak: 2, incidental: 1 };
     filtered.sort((a, b) => {
-      const classDiff =
-        classOrder[b.relevance.class] - classOrder[a.relevance.class];
+      const classDiff = classOrder[b.relevance.class] - classOrder[a.relevance.class];
       if (classDiff !== 0) return classDiff;
       return b.boostedScore - a.boostedScore;
     });
 
-    // ── 7. Narrative clustering (Task C) ─────────────────────
+    // ── 7. Narrative clustering ────────────────────────────────
     const articlesForClustering = filtered.map((c) => ({
       ...c.article,
       combinedScore: c.boostedScore,
@@ -355,7 +383,6 @@ router.post("/feed/personal", async (req, res) => {
 
     const { clusters, singletons, clusteringRate } = clusterNarratives(articlesForClustering);
 
-    // Sprint 10: Record clusters into persistent narrative memory
     const avgClusterSignal = filtered.length > 0
       ? Math.round(filtered.reduce((s, c) => s + c.signal.total, 0) / filtered.length)
       : 0;
@@ -363,8 +390,7 @@ router.post("/feed/personal", async (req, res) => {
       recordNarrativeCluster(cluster, avgClusterSignal);
     }
 
-    // ── 7b. Apply adaptive ranking (Sprint 10 Task E) ────────
-    // Apply adaptation signal from client if provided
+    // ── 7b. Adaptive ranking (Sprint 10) ──────────────────────
     const adaptiveFiltered = req.body.adaptationSignal
       ? applyAdaptiveRanking(
           filtered.map((c) => ({
@@ -377,11 +403,16 @@ router.post("/feed/personal", async (req, res) => {
         )
       : filtered;
 
-    // ── 8. Build enriched feed items (Task I) ─────────────────
+    // ── 8. Build enriched feed items (Sprint 29 trendMeta) ────
     const items: PersonalFeedItem[] = adaptiveFiltered.map(({ article, relevance, signal, matchedWatchlist, boostedScore }) => {
       const sourceTier = getSourceTier(article.source);
       const cluster = findClusterForArticle(article.url, clusters);
       const multiSourceConfirmed = cluster ? cluster.isMultiSource : false;
+
+      // Build trendMeta from pre-computed matches
+      const matches = trendMatchMap.get(article.url) ?? [];
+      const trendMeta = buildTrendMeta(matches, entityMap, article.title, article.description ?? null);
+      const trendMetaOut: TrendMeta | null = trendMeta.momentumScore > 0 ? trendMeta : null;
 
       const selectionReason = buildIntelligentExplanation(
         relevance,
@@ -391,6 +422,7 @@ router.post("/feed/personal", async (req, res) => {
         sourceTier,
         article.source ?? null,
         multiSourceConfirmed,
+        trendMetaOut,
       );
 
       return {
@@ -412,6 +444,7 @@ router.post("/feed/personal", async (req, res) => {
         signalScore: signal.total,
         narrativeClusterId: cluster?.id ?? null,
         narrativeClusterHeadline: cluster?.headline ?? null,
+        trendMeta: trendMetaOut,
         debug: {
           directKeywordScore: relevance.directKeywordScore,
           graphScore: relevance.graphScore,
@@ -422,7 +455,7 @@ router.post("/feed/personal", async (req, res) => {
       };
     });
 
-    // ── 9. Feed quality metrics (Task J) ─────────────────────
+    // ── 9. Feed quality metrics ────────────────────────────────
     const directCount = items.filter((i) => i.relevanceClass === "direct").length;
     const contextualCount = items.filter((i) => i.relevanceClass === "contextual").length;
     const weakCount = items.filter((i) => i.relevanceClass === "weak").length;
@@ -434,6 +467,7 @@ router.post("/feed/personal", async (req, res) => {
     const relevanceAccuracy = items.length > 0
       ? Math.round(((directCount + contextualCount) / items.length) * 100)
       : 0;
+    const trendingCount = items.filter((i) => i.trendMeta !== null).length;
 
     recordFeedQuality({
       interestCount: interests.length,
@@ -454,7 +488,6 @@ router.post("/feed/personal", async (req, res) => {
       processingTimeMs: Date.now() - startMs,
     });
 
-    // ── Build expanded entities summary for debug ─────────────
     const expandedSummary: Record<string, { weight: number; hop: number }> = {};
     for (const [entityId, entry] of expandedGraph) {
       expandedSummary[entityId] = { weight: Math.round(entry.weight * 100) / 100, hop: entry.hop };
@@ -463,6 +496,8 @@ router.post("/feed/personal", async (req, res) => {
     logger.info(
       {
         totalItems: items.length,
+        trendingCount,
+        activeTrends: activeTrends.length,
         directCount, contextualCount, weakCount, incidentalCount,
         filteredCount,
         clusters: clusters.length,
@@ -470,7 +505,7 @@ router.post("/feed/personal", async (req, res) => {
         relevanceAccuracy,
         processingTimeMs: Date.now() - startMs,
       },
-      "Personal feed generated (Sprint 9)",
+      "Personal feed generated (Sprint 29 — trend-first)",
     );
 
     res.json({
@@ -489,12 +524,56 @@ router.post("/feed/personal", async (req, res) => {
         directCount,
         contextualCount,
       },
+      trendSignal: {
+        activeTrends: activeTrends.length,
+        trendingArticles: trendingCount,
+      },
       generatedAt: new Date().toISOString(),
     });
   } catch (err) {
     logger.error({ err }, "Personal feed generation failed");
     res.status(500).json({ error: "Failed to generate personal feed" });
   }
+});
+
+// ── Route: POST /feed/memory ──────────────────────────────────
+// Records a feed engagement event (open, save, skip, follow, share).
+// Used by the feed memory service to improve future predictions.
+
+router.post("/feed/memory", (req, res) => {
+  const {
+    profileId,
+    url,
+    topicId,
+    event,
+    durationMs,
+  } = req.body as {
+    profileId?: string;
+    url?: string;
+    topicId?: string;
+    event?: EngagementEvent;
+    durationMs?: number;
+  };
+
+  if (!profileId || !url || !topicId || !event) {
+    res.status(400).json({ error: "profileId, url, topicId, and event are required" });
+    return;
+  }
+
+  const validEvents: EngagementEvent[] = ["open", "save", "skip", "follow", "share"];
+  if (!validEvents.includes(event)) {
+    res.status(400).json({ error: `event must be one of: ${validEvents.join(", ")}` });
+    return;
+  }
+
+  recordFeedEvent({ profileId, url, topicId, event, durationMs, timestamp: Date.now() });
+  res.json({ ok: true });
+});
+
+// ── Route: GET /feed/memory/stats ─────────────────────────────
+
+router.get("/feed/memory/stats", (_req, res) => {
+  res.json(getMemoryStats());
 });
 
 export default router;

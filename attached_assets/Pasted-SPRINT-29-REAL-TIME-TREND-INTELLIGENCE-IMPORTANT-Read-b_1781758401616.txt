@@ -1,0 +1,286 @@
+SPRINT 29 — REAL-TIME TREND INTELLIGENCE
+
+IMPORTANT:
+Read before coding:
+- WEB_TEAM.md
+- PRODUCT_BRIEF.md
+- QUALITY_GATE.md
+- ARCHITECTURE.md
+- TOKEN_ECONOMY.md
+- CHANGELOG.md
+
+====================================================
+MISSION
+====================================================
+
+INFOX must stop behaving like:
+- RSS reader
+- finance newspaper
+- AI summary dashboard
+
+INFOX must become:
+REAL-TIME PERSONALIZED TREND INTELLIGENCE
+
+GOAL OF SPRINT 29:
+Make the feed feel:
+- alive
+- fast
+- trend-aware
+- personalized
+- addictive
+
+====================================================
+SECTION 1 — REAL TREND DATA
+====================================================
+
+PRIORITY:
+REAL trend momentum.
+
+NOT:
+generic article freshness.
+
+====================================================
+TASK T001 — GOOGLE TRENDS INTEGRATION
+====================================================
+
+INSTALL:
+google-trends-api
+
+CREATE:
+services/socialAdapters/googleRealtimeTrends.ts
+
+FUNCTIONS:
+- getDailyTrends()
+- getRealtimeTrends()
+- getTrendingSearchesByRegion()
+
+REGIONS:
+- Thailand
+- US
+- Global
+
+STORE:
+trend_entities table.
+
+FIELDS:
+- keyword
+- region
+- momentum
+- firstSeenAt
+- lastSeenAt
+- source
+- score
+
+IMPORTANT:
+Use REAL trend data only.
+
+NO MOCK DATA.
+
+====================================================
+TASK T002 — YOUTUBE TREND PIPELINE
+====================================================
+
+CONNECT:
+YouTube Data API.
+
+ENV:
+YOUTUBE_API_KEY
+
+INGEST:
+- trending videos
+- finance
+- AI
+- creator economy
+- gaming
+- drama
+- crypto
+
+EXTRACT:
+- title keywords
+- engagement velocity
+- upload acceleration
+- repeated phrases
+
+GOAL:
+detect emerging topics early.
+
+====================================================
+TASK T003 — REDDIT MOMENTUM ENGINE
+====================================================
+
+UPGRADE:
+reddit adapter.
+
+ADD:
+- keyword velocity
+- subreddit acceleration
+- repeated mention clustering
+- cross-subreddit detection
+
+IMPORTANT:
+Track:
+- sudden spikes
+- repeated keywords
+- rising entities
+
+====================================================
+TASK T004 — TREND ENTITY GRAPH
+====================================================
+
+CREATE:
+services/trendGraph/
+
+FILES:
+- entityGraph.ts
+- entityRelations.ts
+- trendFusion.ts
+
+GOAL:
+Connect trends together.
+
+EXAMPLE:
+"Nvidia"
+→ AI
+→ GPU
+→ OpenAI
+→ data center
+→ startup funding
+
+SYSTEM MUST:
+recommend adjacent trends.
+
+====================================================
+TASK T005 — FEED BECOMES TREND-FIRST
+====================================================
+
+CURRENT PROBLEM:
+Feed still article-centric.
+
+FIX:
+Feed must prioritize:
+- trend momentum
+- repeated appearance
+- user interest overlap
+- engagement prediction
+
+NOT:
+article publication time alone.
+
+====================================================
+TASK T006 — TREND CARDS
+====================================================
+
+REDESIGN FEED CARD.
+
+ADD:
+- trend momentum bar
+- source spread indicator
+- why trending
+- where trending
+- people discussing
+- rising/fading labels
+
+EXAMPLES:
+"Trending across Reddit + Google"
+"Exploding in Thailand"
+"AI creators suddenly discussing this"
+
+====================================================
+TASK T007 — DISCOVERY ENGINE V2
+====================================================
+
+CURRENT:
+discovery injection simple.
+
+NEW:
+Use entity graph expansion.
+
+EXAMPLE:
+User likes:
+- crypto
+
+Inject:
+- AI agents
+- Nvidia
+- GPU
+- SEC
+- stablecoins
+
+GOAL:
+expand user interests intelligently.
+
+====================================================
+TASK T008 — FEED MEMORY
+====================================================
+
+TRACK:
+- open duration
+- saves
+- shares
+- skips
+- repeat opens
+
+USE:
+to train engagement prediction.
+
+IMPORTANT:
+Low-cost only.
+No expensive AI calls.
+
+====================================================
+TASK T009 — X/TIKTOK/IG/FACEBOOK PREPARATION
+====================================================
+
+DO NOT fake integrations.
+
+CREATE ONLY:
+architecture-ready adapters.
+
+FILES:
+- twitterAdapter.ts
+- tiktokAdapter.ts
+- instagramAdapter.ts
+- facebookAdapter.ts
+
+REQUIREMENTS:
+- typed interfaces
+- rate-limit handling
+- auth strategy notes
+- ingestion contracts
+
+NO FAKE DATA.
+
+====================================================
+TASK T010 — TOKEN SAFETY
+====================================================
+
+IMPORTANT:
+Trend detection must remain cheap.
+
+PRIORITY:
+- rule-based
+- cached
+- heuristic
+- lightweight NLP
+
+AVOID:
+expensive LLM summarization loops.
+
+====================================================
+SUCCESS CRITERIA
+====================================================
+
+[ ] Feed feels alive
+[ ] Trends change dynamically
+[ ] Momentum visible
+[ ] Personalized discovery works
+[ ] Google Trends live
+[ ] YouTube trends live
+[ ] Reddit acceleration works
+[ ] No fake trend cards
+[ ] Product feels like trend intelligence platform
+[ ] Token costs remain controlled
+
+FINAL RULE:
+INFOX tracks attention movement,
+NOT just news articles.
