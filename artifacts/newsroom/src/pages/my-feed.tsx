@@ -38,9 +38,23 @@ import {
 } from "@/lib/interestProfile";
 import { formatDistanceToNow } from "date-fns";
 import { BottomNav } from "@/components/BottomNav";
+import {
+  saveBriefing,
+  deleteSavedBriefing,
+} from "@/lib/briefingStorage";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-const SAVED_KEY = "ai-newsroom:saved-articles";
+const SAVED_CARDS_KEY = "ai-newsroom:saved-cards";
+const WATCHLIST_KEY = "ai-newsroom:watchlist";
+
+// ── Topic label lookup ─────────────────────────────────────────
+const TOPIC_LABELS: Record<string, { label: string; labelTh: string; icon: string }> = {
+  ai: { label: "AI", labelTh: "ปัญญาประดิษฐ์", icon: "cpu" },
+  technology: { label: "Technology", labelTh: "เทคโนโลยี", icon: "laptop" },
+  stocks: { label: "Stocks", labelTh: "หุ้น", icon: "bar-chart-2" },
+  economy: { label: "Economy", labelTh: "เศรษฐกิจ", icon: "globe" },
+  politics: { label: "Politics", labelTh: "การเมือง", icon: "landmark" },
+};
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -149,18 +163,47 @@ const PLATFORM_LABELS: Record<string, string> = {
   github: "GitHub",
 };
 
-// ── Saved state helpers ────────────────────────────────────────
+// ── Saved card helpers ────────────────────────────────────────
 
-function getSavedUrls(): Set<string> {
-  try { return new Set(JSON.parse(localStorage.getItem(SAVED_KEY) ?? "[]")); }
-  catch { return new Set(); }
+interface SavedCardRef { cardId: string; briefingId: string; }
+
+function getSavedCardRefs(): SavedCardRef[] {
+  try { return JSON.parse(localStorage.getItem(SAVED_CARDS_KEY) ?? "[]"); }
+  catch { return []; }
 }
 
-function toggleSaved(url: string): boolean {
-  const saved = getSavedUrls();
-  if (saved.has(url)) { saved.delete(url); } else { saved.add(url); }
-  try { localStorage.setItem(SAVED_KEY, JSON.stringify([...saved])); } catch { /**/ }
-  return saved.has(url);
+function isCardSaved(cardId: string): boolean {
+  return getSavedCardRefs().some((r) => r.cardId === cardId);
+}
+
+function toggleSavedCard(card: TrendFeedCard): boolean {
+  const refs = getSavedCardRefs();
+  const existing = refs.find((r) => r.cardId === card.id);
+  if (existing) {
+    deleteSavedBriefing(existing.briefingId);
+    localStorage.setItem(SAVED_CARDS_KEY, JSON.stringify(refs.filter((r) => r.cardId !== card.id)));
+    return false;
+  }
+  const topic = TOPIC_LABELS[card.topicId] ?? { label: card.topicId, labelTh: card.topicId, icon: "newspaper" };
+  const saved = saveBriefing({
+    topicId: `card:${card.id}`,
+    topicLabel: topic.label,
+    topicLabelTh: topic.labelTh,
+    topicIcon: topic.icon,
+    summary: `HEADLINE\n${card.trendTitle}\n\nEXECUTIVE SUMMARY\n${card.trendHook}`,
+    sources: card.articles.map((a) => ({
+      title: a.title,
+      url: a.url,
+      description: a.description,
+      pubDate: a.pubDate,
+      source: a.source,
+    })),
+    generatedAt: new Date().toISOString(),
+    provider: "feed",
+    articleCount: card.articleCount,
+  });
+  localStorage.setItem(SAVED_CARDS_KEY, JSON.stringify([...refs, { cardId: card.id, briefingId: saved.id }]));
+  return true;
 }
 
 function formatAge(pub: string | null): string {
@@ -253,7 +296,7 @@ function ArticleList({ articles, defaultExpanded = false }: {
 
 function ActionBar({ card, topUrl }: { card: TrendFeedCard; topUrl: string }) {
   const [liked, setLiked] = useState<"like" | "dislike" | null>(null);
-  const [saved, setSaved] = useState(() => getSavedUrls().has(topUrl));
+  const [saved, setSaved] = useState(() => isCardSaved(card.id));
   const [busy, setBusy] = useState(false);
 
   async function sendFeedback(type: "more_like_this" | "less_like_this") {
@@ -303,7 +346,7 @@ function ActionBar({ card, topUrl }: { card: TrendFeedCard; topUrl: string }) {
       </button>
 
       <button
-        onClick={() => setSaved(toggleSaved(topUrl))}
+        onClick={() => setSaved(toggleSavedCard(card))}
         className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-medium transition-all ${
           saved
             ? "bg-sky-500/20 text-sky-400"
@@ -656,7 +699,10 @@ export default function MyFeedPage() {
 
   const [interests, setInterests] = useState<string[]>(() => getInterests());
   const [watchlistInput, setWatchlistInput] = useState("");
-  const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [watchlist, setWatchlist] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(WATCHLIST_KEY) ?? "[]"); }
+    catch { return []; }
+  });
   const [showInterestFilter, setShowInterestFilter] = useState(false);
 
   // ── Sync interests from localStorage when page gains focus
@@ -727,9 +773,17 @@ export default function MyFeedPage() {
       setWatchlistInput("");
       return;
     }
-    setWatchlist((prev) => [...prev, trimmed]);
+    const updated = [...watchlist, trimmed];
+    setWatchlist(updated);
+    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(updated)); } catch { /**/ }
     setWatchlistInput("");
   }, [watchlistInput, watchlist]);
+
+  const removeWatchlistItem = useCallback((item: string) => {
+    const updated = watchlist.filter((w) => w !== item);
+    setWatchlist(updated);
+    try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(updated)); } catch { /**/ }
+  }, [watchlist]);
 
   // ── Feed query ──────────────────────────────────────────────
 
@@ -852,7 +906,7 @@ export default function MyFeedPage() {
           {watchlist.map((term) => (
             <button
               key={term}
-              onClick={() => setWatchlist((prev) => prev.filter((t) => t !== term))}
+              onClick={() => removeWatchlistItem(term)}
               className="flex items-center gap-1.5 px-2.5 py-1 bg-sky-500/10 border border-sky-500/25 rounded-full text-[11px] text-sky-400 hover:bg-rose-500/10 hover:border-rose-500/25 hover:text-rose-400 transition-all"
             >
               {term}
