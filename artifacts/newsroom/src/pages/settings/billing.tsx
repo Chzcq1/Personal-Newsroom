@@ -198,11 +198,15 @@ export default function BillingPage() {
   const { data: plansData, isLoading: plansLoading } = useQuery<{ plans: Plan[] }>({
     queryKey: ["billing-plans"],
     queryFn: () => fetch(`${BASE}/api/billing/plans`).then((r) => r.json()),
+    staleTime: 0,
   });
 
   const { data: status, isLoading: statusLoading } = useQuery<BillingStatus>({
     queryKey: ["billing-status"],
     queryFn: () => fetch(`${BASE}/api/billing/status`).then((r) => r.json()),
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const initPayment = useMutation<PaymentInitResponse, Error, string>({
