@@ -28,3 +28,5 @@
 - [Sprint 25 Product Convergence](sprint25-product-convergence.md) — "/" redirects to "/my-feed"; entityResolver.ts maps interests→RSS; billing tables (plans/subscriptions/payments); /settings/billing shell; admin links removed from user settings
 - [Sprint 30 Feed Revolution](sprint30-feed-revolution.md) — groupKey vs keyword bug, BottomNav named import, article cache (5min TTL), startup trend warm-up; feedAssembler bugs and fixes
 - [Sprint 29 Real-Time Trend Intelligence](sprint29-intelligence.md) — entity graph (34 nodes/197 edges), trendFusion cross-references articles with trend cache, TrendMetaBar UI, /trends/graph+discovery+momentum+daily routes, feedMemory service
+- [Analytics API Shape](analytics-api-shape.md) — /api/admin/analytics returns snapshot.deliveries not stats; intelligence-center DeliverySection was fixed to use this shape; alertStats fetched separately from /api/admin/analytics/alerts
+- [Onboarding Gate](onboarding-gate.md) — first-visit gate uses localStorage keys ai-newsroom:onboarded + ai-newsroom:interest-profile; onboarding sets both keys + syncs interests to localStorage before API call

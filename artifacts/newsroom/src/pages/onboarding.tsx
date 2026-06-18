@@ -5,6 +5,7 @@ import { CheckCircle, Cpu, Send, Globe, ChevronRight, Star, AlertCircle } from "
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getOrCreateProfile } from "@/lib/userIdentity";
+import { setInterests } from "@/lib/interestProfile";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
@@ -205,6 +206,21 @@ export default function OnboardingPage() {
 
   async function completeOnboarding() {
     const identity = getOrCreateProfile();
+
+    // Map topic IDs to their labels for display
+    const labels = selectedTopics.map((id) => {
+      const preset = TOPIC_PRESETS.find((t) => t.id === id);
+      return preset?.label ?? id;
+    });
+
+    // Save interests to localStorage immediately — feeds personalise from this
+    if (selectedTopics.length >= MIN_INTERESTS) {
+      setInterests(labels);
+    }
+
+    // Mark as onboarded — prevents redirect loop on next visit
+    localStorage.setItem("ai-newsroom:onboarded", "true");
+
     try {
       await fetch(`${BASE}/api/identity/${identity.profileId}/onboarding`, {
         method: "POST",
@@ -214,12 +230,9 @@ export default function OnboardingPage() {
     } catch {
       // Non-critical — continue regardless
     }
-    // Save selected topics as interests
+
+    // Sync interests to server (best-effort)
     if (selectedTopics.length >= MIN_INTERESTS) {
-      const labels = selectedTopics.map((id) => {
-        const preset = TOPIC_PRESETS.find((t) => t.id === id);
-        return preset?.label ?? id;
-      });
       try {
         await fetch(`${BASE}/api/interests`, {
           method: "POST",
@@ -230,6 +243,7 @@ export default function OnboardingPage() {
         // Non-critical
       }
     }
+
     navigate("/");
   }
 

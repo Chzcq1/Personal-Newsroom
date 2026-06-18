@@ -124,57 +124,79 @@ function IntelligenceSection() {
 
 // ── Delivery Section ──────────────────────────────────────────
 
-interface AnalyticsData {
-  stats: {
-    totalDeliveries: number; successfulDeliveries: number; failedDeliveries: number;
-    successRate: number; avgWordCount: number; avgReadingTimeSecs: number;
-    avgArticlesIncluded: number; avgGenerationTimeMs: number;
-    last7Days: { morning: number; evening: number; failures: number };
+interface AnalyticsSnapshot {
+  ok: boolean;
+  snapshot: {
+    users: { total: number; dau: number; wau: number; mau: number };
+    deliveries: {
+      total: number; delivered: number; failed: number;
+      successRate: number; queuePending: number; queueFailed: number;
+    };
+    events: {
+      last24h: { total: number; byType: Record<string, number> };
+      last7d: { total: number; byType: Record<string, number> };
+    };
+    generatedAt: string;
   };
-  alertStats: { totalInLast24h: number; totalInLast6h: number; lastAlertAt: string | null };
-  recentDeliveries: Array<{
-    id: string; type: "morning" | "evening"; recordedAt: string; success: boolean;
-    wordCount: number; estimatedReadingTimeSecs: number; articlesIncluded: number;
-    generationTimeMs: number; signalHighCount: number; signalLowCount: number; error?: string;
-  }>;
+}
+
+interface AlertsData {
+  ok: boolean;
+  alerts: Array<{ severity: "critical" | "warning" | "info"; message: string; metric: string }>;
+  count: number;
   generatedAt: string;
 }
 
 function DeliverySection() {
-  const { data, isLoading, error, refetch } = useQuery<AnalyticsData>({
+  const { data, isLoading, error, refetch } = useQuery<AnalyticsSnapshot>({
     queryKey: ["ic-analytics"],
     queryFn: async () => {
       const r = await fetch(`${BASE}/api/admin/analytics`);
       if (!r.ok) throw new Error("Not available");
-      return r.json() as Promise<AnalyticsData>;
+      return r.json() as Promise<AnalyticsSnapshot>;
+    },
+    refetchInterval: 60_000,
+  });
+
+  const { data: alertsData } = useQuery<AlertsData>({
+    queryKey: ["ic-alerts"],
+    queryFn: async () => {
+      const r = await fetch(`${BASE}/api/admin/analytics/alerts`);
+      if (!r.ok) throw new Error("Not available");
+      return r.json() as Promise<AlertsData>;
     },
     refetchInterval: 60_000,
   });
 
   if (isLoading) return <SkeletonGrid />;
-  if (error || !data) return <EmptyState label="Delivery records appear after your first scheduled briefing." />;
+  if (error || !data?.snapshot) return <EmptyState label="ข้อมูลการส่งจะปรากฏหลังจากมีการส่งสรุปข่าวครั้งแรก" />;
 
-  const s = data.stats;
+  const d = data.snapshot.deliveries;
+  const alerts = alertsData?.alerts ?? [];
+  const criticalAlerts = alerts.filter((a) => a.severity === "critical" || a.severity === "warning");
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Total Deliveries" value={s.totalDeliveries} icon={Activity} />
-        <MetricCard label="Success Rate" value={`${s.successRate}%`}
-          color={s.successRate >= 90 ? "emerald" : s.successRate >= 70 ? "amber" : "rose"}
-          sub={`${s.successfulDeliveries} succeeded`} icon={CheckCircle2} />
-        <MetricCard label="Avg Read Time" value={fmtSecs(s.avgReadingTimeSecs)} sub={`~${s.avgWordCount} words`} icon={BookOpen} color="blue" />
-        <MetricCard label="Avg Generation" value={fmtMs(s.avgGenerationTimeMs)} sub="AI + fetch" icon={Clock} color="amber" />
+        <MetricCard label="การส่งทั้งหมด" value={d.total} icon={Activity} />
+        <MetricCard label="อัตราสำเร็จ" value={`${d.successRate}%`}
+          color={d.successRate >= 90 ? "emerald" : d.successRate >= 70 ? "amber" : "rose"}
+          sub={`${d.delivered} สำเร็จ`} icon={CheckCircle2} />
+        <MetricCard label="คิวรอส่ง" value={d.queuePending} sub="รายการ" icon={Clock} color="blue" />
+        <MetricCard label="ส่งล้มเหลว" value={d.failed}
+          color={d.failed > 0 ? "rose" : "emerald"}
+          sub={d.queueFailed > 0 ? `${d.queueFailed} ค้างในคิว` : "ไม่มีข้อผิดพลาด"} icon={XCircle} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-2"><CardTitle className="text-xs text-white/50 uppercase tracking-wider">Last 7 days</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-xs text-white/50 uppercase tracking-wider">สถิติการส่ง</CardTitle></CardHeader>
           <CardContent className="space-y-2.5">
             {[
-              { label: "Morning", val: s.last7Days.morning, color: "text-amber-300" },
-              { label: "Evening", val: s.last7Days.evening, color: "text-indigo-300" },
-              { label: "Failures", val: s.last7Days.failures, color: s.last7Days.failures > 0 ? "text-rose-400" : "text-emerald-400" },
-              { label: "Avg articles/digest", val: s.avgArticlesIncluded, color: "text-white/70" },
+              { label: "ส่งสำเร็จ", val: d.delivered, color: "text-emerald-400" },
+              { label: "ส่งล้มเหลว", val: d.failed, color: d.failed > 0 ? "text-rose-400" : "text-white/40" },
+              { label: "คิวรอดำเนินการ", val: d.queuePending, color: "text-amber-300" },
+              { label: "คิวที่ล้มเหลว", val: d.queueFailed, color: d.queueFailed > 0 ? "text-rose-400" : "text-white/40" },
             ].map(({ label, val, color }) => (
               <div key={label} className="flex items-center justify-between">
                 <span className="text-sm text-white/50">{label}</span>
@@ -185,48 +207,28 @@ function DeliverySection() {
         </Card>
 
         <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-2"><CardTitle className="text-xs text-white/50 uppercase tracking-wider">Priority Alerts</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-xs text-white/50 uppercase tracking-wider">การแจ้งเตือนระบบ</CardTitle></CardHeader>
           <CardContent className="space-y-2.5">
-            {[
-              { label: "Last 24h", val: data.alertStats.totalInLast24h },
-              { label: "Last 6h", val: data.alertStats.totalInLast6h },
-            ].map(({ label, val }) => (
-              <div key={label} className="flex items-center justify-between">
-                <span className="text-sm text-white/50">{label}</span>
-                <span className={`text-sm font-mono ${val > 0 ? "text-amber-300" : "text-white/30"}`}>{val}</span>
+            {criticalAlerts.length === 0 ? (
+              <div className="flex items-center gap-2 text-sm text-emerald-400">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>ระบบทำงานปกติ</span>
               </div>
-            ))}
+            ) : (
+              criticalAlerts.slice(0, 3).map((a, i) => (
+                <div key={i} className={`flex items-start gap-2 text-xs ${a.severity === "critical" ? "text-rose-400" : "text-amber-400"}`}>
+                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  <span>{a.message}</span>
+                </div>
+              ))
+            )}
             <div className="flex items-center justify-between border-t border-white/8 pt-2">
-              <span className="text-sm text-white/50">Last alert</span>
-              <span className="text-sm text-white/40">{data.alertStats.lastAlertAt ? timeAgo(data.alertStats.lastAlertAt) : "None"}</span>
+              <span className="text-sm text-white/50">อัปเดตล่าสุด</span>
+              <span className="text-sm text-white/40">{data.snapshot.generatedAt ? timeAgo(data.snapshot.generatedAt) : "—"}</span>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {data.recentDeliveries.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs text-white/40 uppercase tracking-wider">Recent Deliveries</p>
-          {data.recentDeliveries.slice(0, 5).map((r) => (
-            <div key={r.id} className={`p-4 rounded-xl border ${r.success ? "bg-white/3 border-white/8" : "bg-rose-500/5 border-rose-500/15"}`}>
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  {r.success ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-rose-400" />}
-                  <div>
-                    <span className={`text-sm font-medium capitalize ${r.type === "morning" ? "text-amber-300" : "text-indigo-300"}`}>{r.type}</span>
-                    <span className="text-xs text-white/30 ml-2">{timeAgo(r.recordedAt)}</span>
-                  </div>
-                </div>
-                <div className="text-right text-xs text-white/40">
-                  <p className="font-mono">{fmtMs(r.generationTimeMs)}</p>
-                  <p>{r.articlesIncluded} articles</p>
-                </div>
-              </div>
-              {r.error && <p className="text-xs text-rose-300 mt-1 pl-7">{r.error}</p>}
-            </div>
-          ))}
-        </div>
-      )}
 
       <div className="flex justify-end">
         <Button onClick={() => { void refetch(); }} variant="ghost" size="sm"

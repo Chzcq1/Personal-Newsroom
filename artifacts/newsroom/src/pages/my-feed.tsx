@@ -11,7 +11,7 @@
 // ============================================================
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -107,7 +107,7 @@ const MOMENTUM_CONFIG: Record<MomentumLabel, {
 }> = {
   exploding: {
     emoji: "🔥",
-    label: "Exploding",
+    label: "พุ่งแรง",
     barColor: "from-orange-500 via-red-500 to-rose-500",
     textColor: "text-orange-400",
     bgColor: "bg-orange-500/8",
@@ -115,7 +115,7 @@ const MOMENTUM_CONFIG: Record<MomentumLabel, {
   },
   rising: {
     emoji: "📈",
-    label: "Rising",
+    label: "กำลังมา",
     barColor: "from-emerald-500 to-teal-400",
     textColor: "text-emerald-400",
     bgColor: "bg-emerald-500/8",
@@ -123,7 +123,7 @@ const MOMENTUM_CONFIG: Record<MomentumLabel, {
   },
   stable: {
     emoji: "➡️",
-    label: "Stable",
+    label: "คงที่",
     barColor: "from-white/25 to-white/15",
     textColor: "text-white/40",
     bgColor: "bg-white/[0.03]",
@@ -131,7 +131,7 @@ const MOMENTUM_CONFIG: Record<MomentumLabel, {
   },
   fading: {
     emoji: "📉",
-    label: "Fading",
+    label: "ลดลง",
     barColor: "from-white/15 to-white/5",
     textColor: "text-white/25",
     bgColor: "bg-white/[0.02]",
@@ -213,7 +213,7 @@ function ArticleList({ articles, defaultExpanded = false }: {
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-1.5 text-[11px] text-white/40 hover:text-white/60 transition-colors mb-2"
       >
-        <span>Supporting evidence ({articles.length})</span>
+        <span>หลักฐาน ({articles.length})</span>
         {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
       <div className="space-y-1.5">
@@ -286,7 +286,7 @@ function ActionBar({ card, topUrl }: { card: TrendFeedCard; topUrl: string }) {
         }`}
       >
         <ThumbsUp className="w-3.5 h-3.5" />
-        Like
+        ถูกใจ
       </button>
 
       <button
@@ -299,7 +299,7 @@ function ActionBar({ card, topUrl }: { card: TrendFeedCard; topUrl: string }) {
         }`}
       >
         <ThumbsDown className="w-3.5 h-3.5" />
-        Pass
+        ข้าม
       </button>
 
       <button
@@ -311,7 +311,7 @@ function ActionBar({ card, topUrl }: { card: TrendFeedCard; topUrl: string }) {
         }`}
       >
         <Bookmark className={`w-3.5 h-3.5 ${saved ? "fill-current" : ""}`} />
-        {saved ? "Saved" : "Save"}
+        {saved ? "บันทึกแล้ว" : "บันทึก"}
       </button>
 
       <a
@@ -321,7 +321,7 @@ function ActionBar({ card, topUrl }: { card: TrendFeedCard; topUrl: string }) {
         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-medium text-white/35 hover:text-white/70 hover:bg-white/5 transition-all"
       >
         <ExternalLink className="w-3.5 h-3.5" />
-        Open
+        เปิด
       </a>
     </div>
   );
@@ -345,6 +345,18 @@ function TrendCard({ card }: { card: TrendFeedCard }) {
 
   return (
     <div className={`rounded-2xl border overflow-hidden transition-all ${cfg.borderColor} ${cfg.bgColor}`}>
+      {/* Article image header */}
+      {card.articles[0]?.imageUrl && (
+        <div className="relative w-full h-44 overflow-hidden">
+          <img
+            src={card.articles[0].imageUrl}
+            alt={card.trendTitle}
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = "none"; }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/80" />
+        </div>
+      )}
       <div className="p-5">
 
         {/* Momentum bar + label */}
@@ -534,14 +546,14 @@ function WatchlistBar({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onAdd()}
-        placeholder="Track a keyword or company..."
+        placeholder="ติดตามคีย์เวิร์ดหรือบริษัท..."
         className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl px-4 py-2.5 text-[13px] text-white/80 placeholder-white/25 outline-none focus:border-white/25 transition-colors"
       />
       <button
         onClick={onAdd}
         className="px-4 py-2.5 bg-white/8 border border-white/10 rounded-xl text-[13px] font-medium text-white/60 hover:bg-white/12 hover:text-white/80 transition-all"
       >
-        Add
+        เพิ่ม
       </button>
     </div>
   );
@@ -631,6 +643,16 @@ function InterestFilterBar({
 export default function MyFeedPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
+
+  // ── Redirect first-time visitors to onboarding ────────────────
+  useEffect(() => {
+    const onboarded = localStorage.getItem("ai-newsroom:onboarded");
+    const hasProfile = localStorage.getItem("ai-newsroom:interest-profile");
+    if (!onboarded && !hasProfile) {
+      navigate("/onboarding");
+    }
+  }, [navigate]);
 
   const [interests, setInterests] = useState<string[]>(() => getInterests());
   const [watchlistInput, setWatchlistInput] = useState("");
@@ -752,7 +774,7 @@ export default function MyFeedPage() {
 
   // ── Topics label ─────────────────────────────────────────────
   const topicsLabel = useMemo(() => {
-    if (interests.length === 0) return "All topics";
+    if (interests.length === 0) return "ทุกหัวข้อ";
     if (interests.length <= 3) return interests.join(", ");
     return `${interests.slice(0, 2).join(", ")} +${interests.length - 2}`;
   }, [interests]);
@@ -770,7 +792,7 @@ export default function MyFeedPage() {
               {topicsLabel}
             </span>
             {isFetching && (
-              <span className="text-[11px] text-white/25 animate-pulse">· Refreshing...</span>
+              <span className="text-[11px] text-white/25 animate-pulse">· กำลังโหลด...</span>
             )}
             {!isFetching && countdown && (
               <span className="text-[10px] text-white/20">· {countdown}</span>
