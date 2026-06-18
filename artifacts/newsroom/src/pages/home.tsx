@@ -18,6 +18,7 @@ import {
   BarChart2,
   Globe,
   Landmark,
+  Flag,
   ChevronDown,
   ChevronUp,
   CheckCircle,
@@ -51,6 +52,7 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>
   "bar-chart-2": BarChart2,
   globe: Globe,
   landmark: Landmark,
+  flag: Flag,
 };
 
 function TopicIcon({ icon, className = "w-5 h-5" }: { icon: string; className?: string }) {

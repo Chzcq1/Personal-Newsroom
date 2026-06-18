@@ -14,6 +14,7 @@ import {
   BarChart2,
   Globe,
   Landmark,
+  Flag,
   FileText,
   ExternalLink,
 } from "lucide-react";
@@ -33,6 +34,7 @@ const TOPIC_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>
   "bar-chart-2": BarChart2,
   globe: Globe,
   landmark: Landmark,
+  flag: Flag,
 };
 
 function TopicIcon({ icon, className = "w-4 h-4" }: { icon: string; className?: string }) {

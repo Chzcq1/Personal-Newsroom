@@ -16,16 +16,16 @@ const STORAGE_KEY = "ai-newsroom:interest-profile";
 
 // Preset interest options (matches server-side INTEREST_DEFINITIONS)
 export const PRESET_INTERESTS = [
-  "Tesla",
-  "Nvidia",
-  "BYD",
-  "Bitcoin",
-  "Ethereum",
-  "Nintendo",
-  "Steam",
+  "ไทยรัฐ",
+  "มติชน",
+  "The Standard",
   "OpenAI",
   "Anthropic",
   "AI Agents",
+  "Tesla",
+  "Nvidia",
+  "Bitcoin",
+  "SET ตลาดหุ้น",
   "EV",
   "Gaming",
 ];

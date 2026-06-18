@@ -10,18 +10,18 @@ import { setInterests } from "@/lib/interestProfile";
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 const TOPIC_PRESETS = [
+  { id: "thai-news", label: "ข่าวไทย", labelTh: "ข่าวไทย", icon: "🇹🇭" },
   { id: "ai", label: "AI & Machine Learning", labelTh: "AI & Machine Learning", icon: "🤖" },
   { id: "technology", label: "Technology", labelTh: "เทคโนโลยี", icon: "💻" },
-  { id: "crypto", label: "Crypto & Web3", labelTh: "Crypto & Web3", icon: "₿" },
   { id: "stocks", label: "Stock Market", labelTh: "ตลาดหุ้น", icon: "📈" },
-  { id: "business", label: "Business & Finance", labelTh: "ธุรกิจและการเงิน", icon: "📊" },
+  { id: "economy", label: "Economy", labelTh: "เศรษฐกิจ", icon: "📊" },
+  { id: "politics", label: "Politics", labelTh: "การเมืองไทยและโลก", icon: "🏛️" },
+  { id: "crypto", label: "Crypto & Web3", labelTh: "Crypto & Web3", icon: "₿" },
   { id: "startups", label: "Startups & VC", labelTh: "Startups & VC", icon: "🚀" },
   { id: "energy", label: "Energy & Climate", labelTh: "พลังงานและสิ่งแวดล้อม", icon: "🌱" },
-  { id: "politics", label: "Politics", labelTh: "การเมือง", icon: "🏛️" },
   { id: "geopolitics", label: "Geopolitics", labelTh: "ภูมิรัฐศาสตร์", icon: "🌍" },
   { id: "science", label: "Science & Research", labelTh: "วิทยาศาสตร์และวิจัย", icon: "🔬" },
   { id: "gaming", label: "Gaming", labelTh: "เกม", icon: "🎮" },
-  { id: "sports", label: "Sports", labelTh: "กีฬา", icon: "⚽" },
 ];
 
 const MIN_INTERESTS = 3;

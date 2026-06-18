@@ -49,6 +49,7 @@ const WATCHLIST_KEY = "ai-newsroom:watchlist";
 
 // ── Topic label lookup ─────────────────────────────────────────
 const TOPIC_LABELS: Record<string, { label: string; labelTh: string; icon: string }> = {
+  "thai-news": { label: "Thai News", labelTh: "ข่าวไทย", icon: "flag" },
   ai: { label: "AI", labelTh: "ปัญญาประดิษฐ์", icon: "cpu" },
   technology: { label: "Technology", labelTh: "เทคโนโลยี", icon: "laptop" },
   stocks: { label: "Stocks", labelTh: "หุ้น", icon: "bar-chart-2" },
