@@ -1,4 +1,4 @@
-FROM node:24-alpine AS base
+FROM node:24-slim AS base
 WORKDIR /app
 
 # Install pnpm
@@ -24,17 +24,19 @@ RUN pnpm --filter @workspace/api-server run build
 # ── Build frontend ───────────────────────────────────────────
 FROM deps AS frontend-build
 COPY . .
-RUN pnpm --filter @workspace/newsroom run build
+# PORT is required by vite.config.ts — set a default for build time
+RUN PORT=3000 pnpm --filter @workspace/newsroom run build
 
 # ── Production image ─────────────────────────────────────────
-FROM node:24-alpine AS production
+FROM node:24-slim AS production
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@10 --activate
-
+# API bundle
 COPY --from=api-build /app/artifacts/api-server/dist ./dist
+# Runtime node_modules (production deps only — hoisted from workspace root)
 COPY --from=api-build /app/node_modules ./node_modules
 COPY --from=api-build /app/artifacts/api-server/package.json ./package.json
+# Frontend static build — served by Express in production
 COPY --from=frontend-build /app/artifacts/newsroom/dist/public ./public
 
 ENV NODE_ENV=production
