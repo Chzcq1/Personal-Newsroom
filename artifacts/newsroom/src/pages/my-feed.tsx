@@ -121,6 +121,47 @@ const CLASS_STYLES: Record<FeedItem["relevanceClass"], { label: string; classNam
   incidental:  { label: "Incidental",  className: "text-white/20 border-white/10" },
 };
 
+// ── Momentum helpers (Sprint 28) ──────────────────────────────
+
+type MomentumLabel = "exploding" | "rising" | "stable" | "fading";
+
+const MOMENTUM_DISPLAY: Record<MomentumLabel, { emoji: string; label: string; color: string }> = {
+  exploding: { emoji: "🔥", label: "Exploding",  color: "text-orange-400" },
+  rising:    { emoji: "📈", label: "Rising",     color: "text-emerald-400" },
+  stable:    { emoji: "➡️", label: "Stable",     color: "text-white/35" },
+  fading:    { emoji: "📉", label: "Fading",     color: "text-white/20" },
+};
+
+const TREND_HOOKS: Record<MomentumLabel, string[]> = {
+  exploding: [
+    "ทุกคนกำลังพูดถึงเรื่องนี้",
+    "เทรนด์นี้ระเบิดในชั่วโมงที่ผ่านมา",
+    "กำลังแพร่กระจายทุกแพลตฟอร์ม",
+  ],
+  rising: [
+    "ความสนใจกำลังเพิ่มสูงขึ้น",
+    "สัญญาณกำลังแข็งแกร่งขึ้น",
+    "นักวิเคราะห์กำลังจับตามอง",
+  ],
+  stable: [],
+  fading: [],
+};
+
+function deriveMomentum(signalScore: number, recencyLabel?: string): MomentumLabel {
+  if (recencyLabel === "Breaking" || signalScore >= 80) return "exploding";
+  if (signalScore >= 50) return "rising";
+  if (signalScore >= 20) return "stable";
+  return "fading";
+}
+
+function getTrendHook(label: MomentumLabel, seed: string): string | null {
+  const hooks = TREND_HOOKS[label];
+  if (!hooks.length) return null;
+  let hash = 0;
+  for (const ch of seed) hash = (hash * 31 + ch.charCodeAt(0)) & 0xffff;
+  return hooks[hash % hooks.length];
+}
+
 function readingTime(text: string | null | undefined): string | null {
   if (!text) return null;
   const words = text.trim().split(/\s+/).length;
@@ -331,7 +372,7 @@ function FeedCard({
       <div className="p-4 pb-3">
 
         {/* Source row */}
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-2.5">
           <SourceAvatar source={item.source} />
           <div className="flex-1 min-w-0 flex items-center gap-1.5">
             {item.source && (
@@ -357,6 +398,27 @@ function FeedCard({
           </div>
         </div>
 
+        {/* Momentum label (Sprint 28) */}
+        {(() => {
+          const momentumLabel = deriveMomentum(item.signalScore, item.recencyLabel);
+          const momentum = MOMENTUM_DISPLAY[momentumLabel];
+          const hook = getTrendHook(momentumLabel, item.url);
+          if (momentumLabel === "stable" || momentumLabel === "fading") return null;
+          return (
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className={`text-[10px] font-semibold ${momentum.color} flex items-center gap-1`}>
+                {momentum.emoji} {momentum.label}
+              </span>
+              {hook && (
+                <>
+                  <span className="text-white/15">·</span>
+                  <span className="text-[10px] text-white/35 italic">{hook}</span>
+                </>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Headline — large & scannable */}
         <h2 className={`text-[15px] font-semibold leading-snug mb-2.5 line-clamp-3 ${
           isRead ? "text-white/50" : "text-white/90"
@@ -376,12 +438,12 @@ function FeedCard({
           </p>
         )}
 
-        {/* Why this matters */}
+        {/* Why you see this (Sprint 28 — replaces "Why this matters") */}
         {item.selectionReason && item.selectionReason !== "General coverage" && (
-          <div className="flex items-start gap-1.5 mb-1 px-3 py-2 bg-amber-400/[0.05] rounded-lg border border-amber-400/[0.12]">
-            <span className="text-amber-400/80 text-[11px] flex-shrink-0 mt-0.5">⚡</span>
-            <p className="text-[11px] text-white/40 leading-snug">
-              <span className="text-white/60 font-medium">Why this matters: </span>
+          <div className="flex items-start gap-1.5 mb-1 px-3 py-2 bg-white/[0.03] rounded-lg border border-white/[0.08]">
+            <span className="text-white/40 text-[10px] flex-shrink-0 mt-0.5">↳</span>
+            <p className="text-[11px] text-white/35 leading-snug">
+              <span className="text-white/50 font-medium">Why you see this: </span>
               {item.selectionReason}
             </p>
           </div>
@@ -820,7 +882,7 @@ export default function MyFeedPage() {
                   {i}
                 </span>
               ))}
-              <Link href="/settings/interests">
+              <Link href="/profile">
                 <span className="text-[11px] px-2 py-0.5 text-white/30 hover:text-white/50 cursor-pointer transition-colors">
                   Edit →
                 </span>
@@ -838,7 +900,7 @@ export default function MyFeedPage() {
               <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-300/80">
                 No interests set — showing all topics.{" "}
-                <Link href="/settings/interests">
+                <Link href="/profile">
                   <span className="underline cursor-pointer">Set interests →</span>
                 </Link>
               </p>
@@ -978,18 +1040,9 @@ export default function MyFeedPage() {
               </div>
             )}
 
-            {/* Debug link */}
-            <div className="pt-2 border-t border-white/5 flex items-center gap-3">
-              <Link href="/debug/relevance">
-                <span className="text-[10px] text-white/20 hover:text-white/40 transition-colors cursor-pointer">
-                  Relevance Inspector →
-                </span>
-              </Link>
-              <Link href="/admin/feed-quality">
-                <span className="text-[10px] text-white/20 hover:text-white/40 transition-colors cursor-pointer">
-                  Feed Quality →
-                </span>
-              </Link>
+            {/* Footer */}
+            <div className="pt-2 border-t border-white/5 flex items-center justify-center">
+              <span className="text-[10px] text-white/15">INFOX · Trend Intelligence</span>
             </div>
           </>
         )}

@@ -1,0 +1,517 @@
+SPRINT 28 — PRODUCT REALIGNMENT & AI TEAM GOVERNANCE
+GOAL:
+Stop feature chaos.
+Realign INFOX into a personalized trend intelligence platform.
+NO MORE AI NEWSPAPER.
+NO MORE RANDOM DASHBOARDS.
+NO MORE PLACEHOLDER FEATURES.
+
+IMPORTANT:
+Before writing ANY code, you MUST read and follow ALL project governance documents:
+
+- AGENT_ARCHITECTURE.md
+- AGENT_RULES.md
+- ALPHA_GATING.md
+- ARCHITECTURE.md
+- CHANGELOG.md
+- CLOSED_ALPHA_PLAN.md
+- DELIVERY_INFRASTRUCTURE.md
+- DEPLOYMENT_GUIDE.md
+- DEPLOYMENT_READINESS.md
+- IDENTITY_FOUNDATION.md
+- INTELLIGENCE_MEMORY.md
+- KNOWLEDGE_COMPOUND.md
+- LOGIN_PREPARATION.md
+- PERSISTENT_INFRASTRUCTURE.md
+- PRECISION_INTELLIGENCE.md
+- PROACTIVE_INTELLIGENCE.md
+- PROJECT_VISION.md
+- SYSTEM_STATUS.md
+- TELEGRAM_FORMATTING.md
+- TOKEN_ECONOMY.md
+- VISUAL_GUIDELINES.md
+
+NEW GOVERNANCE FILES TO CREATE:
+- WEB_TEAM.md
+- PRODUCT_BRIEF.md
+- QUALITY_GATE.md
+
+====================================================
+SECTION 1 — AI TEAM GOVERNANCE
+====================================================
+
+CREATE:
+docs/WEB_TEAM.md
+
+CONTENT:
+
+INFOX AI PRODUCT TEAM STRUCTURE
+
+1. Product Agent
+Responsibilities:
+- product direction
+- business alignment
+- user value
+- monetization alignment
+- feature prioritization
+
+2. UX Agent
+Responsibilities:
+- mobile-first UX
+- TikTok-style feed flow
+- onboarding simplicity
+- friction reduction
+- information hierarchy
+
+3. Feed Intelligence Agent
+Responsibilities:
+- trend ingestion
+- personalization
+- engagement ranking
+- trend velocity
+- discovery injection
+- signal relevance
+
+4. Backend Agent
+Responsibilities:
+- APIs
+- DB structure
+- runtime safety
+- queues
+- integrations
+- auth/payment architecture
+
+5. QA Agent
+Responsibilities:
+- route validation
+- no placeholder UI
+- mobile validation
+- production readiness
+- dead route detection
+- token efficiency
+
+6. Release Agent
+Responsibilities:
+- changelog
+- migration notes
+- deployment validation
+- cleanup
+- rollback safety
+
+WORKFLOW:
+Brief
+→ Product Validation
+→ UX Validation
+→ Architecture Validation
+→ Build
+→ QA
+→ Cleanup
+→ Release
+
+ABSOLUTE RULE:
+DO NOT jump directly into coding.
+
+====================================================
+SECTION 2 — PRODUCT REALIGNMENT
+====================================================
+
+CREATE:
+docs/PRODUCT_BRIEF.md
+
+CONTENT:
+
+INFOX IS NOT:
+- AI newspaper
+- RSS reader
+- generic dashboard
+- enterprise admin panel
+
+INFOX IS:
+A personalized trend intelligence platform.
+
+CORE IDEA:
+Users receive trends and information THEY care about before everyone else.
+
+TARGET USERS:
+- traders
+- crypto users
+- creators
+- startup founders
+- researchers
+- trend watchers
+- content creators
+- people following drama/trends/news
+
+CORE EXPERIENCE:
+Open app
+→ instantly see personalized trend feed
+→ interact
+→ algorithm learns
+→ Telegram delivers important updates
+
+CORE SOURCES:
+- Reddit
+- YouTube
+- Google Trends
+- Google News
+- X/Twitter
+- TikTok
+- Instagram
+- Facebook
+- GitHub
+
+IMPORTANT:
+The system MUST prioritize:
+- momentum
+- virality
+- trend acceleration
+- user interest match
+NOT generic breaking news.
+
+====================================================
+SECTION 3 — QUALITY GATE
+====================================================
+
+CREATE:
+docs/QUALITY_GATE.md
+
+CHECKLIST:
+
+[ ] Uses REAL data
+[ ] No placeholder cards
+[ ] No fake metrics
+[ ] No duplicate dashboards
+[ ] No dead routes
+[ ] Mobile-first
+[ ] User instantly understands feature
+[ ] Connected to product vision
+[ ] No admin leakage into user UI
+[ ] Token cost justified
+[ ] Production deploy compatible
+[ ] No unnecessary abstraction
+[ ] No duplicate settings page
+[ ] No broken OAuth
+[ ] No fake trend injection
+
+QA AGENT MUST FAIL BUILD IF:
+- feature is fake
+- feature duplicates existing functionality
+- route is dead
+- data is mock-only
+- admin tools leak into user UX
+
+====================================================
+SECTION 4 — PRODUCT REALIGNMENT TASKS
+====================================================
+
+THIS SPRINT PRIORITIZES:
+CONSOLIDATION > REAL DATA > PRODUCT IDENTITY
+
+DO NOT CREATE:
+- new dashboards
+- experimental admin pages
+- analytics toys
+- duplicate feeds
+- enterprise interfaces
+
+====================================================
+TASK T001 — REMOVE PRODUCT CONFUSION
+====================================================
+
+REMOVE:
+- old AI summarize workflow pages
+- duplicate topic selection pages
+- unused intelligence pages
+- unused settings pages
+- broken redirects
+- dead onboarding paths
+
+GOAL:
+ONE PRODUCT.
+ONE FEED.
+ONE USER FLOW.
+
+FINAL USER FLOW:
+
+Login
+→ onboarding interests
+→ personalized feed
+→ interact
+→ follow/save/watch
+→ Telegram delivery
+
+====================================================
+TASK T002 — REAL TREND INGESTION
+====================================================
+
+CURRENT PROBLEM:
+Feed still behaves like finance RSS.
+
+FIX:
+Create REAL trend ingestion layer.
+
+CREATE:
+services/trendAggregation/
+
+FILES:
+- trendNormalizer.ts
+- trendScoring.ts
+- trendCluster.ts
+- trendMomentum.ts
+- trendTopicExtractor.ts
+
+GOAL:
+Convert:
+- Reddit discussions
+- YouTube uploads
+- Google Trends
+- Google News
+- GitHub trending
+INTO:
+trend entities.
+
+IMPORTANT:
+STOP prioritizing:
+headline freshness only.
+
+START prioritizing:
+- acceleration
+- repetition
+- engagement velocity
+- cross-platform appearance
+
+====================================================
+TASK T003 — TIKTOK-STYLE FEED
+====================================================
+
+REDESIGN:
+/my-feed
+
+GOAL:
+Feed should feel:
+- addictive
+- fast
+- visual
+- personalized
+- alive
+
+NOT:
+newspaper list.
+
+REQUIREMENTS:
+
+1. FULL-WIDTH MOBILE CARDS
+- tighter spacing
+- swipe feeling
+- stronger visual hierarchy
+
+2. TREND HOOK
+Examples:
+"Everyone is suddenly talking about this"
+"This trend exploded in the last hour"
+"Crypto Twitter is accelerating around BTC"
+
+3. WHY YOU SEE THIS
+Explain:
+- because user follows AI
+- because watched NVDA
+- because saved startup content
+- because interacted with drama trends
+
+4. TREND MOMENTUM
+Show:
+- exploding
+- rising
+- stable
+- fading
+
+5. DISCOVERY MIXING
+Every 6–8 posts:
+inject adjacent interests.
+
+EXAMPLE:
+User likes crypto
+→ inject AI agents
+→ inject Nvidia
+→ inject startup funding
+
+====================================================
+TASK T004 — REAL INTEREST ENGINE
+====================================================
+
+CURRENT PROBLEM:
+Interest selection feels fake.
+
+FIX:
+Make onboarding influence feed immediately.
+
+WHEN USER SELECTS:
+- crypto
+- gaming
+- drama
+- startups
+- AI
+- politics
+
+SYSTEM MUST:
+change feed composition instantly.
+
+ADD:
+interest confidence scoring.
+
+====================================================
+TASK T005 — SOCIAL TREND CONNECTORS
+====================================================
+
+IMPORTANT:
+Do NOT fake integrations.
+
+IMPLEMENT REAL CONNECTOR ARCHITECTURE.
+
+CREATE:
+services/socialAdapters/
+
+FILES:
+- redditAdapter.ts
+- youtubeAdapter.ts
+- googleTrendsAdapter.ts
+- githubTrendingAdapter.ts
+
+PREPARE INTERFACES:
+- twitterAdapter.ts
+- tiktokAdapter.ts
+- instagramAdapter.ts
+- facebookAdapter.ts
+
+IMPORTANT:
+If APIs unavailable:
+mark feature:
+"architecture-ready"
+
+DO NOT fake data.
+
+====================================================
+TASK T006 — AUTH FIXES
+====================================================
+
+FIX GOOGLE LOGIN FULLY.
+
+CURRENT ISSUE:
+OAuth partially wired but broken.
+
+REQUIREMENTS:
+- working Google OAuth
+- proper callback handling
+- account linking
+- session persistence
+- logout works
+- auth errors visible
+
+ALSO ADD:
+email verification flow.
+
+NO MORE:
+instant fake signup.
+
+====================================================
+TASK T007 — PAYMENT FOUNDATION HARDENING
+====================================================
+
+CURRENT PROBLEM:
+Manual PromptPay confirmation.
+
+KEEP current system TEMPORARILY,
+BUT PREPARE PRODUCTION STRUCTURE.
+
+CREATE:
+- payment status lifecycle
+- transaction references
+- subscription expiry handling
+- failed payment state
+- payment audit logs
+
+DO NOT:
+build fake automation.
+
+====================================================
+TASK T008 — ADMIN / USER SEPARATION
+====================================================
+
+STRICTLY SEPARATE:
+
+USER PRODUCT:
+- feed
+- watchlist
+- profile
+- discover
+- billing
+- onboarding
+
+ADMIN:
+- analytics
+- token costs
+- ingestion health
+- payment verification
+- runtime health
+
+ADMIN UI MUST:
+- not appear in user navigation
+- not share UX style
+- not confuse users
+
+====================================================
+TASK T009 — TOKEN COST GOVERNANCE
+====================================================
+
+IMPORTANT:
+This product must survive financially.
+
+CREATE:
+- token usage visibility
+- per-user token tracking
+- AI usage classification
+- expensive action detection
+- budget warnings
+
+GOAL:
+Prevent:
+heavy users destroying margins.
+
+====================================================
+TASK T010 — RELEASE CLEANUP
+====================================================
+
+DELETE:
+- dead imports
+- unused pages
+- duplicate layouts
+- unused hooks
+- abandoned sprint artifacts
+
+UPDATE:
+- MASTER_INDEX.md
+- CHANGELOG.md
+- ARCHITECTURE.md
+
+====================================================
+SUCCESS CRITERIA
+====================================================
+
+Sprint 28 is SUCCESSFUL IF:
+
+[ ] INFOX finally feels like ONE product
+[ ] Feed feels personalized
+[ ] Feed feels alive
+[ ] Interests actually affect content
+[ ] Real trends appear
+[ ] Google login works
+[ ] User/admin separation is clear
+[ ] No fake dashboards
+[ ] No duplicate systems
+[ ] Product vision restored
+[ ] Product no longer feels like AI newspaper
+[ ] Product feels like TikTok + trend intelligence
+
+FINAL RULE:
+If implementation conflicts with PRODUCT_BRIEF.md,
+PRODUCT_BRIEF wins.

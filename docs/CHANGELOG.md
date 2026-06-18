@@ -2,6 +2,48 @@
 
 ---
 
+## [2026-06-18] — Sprint 28: Product Realignment & AI Team Governance
+
+**What:** Stopped feature chaos. Realigned INFOX as a personalized trend intelligence platform — not an AI newspaper. Established governance framework, built real trend aggregation + social adapter architecture, wired momentum signals into the TikTok feed.
+
+**Theme: CONSOLIDATION > REAL DATA > PRODUCT IDENTITY**
+
+### T001: AI Team Governance Docs
+- `docs/WEB_TEAM.md` — NEW: team roles (Product, UX, Feed Intelligence, Backend, QA, Release), workflow protocol, sprint rules
+- `docs/PRODUCT_BRIEF.md` — NEW: product identity (what INFOX IS vs IS NOT), target users, data sources, feed ranking priority (momentum > virality > user-match > recency > source), momentum labels, discovery injection rule, anti-patterns list
+- `docs/QUALITY_GATE.md` — NEW: sprint QA checklist — data quality, nav/routes, product alignment, mobile, technical gates; "architecture-ready" exception for connectors awaiting API keys
+
+### T002: Trend Aggregation Service Layer (new — `services/trendAggregation/`)
+- `trendNormalizer.ts` — RawSignal → TrendEntity; platform-scaled engagement (YouTube 10M, Reddit 100K, TikTok 50M, Google Trends 100); deduplication by URL
+- `trendMomentum.ts` — velocity engine (signals/hour in 1h sliding windows), acceleration scoring, MomentumLabel (exploding/rising/stable/fading), Thai-language trend hooks, in-memory signal history (2 000 entries, 24h TTL)
+- `trendScoring.ts` — composite scorer: momentum 35% + virality 25% + user-match 20% + recency 12% + source quality 8%; Tier A/B source quality map; rankTrends()
+- `trendCluster.ts` — Jaccard + title-word-overlap clustering; greedy seed algorithm; TrendCluster with platformCount, isCrossPlatform, dominantPlatform
+- `trendTopicExtractor.ts` — keyword topic extraction (8 categories, 100+ keywords), entity extraction (20 major entities), getAdjacentInterests() for discovery injection
+
+### T003: Social Adapter Architecture (new — `services/socialAdapters/`)
+- `redditAdapter.ts` — **ACTIVE**: Reddit hot posts via public JSON API (no key needed), dynamic subreddit selection per user interests
+- `googleTrendsAdapter.ts` — **ACTIVE**: Google Trends RSS (Thailand TH + US), traffic volume parsing, no key needed
+- `githubTrendingAdapter.ts` — **ACTIVE**: GitHub trending repos via community proxy + Atom fallback
+- `youtubeAdapter.ts` — **ARCHITECTURE-READY**: YouTube Data API v3 (set `YOUTUBE_API_KEY` to activate)
+- `twitterAdapter.ts` — **ARCHITECTURE-READY**: Twitter v2 API (set `TWITTER_BEARER_TOKEN` to activate)
+- `tiktokAdapter.ts` — **ARCHITECTURE-READY**: TikTok Research API (business approval required)
+- `instagramAdapter.ts` / `facebookAdapter.ts` — **ARCHITECTURE-READY**: Graph API
+- `index.ts` — fetchAllTrending() orchestrator, getAdapterStatus() for health endpoint
+
+### T004: Feed UI — Momentum + Identity Signals
+- `pages/my-feed.tsx` — deriveMomentum() derives label from signalScore + recencyLabel; MOMENTUM_DISPLAY map (emoji + color per state); TREND_HOOKS (Thai hook phrases for exploding/rising); FeedCard shows momentum badge + hook for high-velocity items only; "Why this matters" → "Why you see this"; dead admin debug links removed; footer text → "INFOX · Trend Intelligence"
+
+### T005: Product Cleanup — Nav & Admin Separation
+- `pages/settings/index.tsx` — "Interest Profile" href `/settings/interests` → `/profile`; admin link at footer removed (QUALITY_GATE violation fixed); footer → "INFOX · Trend Intelligence"
+- `pages/my-feed.tsx` — all `/settings/interests` links → `/profile`
+- `App.tsx` — `/settings/interests` redirect to `/profile` already in place (confirmed correct)
+
+### Packages Fixed
+- `bcryptjs` + `@types/bcryptjs` — installed in @workspace/api-server (authService build fix)
+- `jsonwebtoken` + `@types/jsonwebtoken` — installed in @workspace/api-server (authService build fix)
+
+---
+
 ## [2026-06-17] — Sprint 26: Real-Time Intelligence + Payment Activation
 
 **What:** Transformed prototype into working personalized intelligence platform. Real trend ingestion, live PromptPay QR payment flow, entityResolver wired into feed pipeline, route retirement, exec mode toggle inline.

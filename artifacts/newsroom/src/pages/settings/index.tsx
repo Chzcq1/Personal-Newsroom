@@ -133,7 +133,7 @@ export default function SettingsPage() {
         <SectionLabel>Personalisation</SectionLabel>
 
         <SettingsRow
-          href="/settings/interests"
+          href="/profile"
           icon={<Heart className="w-4 h-4" />}
           iconBg="bg-purple-500/10"
           iconColor="text-purple-400"
@@ -212,10 +212,7 @@ export default function SettingsPage() {
         />
 
         <div className="pt-6 pb-4 text-center">
-          <p className="text-xs text-white/35">INFOX · Personal AI Newsroom</p>
-          <Link href="/admin/command-center">
-            <p className="text-[10px] text-white/15 mt-1 hover:text-white/30 transition-colors cursor-pointer">Admin</p>
-          </Link>
+          <p className="text-xs text-white/35">INFOX · Trend Intelligence</p>
         </div>
 
       </main>
